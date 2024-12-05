@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Sidebar } from "@/components/sidebar"
 
 export default function Settings() {
   const [folderPath, setFolderPath] = useState('')
@@ -53,42 +53,50 @@ export default function Settings() {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <Card className="w-full max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle>Choose a Folder</CardTitle>
-          <CardDescription>Enter a new root folder path for LockerZ</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <p className="text-sm font-medium">Current folder path:</p>
-            <Input value={folderPath} readOnly />
-          </div>
-          <div>
-            <p className="text-sm font-medium">New folder path:</p>
-            <Input 
-              value={newFolderPath} 
-              onChange={(e) => setNewFolderPath(e.target.value)}
-              placeholder="Enter new folder path"
-            />
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button onClick={handleApplyNewPath} disabled={!newFolderPath}>Apply New Path</Button>
-        </CardFooter>
-      </Card>
-      {alert.show && (
-        <Alert className="mt-4" variant={alert.type === 'error' ? 'destructive' : 'default'}>
-          <AlertTitle>{alert.type === 'error' ? 'Error' : 'Success'}</AlertTitle>
-          <AlertDescription>{alert.message}</AlertDescription>
-        </Alert>
-      )}
-      <div className="mt-4 text-center">
-        <Link href="/" className="text-blue-500 hover:underline">
-          Back to Home
-        </Link>
+      <div className="flex h-screen bg-background">
+        <Sidebar />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <main className="flex-1 overflow-y-auto p-4">
+            <h1 className="text-3xl font-bold mb-6 gradient-text">Settings</h1>
+            <Card className="w-full max-w-2xl mx-auto">
+              <CardHeader>
+                <CardTitle>Choose a Folder</CardTitle>
+                <CardDescription>Enter a new root folder path for LockerZ</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label htmlFor="currentPath" className="text-sm font-medium text-muted-foreground">Current folder
+                    path:</label>
+                  <Input
+                      id="currentPath"
+                      value={folderPath}
+                      readOnly
+                      disabled
+                      className="mt-1 bg-muted cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">New folder path:</p>
+                  <Input
+                      value={newFolderPath}
+                      onChange={(e) => setNewFolderPath(e.target.value)}
+                      placeholder="Enter new folder path"
+                  />
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={handleApplyNewPath} disabled={!newFolderPath}>Apply New Path</Button>
+              </CardFooter>
+            </Card>
+            {alert.show && (
+                <Alert className="mt-4 max-w-md mx-auto" variant={alert.type === 'error' ? 'destructive' : 'default'}>
+                  <AlertTitle>{alert.type === 'error' ? 'Error' : 'Success'}</AlertTitle>
+                  <AlertDescription>{alert.message}</AlertDescription>
+                </Alert>
+            )}
+          </main>
+        </div>
       </div>
-    </div>
   )
 }
 
