@@ -26,10 +26,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 export default function Locker() {
     const [files, setFiles] = useState<File[]>([])
     const [categories, setCategories] = useState<string[]>([])
-    const [selectedCategory, setSelectedCategory] = useState<string>(() => {
-        const storedCategory = localStorage.getItem('lastSelectedCategory')
-        return storedCategory || 'all'
-    })
+    const [selectedCategory, setSelectedCategory] = useState<string>('all')
     const [isLoading, setIsLoading] = useState(true)
     const [isCategoriesLoading, setIsCategoriesLoading] = useState(true)
     const [currentPage, setCurrentPage] = useState(1)
@@ -40,15 +37,42 @@ export default function Locker() {
     const [imagesPerPage, setImagesPerPage] = useState(10)
     const [selectedImage, setSelectedImage] = useState<string | null>(null)
     const [isViewerOpen, setIsViewerOpen] = useState(false)
+    const [rememberCategory, setRememberCategory] = useState(false)
+
+    const isRememberCategory = async () => {
+        try {
+            const response = await fetch(`${API_URL}/get-settings`)
+            const data = await response.json()
+            setRememberCategory(data.rememberCategory)
+            if (data.rememberCategory) {
+                const storedCategory = localStorage.getItem('lastSelectedCategory')
+                if (storedCategory) {
+                    setSelectedCategory(storedCategory)
+                }
+            } else {
+                localStorage.removeItem('lastSelectedCategory')
+            }
+        } catch (error) {
+            console.error('Error fetching current settings:', error)
+            toast({
+                title: "Error",
+                description: "Error fetching current settings",
+                variant: "destructive",
+            })
+        }
+    }
 
     useEffect(() => {
+        isRememberCategory()
         fetchFiles()
         fetchCategories()
     }, [])
 
     useEffect(() => {
-        localStorage.setItem('lastSelectedCategory', selectedCategory)
-    }, [selectedCategory])
+        if (rememberCategory) {
+            localStorage.setItem('lastSelectedCategory', selectedCategory)
+        }
+    }, [selectedCategory, rememberCategory])
 
     useEffect(() => {
         fetchFiles()
@@ -221,7 +245,9 @@ export default function Locker() {
                             onCategoryChange={(value) => {
                                 setSelectedCategory(value)
                                 setCurrentPage(1)
-                                localStorage.setItem('lastSelectedCategory', value)
+                                if (rememberCategory) {
+                                    localStorage.setItem('lastSelectedCategory', value)
+                                }
                             }}
                             onDrop={onDrop}
                         />
