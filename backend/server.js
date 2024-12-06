@@ -1,9 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
 const fsPromises = require('fs').promises;
 const path = require('path');
-const busboy = require('busboy');
+const formidable = require('formidable');
 const NodeCache = require('node-cache');
 
 const app = express();
@@ -24,15 +23,15 @@ console.log('Config file path:', configPath);
 // Helper functions
 function clearRelevantCaches(categories = []) {
     const keys = cache.keys();
-    for (const key of keys) {
+    new Set(categories);
+    keys.forEach(key => {
         if (key.startsWith('files_') || categories.some(cat => key.includes(cat))) {
             cache.del(key);
         }
-    }
+    });
     cache.del('categories');
     cache.del('stats');
 }
-
 async function readConfig() {
     try {
         await fsPromises.access(configPath);
@@ -43,8 +42,7 @@ async function readConfig() {
             return {
                 folderPath: path.join(process.env.USERPROFILE || process.env.HOME, 'Documents', 'LockerZ'),
                 rememberCategory: true,
-                rememberPage: true,
-                currentPage: 10
+                rememberPage: true
             };
         }
         throw error;
@@ -52,40 +50,28 @@ async function readConfig() {
 }
 
 async function writeConfig(config) {
-    try {
-        await fsPromises.mkdir(configDir, { recursive: true });
-        await fsPromises.writeFile(configPath, JSON.stringify(config, null, 2));
-    } catch (error) {
-        throw error;
-    }
-}
-
-async function getFileSize(filePath) {
-    const stats = await fsPromises.stat(filePath);
-    return stats.size;
+    await fsPromises.mkdir(configDir, { recursive: true });
+    await fsPromises.writeFile(configPath, JSON.stringify(config, null, 2));
 }
 
 async function getDirStats(dirPath) {
-    let totalSize = 0;
-    let fileCount = 0;
     const items = await fsPromises.readdir(dirPath, { withFileTypes: true });
-
-    for (const item of items) {
+    let [totalSize, fileCount] = await items.reduce(async (accPromise, item) => {
+        const [accSize, accCount] = await accPromise;
         const itemPath = path.join(dirPath, item.name);
         if (item.isFile()) {
-            totalSize += await getFileSize(itemPath);
-            fileCount++;
+            const stats = await fsPromises.stat(itemPath);
+            return [accSize + stats.size, accCount + 1];
         } else if (item.isDirectory()) {
             const { size, count } = await getDirStats(itemPath);
-            totalSize += size;
-            fileCount += count;
+            return [accSize + size, accCount + count];
         }
-    }
+        return [accSize, accCount];
+    }, Promise.resolve([0, 0]));
 
     return { size: totalSize, count: fileCount };
 }
 
-// Server initialization
 let config;
 let rootFolderPath;
 
@@ -128,34 +114,34 @@ app.get('/files', async (req, res) => {
     }
 
     try {
-        let files = [];
         const categories = await fsPromises.readdir(rootFolderPath, { withFileTypes: true });
+        const files = await Promise.all(
+            categories
+                .filter(cat => cat.isDirectory() && (category === 'all' || cat.name === category) && cat.name !== 'temp')
+                .map(async (cat) => {
+                    const categoryPath = path.join(rootFolderPath, cat.name);
+                    const categoryFiles = await fsPromises.readdir(categoryPath);
+                    return Promise.all(categoryFiles.map(async (file) => {
+                        const filePath = path.join(categoryPath, file);
+                        const stats = await fsPromises.stat(filePath);
+                        return {
+                            name: file,
+                            category: cat.name,
+                            url: `/images/${cat.name}/${file}`,
+                            size: stats.size,
+                            createdAt: stats.birthtime
+                        };
+                    }));
+                })
+        );
 
-        for (const cat of categories) {
-            if (cat.isDirectory() && (category === 'all' || cat.name === category) && cat.name !== 'temp') {
-                const categoryPath = path.join(rootFolderPath, cat.name);
-                const categoryFiles = await fsPromises.readdir(categoryPath);
-
-                for (const file of categoryFiles) {
-                    const filePath = path.join(categoryPath, file);
-                    const stats = await fsPromises.stat(filePath);
-                    files.push({
-                        name: file,
-                        category: cat.name,
-                        url: `/images/${cat.name}/${file}`,
-                        size: stats.size,
-                        createdAt: stats.birthtime
-                    });
-                }
-            }
-        }
-
-        const totalFiles = files.length;
+        const flattenedFiles = files.flat();
+        const totalFiles = flattenedFiles.length;
         const totalPages = Math.ceil(totalFiles / limit);
         const startIndex = (page - 1) * limit;
         const endIndex = page * limit;
 
-        const paginatedFiles = files.slice(startIndex, endIndex);
+        const paginatedFiles = flattenedFiles.slice(startIndex, endIndex);
 
         const result = {
             files: paginatedFiles,
@@ -296,86 +282,61 @@ app.post('/create-category', async (req, res) => {
     }
 });
 
-app.post('/move-file', (req, res) => {
-    const bb = busboy({ headers: req.headers });
-    let fileToUpload;
-    let fileName;
-    let category;
-    let originalPath;
-    let fileReceived = false;
+app.post('/move-file', async (req, res) => {
+    const form = new formidable.IncomingForm();
+    form.keepExtensions = true;
 
-    bb.on('file', (name, file, info) => {
-        fileName = info.filename;
-        originalPath = info.filepath; // Store the original file path
-        const saveTo = path.join(rootFolderPath, 'temp', fileName);
-        fileToUpload = { saveTo, file };
-        fileReceived = true;
+    try {
+        const [fields, files] = await form.parse(req);
 
-        const writeStream = fs.createWriteStream(saveTo);
-        file.pipe(writeStream);
-
-        writeStream.on('finish', () => {
-            console.log('File write completed');
-        });
-
-        writeStream.on('error', (err) => {
-            console.error('Error writing file:', err);
-        });
-    });
-
-    bb.on('field', (name, val) => {
-        if (name === 'category') {
-            category = val;
-        }
-    });
-
-    bb.on('finish', async () => {
-        if (!fileReceived) {
+        if (!files.file || files.file.length === 0) {
             return res.status(400).json({ error: 'No file provided' });
         }
 
-        const targetDir = path.join(rootFolderPath, category || 'uncategorized');
+        const uploadedFile = files.file[0];
+        const fileName = uploadedFile.originalFilename;
+        const category = fields.category ? fields.category[0] : 'uncategorized';
+        const originalPath = fields.originalPath ? fields.originalPath[0] : uploadedFile.filepath;
+
+        console.log('Original file path:', originalPath);
+
+        const targetDir = path.join(rootFolderPath, category);
         const targetPath = path.join(targetDir, fileName);
 
-        try {
-            await fsPromises.mkdir(targetDir, { recursive: true });
-            await fsPromises.rename(fileToUpload.saveTo, targetPath);
-            const stats = await fsPromises.stat(targetPath);
-            clearRelevantCaches([category]);
+        console.log('Target directory:', targetDir);
+        console.log('Target path:', targetPath);
 
-            // Store the original path in a separate file
-            const metaFilePath = targetPath + '.meta';
-            if (originalPath) {
-                await fsPromises.writeFile(metaFilePath, originalPath);
-            } else {
-                console.warn(`Original path not available for file: ${fileName}`);
+        await fsPromises.mkdir(targetDir, { recursive: true });
+
+        // Copy the file from its original location to the target path
+        await fsPromises.copyFile(originalPath, targetPath);
+        console.log('File copied successfully');
+
+        // Remove the original file
+        await fsPromises.unlink(originalPath);
+        console.log('Original file removed');
+
+        const stats = await fsPromises.stat(targetPath);
+        console.log('File stats:', stats);
+        clearRelevantCaches([category]);
+
+
+        res.json({
+            success: true,
+            file: {
+                name: fileName,
+                category: category,
+                url: `/images/${category}/${fileName}`,
+                size: stats.size,
+                createdAt: stats.birthtime,
+                originalPath: originalPath
             }
-
-            res.json({
-                success: true,
-                file: {
-                    name: fileName,
-                    category: category || 'uncategorized',
-                    url: `/images/${category || 'uncategorized'}/${fileName}`,
-                    size: stats.size,
-                    createdAt: stats.birthtime,
-                    originalPath: originalPath || 'Not available'
-                }
-            });
-        } catch (error) {
-            console.error('Error moving file:', error);
-            res.status(500).json({ error: 'Failed to move file', details: error.message });
-        }
-    });
-
-    bb.on('error', (err) => {
-        console.error('Busboy error:', err);
-        res.status(500).json({ error: 'File upload failed', details: err.message });
-    });
-
-    req.pipe(bb);
+        });
+    } catch (error) {
+        console.error('Error moving file:', error);
+        res.status(500).json({ error: 'Failed to move file', details: error.message });
+    }
 });
-
 
 app.post('/delete-file', async (req, res) => {
     const { category, name } = req.body;
