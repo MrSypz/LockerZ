@@ -21,6 +21,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { ImageViewer } from '@/components/image-viewer'
 
 interface File {
     name: string;
@@ -53,6 +54,9 @@ export default function Locker() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [imagesPerPage, setImagesPerPage] = useState(10)
     const [rememberPage, setRememberPage] = useState(false)
+    const [selectedImage, setSelectedImage] = useState<string | null>(null)
+    const [isViewerOpen, setIsViewerOpen] = useState(false)
+
 
     useEffect(() => {
         const storedCategory = localStorage.getItem('selectedCategory')
@@ -316,7 +320,13 @@ export default function Locker() {
                                         setMoveDialogOpen(true)
                                     }}
                                 >
-                                    <Card className="overflow-hidden transition-all duration-300 ease-in-out hover:ring-2 hover:ring-primary/50 bg-card border-border">
+                                    <Card
+                                        className="overflow-hidden transition-all duration-300 ease-in-out hover:ring-2 hover:ring-primary/50 bg-card border-border cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedImage(`${API_URL}${file.url}`)
+                                            setIsViewerOpen(true)
+                                        }}
+                                    >
                                         <CardContent className="p-0">
                                             <div className="relative aspect-[3/4]">
                                                 <Image
@@ -432,7 +442,15 @@ export default function Locker() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            {isViewerOpen && selectedImage && (
+                <ImageViewer
+                    src={selectedImage}
+                    alt="Selected image"
+                    onClose={() => setIsViewerOpen(false)}
+                />
+            )}
         </div>
     )
 }
+
 
