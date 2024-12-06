@@ -6,13 +6,14 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { ModeToggle } from "@/components/mode-toggle"
 
-
 const menuItems = [
   { icon: Home, label: "Dashboard", href: "/" },
   { icon: Image, label: "My Locker", href: "/locker" },
   { icon: FolderOpen, label: "My Category", href: "/category" },
   { icon: Settings, label: "Settings", href: "/settings" },
 ]
+
+const APP_VERSION = "0.2.0"
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -31,13 +32,13 @@ export function Sidebar() {
                   isCollapsed && "hidden"
               )}
           >
-            Zaphire
+            LockerZ
           </h1>
           <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="p-2 rounded-md hover:bg-primary/20"
           >
-            <Menu size={24}/>
+            <Menu size={24} />
           </button>
         </div>
         <nav className="flex-1">
@@ -56,8 +57,16 @@ export function Sidebar() {
                 </li>
             ))}
           </ul>
-          <ModeToggle/>
         </nav>
+        <div className="mt-auto pt-4 space-y-2">
+          <ModeToggle collapsed={isCollapsed} />
+          <div className={cn(
+              "text-xs text-muted-foreground",
+              isCollapsed ? "text-center" : "px-2"
+          )}>
+            {isCollapsed ? APP_VERSION : `LockerZ ${APP_VERSION}`}
+          </div>
+        </div>
       </aside>
   )
 }
