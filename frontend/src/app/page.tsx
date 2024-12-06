@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { Sidebar } from "@/components/sidebar"
 import { Dashboard } from "@/components/dashboard"
 import { Changelog } from "@/components/changelog"

@@ -1,7 +1,10 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { BarChart, FolderOpen, Image } from 'lucide-react'
+import { BarChart, FolderOpen, ImageIcon, ChevronDown } from 'lucide-react'
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 interface Category {
   name: string;
@@ -31,6 +34,7 @@ export function Dashboard() {
     categories: 0,
     storageUsed: 0
   });
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -40,7 +44,7 @@ export function Dashboard() {
           fetch('http://localhost:3001/stats')
         ]);
         const categoriesData = await categoriesResponse.json();
-        const statsData = await statsResponse.json();
+        const statsData = await statsResponse.json(); // Corrected variable name here
 
         setCategories(categoriesData);
         setStats(statsData);
@@ -53,43 +57,65 @@ export function Dashboard() {
   }, []);
 
   const statsItems = [
-    { icon: Image, label: "Total Images", value: stats.totalImages.toString() },
+    { icon: ImageIcon, label: "Total Images", value: stats.totalImages.toString() },
     { icon: FolderOpen, label: "Categories", value: stats.categories.toString() },
     { icon: BarChart, label: "Storage Used", value: formatBytes(stats.storageUsed) },
   ];
 
   return (
-      <div className="space-y-6 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {statsItems.map((stat) => (
-              <div
-                  key={stat.label}
-                  className="glass-effect rounded-lg p-6 card-shadow hover-lift"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="text-2xl font-bold mt-2 gradient-text">
-                      {stat.value}
-                    </p>
-                  </div>
-                  <stat.icon size={32} className="text-primary" />
-                </div>
-              </div>
-          ))}
-        </div>
-
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4 gradient-text">Categories</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {categories.map((category) => (
-                <div key={category.name} className="glass-effect rounded-lg p-4 card-shadow hover-lift">
-                  <h3 className="text-lg font-semibold">{category.name}</h3>
-                  <p className="text-sm text-muted-foreground">{category.fileCount} files</p>
-                  <p className="text-sm text-muted-foreground">{formatBytes(category.size)}</p>
-                </div>
+      <div className="space-y-6">
+          <h1 className="absolute bottom-4 left-6 text-4xl font-bold text-white">Dashboard</h1>
+        <div className="p-6 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {statsItems.map((stat) => (
+                <Card key={stat.label} className="overflow-hidden transition-all hover:shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">{stat.label}</p>
+                        <p className="text-2xl font-bold mt-2 text-primary">
+                          {stat.value}
+                        </p>
+                      </div>
+                      <stat.icon size={32} className="text-primary" />
+                    </div>
+                  </CardContent>
+                </Card>
             ))}
           </div>
+
+          <Collapsible
+              open={isOpen}
+              onOpenChange={setIsOpen}
+              className="w-full space-y-2"
+          >
+            <div className="flex items-center justify-between space-x-4 px-4">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="p-0 hover:bg-transparent flex items-center space-x-2 w-full justify-start">
+                  <FolderOpen className="h-5 w-5" />
+                  <span className="text-lg font-semibold">Categories</span>
+                  <ChevronDown className={`h-5 w-5 transition-transform duration-300 ease-in-out ml-auto ${
+                      isOpen ? "transform rotate-180" : ""
+                  }`}/>
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent className="space-y-2 collapsible-content">
+              <div className="rounded-md border px-4 py-3 font-mono text-sm shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {categories.map((category) => (
+                      <Card key={category.name} className="overflow-hidden transition-all hover:shadow-lg animate-fadeIn">
+                        <CardContent className="p-4">
+                          <h3 className="text-lg font-semibold">{category.name}</h3>
+                          <p className="text-sm text-muted-foreground">{category.fileCount} files</p>
+                          <p className="text-sm text-muted-foreground">{formatBytes(category.size)}</p>
+                        </CardContent>
+                      </Card>
+                  ))}
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </div>
   )

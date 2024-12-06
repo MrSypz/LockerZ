@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%; /* #1e202c */
-    --foreground: 0 0% 3.9%; /* #bfc0d1 */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
 
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
@@ -13,10 +13,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
 
-    --primary: 0 0% 9%; /* #60519b */
+    --primary: 0 0% 9%;
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 0 0% 96.1%; /* #31323e */
+    --secondary: 0 0% 96.1%;
     --secondary-foreground: 0 0% 9%;
 
     --muted: 0 0% 96.1%;
@@ -44,23 +44,32 @@
 
     --chart-5: 27 87% 67%;
   }
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
+
     --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;
+
     --popover: 0 0% 3.9%;
     --popover-foreground: 0 0% 98%;
+
     --primary: 0 0% 98%;
     --primary-foreground: 0 0% 9%;
+
     --secondary: 0 0% 14.9%;
     --secondary-foreground: 0 0% 98%;
+
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
+
     --accent: 0 0% 14.9%;
     --accent-foreground: 0 0% 98%;
+
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
+
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
@@ -78,51 +87,39 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-@layer utilities {
-  .glass-effect {
-    @apply bg-white/5 backdrop-blur-md border border-white/10;
-  }
-
-  .neon-glow {
-    @apply relative;
-  }
-  .neon-glow::before {
-    content: attr(data-text);
-    @apply absolute inset-0 text-primary blur-[2px] opacity-70;
-  }
-
-  .gradient-text {
-    @apply text-transparent bg-clip-text bg-gradient-to-r from-[#60519b] to-[#bfc0d1];
-  }
-
-  .hover-lift {
-    @apply transition-transform duration-300 ease-in-out hover:-translate-y-1;
-  }
-
-  .card-shadow {
-    @apply shadow-lg shadow-primary/20;
-  }
-
-  .animate-fade-in {
-    @apply animate-[fade-in_0.5s_ease-out];
-  }
-
-  .animate-slide-up {
-    @apply animate-[slide-up_0.5s_ease-out];
-  }
-
-  .animate-pulse-glow {
-    @apply animate-[pulse-glow_2s_infinite];
-  }
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500;
 }
 
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.glass-effect {
+  @apply bg-black/10 backdrop-blur-lg border border-white/10;
+}
+
+.card-shadow {
+  @apply shadow-lg shadow-black/5;
+}
+
+.hover-lift {
+  @apply transition-transform duration-200 hover:-translate-y-1;
+}
+
+.animate-fade-in {
+  @apply animate-[fade-in_0.5s_ease-out];
+}
+
+
+/* Add these new animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { max-height: 0; opacity: 0; }
+  to { max-height: 1000px; opacity: 1; }
 }
 
 @keyframes slide-up {
@@ -144,7 +141,17 @@
   scrollbar-width: none;
 }
 
-.text-balance {
-  text-wrap: balance;
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out;
+}
+
+.collapsible-content {
+  overflow: hidden;
+  transition: height 0.3s ease-in-out;
 }
 

@@ -7,8 +7,18 @@ const NodeCache = require('node-cache');
 
 const app = express();
 const port = 3001;
-const cache = new NodeCache({ stdTTL: 600 }); // Cache for 10 minutes
+const cache = new NodeCache({stdTTL: 600}); // Cache for 10 minutes
 
+function clearRelevantCaches(categories = []) {
+    const keys = cache.keys();
+    for (const key of keys) {
+        if (key.startsWith('files_') || categories.some(cat => key.includes(cat))) {
+            cache.del(key);
+        }
+    }
+    cache.del('categories');
+    cache.del('stats');
+}
 
 app.use(cors());
 app.use(express.json());
@@ -31,7 +41,12 @@ async function readConfig() {
     } catch (error) {
         if (error.code === 'ENOENT') {
             console.log('Config file does not exist, returning default config');
-            return {folderPath: path.join(process.env.USERPROFILE || process.env.HOME, 'Documents', 'LockerZ')};
+            return {
+                folderPath: path.join(process.env.USERPROFILE || process.env.HOME, 'Documents', 'LockerZ'),
+                rememberCategory: true,
+                rememberPage: true,
+                currentPage: 10
+            };
         }
         console.error('Error reading config file:', error);
         throw error;
@@ -57,19 +72,12 @@ let rootFolderPath;
 
 // Set up multer for file uploads
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const category = req.body.category || 'uncategorized';
-    const categoryPath = path.join(rootFolderPath, category);
-    fs.mkdir(categoryPath, { recursive: true })
-        .then(() => cb(null, categoryPath))
-        .catch(err => cb(err));
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({storage: storage});
 
 // Function to get file size in bytes
 async function getFileSize(filePath) {
@@ -98,7 +106,6 @@ async function getDirStats(dirPath) {
     return {size: totalSize, count: fileCount};
 }
 
-
 // Async function to initialize the server
 async function initializeServer() {
     try {
@@ -106,8 +113,9 @@ async function initializeServer() {
         rootFolderPath = config.folderPath;
         console.log('Initial root folder path:', rootFolderPath);
 
-        // Ensure the root folder exists
-        await fs.mkdir(rootFolderPath, { recursive: true });
+        // Ensure the root folder and temp folder exist
+        await fs.mkdir(rootFolderPath, {recursive: true});
+        await fs.mkdir(path.join(rootFolderPath, 'temp'), {recursive: true});
 
         // If config doesn't exist, create it
         if (!await fs.access(configPath).then(() => true).catch(() => false)) {
@@ -143,10 +151,10 @@ app.get('/files', async (req, res) => {
 
     try {
         let files = [];
-        const categories = await fs.readdir(rootFolderPath, { withFileTypes: true });
+        const categories = await fs.readdir(rootFolderPath, {withFileTypes: true});
 
         for (const cat of categories) {
-            if (cat.isDirectory() && (category === 'all' || cat.name === category)) {
+            if (cat.isDirectory() && (category === 'all' || cat.name === category) && cat.name !== 'temp') {
                 const categoryPath = path.join(rootFolderPath, cat.name);
                 const categoryFiles = await fs.readdir(categoryPath);
 
@@ -183,16 +191,15 @@ app.get('/files', async (req, res) => {
         res.json(result);
     } catch (err) {
         console.error('Error reading files:', err);
-        res.status(500).json({ error: 'Error reading files' });
+        res.status(500).json({error: 'Error reading files'});
     }
 });
-
 
 app.get('/categories', async (req, res) => {
     try {
         const entries = await fs.readdir(rootFolderPath, {withFileTypes: true});
         const categories = await Promise.all(entries
-            .filter(entry => entry.isDirectory())
+            .filter(entry => entry.isDirectory() && entry.name !== 'temp')
             .map(async (dir) => {
                 const dirPath = path.join(rootFolderPath, dir.name);
                 const {size, count} = await getDirStats(dirPath);
@@ -213,7 +220,7 @@ app.get('/stats', async (req, res) => {
     try {
         const {size, count} = await getDirStats(rootFolderPath);
         const entries = await fs.readdir(rootFolderPath, {withFileTypes: true});
-        const categoriesCount = entries.filter(entry => entry.isDirectory()).length;
+        const categoriesCount = entries.filter(entry => entry.isDirectory() && entry.name !== 'temp').length;
 
         res.json({
             totalImages: count,
@@ -225,7 +232,6 @@ app.get('/stats', async (req, res) => {
         res.status(500).json({error: 'Error getting stats'});
     }
 });
-
 
 app.get('/get-folder-path', (req, res) => {
     res.json({folderPath: rootFolderPath});
@@ -246,6 +252,29 @@ app.post('/update-folder-path', async (req, res) => {
         res.status(400).json({success: false, message: 'Invalid folder path or permission denied'});
     }
 });
+app.get('/get-settings', async (req, res) => {
+    try {
+        const config = await readConfig();
+        res.json(config);
+    } catch (error) {
+        console.error('Error reading settings:', error);
+        res.status(500).json({error: 'Failed to read settings'});
+    }
+});
+
+app.post('/update-settings', async (req, res) => {
+    try {
+        const config = await readConfig();
+        const updatedConfig = {...config, ...req.body};
+        await writeConfig(updatedConfig);
+        res.json({success: true});
+    } catch (error) {
+        console.error('Error updating settings:', error);
+        res.status(500).json({error: 'Failed to update settings'});
+    }
+});
+
+
 app.post('/rename-category', async (req, res) => {
     const {oldName, newName} = req.body;
     const oldPath = path.join(rootFolderPath, oldName);
@@ -253,6 +282,7 @@ app.post('/rename-category', async (req, res) => {
 
     try {
         await fs.rename(oldPath, newPath);
+        clearRelevantCaches([oldName, newName]);
         res.json({success: true});
     } catch (error) {
         console.error('Error renaming category:', error);
@@ -266,45 +296,106 @@ app.post('/delete-category', async (req, res) => {
 
     try {
         await fs.rm(categoryPath, {recursive: true});
+        clearRelevantCaches([name]);
         res.json({success: true});
     } catch (error) {
         console.error('Error deleting category:', error);
         res.status(500).json({error: 'Failed to delete category'});
     }
 });
+
+
 app.post('/create-category', async (req, res) => {
     const {name} = req.body;
     const categoryPath = path.join(rootFolderPath, name);
 
     try {
         await fs.mkdir(categoryPath);
+        clearRelevantCaches();
         res.json({success: true});
     } catch (error) {
         console.error('Error creating category:', error);
         res.status(500).json({error: 'Failed to create category'});
     }
 });
-
-app.post('/upload', upload.single('file'), async (req, res) => {
+app.post('/move-file', upload.single('file'), async (req, res) => {
     if (!req.file) {
-        return res.status(400).json({error: 'No file uploaded'});
+        return res.status(400).json({error: 'No file provided'});
     }
 
-    res.json({
-        success: true,
-        file: {
-            name: req.file.filename,
-            category: req.body.category || 'uncategorized',
-            url: `/images/${req.body.category || 'uncategorized'}/${req.file.filename}`
+    const category = req.body.category || 'uncategorized';
+    const tempPath = req.file.path;
+    console.log(tempPath);
+    const targetPath = path.join(rootFolderPath, category, req.file.filename);
+
+    try {
+        await fs.mkdir(path.join(rootFolderPath, category), {recursive: true});
+        await fs.copyFile(tempPath, targetPath);
+        await fs.unlink(tempPath);
+
+        const stats = await fs.stat(targetPath);
+
+        clearRelevantCaches([category]);
+
+        res.json({
+            success: true,
+            file: {
+                name: req.file.filename,
+                category: category,
+                url: `/images/${category}/${req.file.filename}`,
+                size: stats.size,
+                createdAt: stats.birthtime
+            }
+        });
+    } catch (error) {
+        console.error('Error moving file:', error);
+        try {
+            await fs.unlink(targetPath);
+        } catch (cleanupError) {
+            console.error('Error during cleanup:', cleanupError);
         }
-    });
+        res.status(500).json({error: 'Failed to move file', details: error.message});
+    }
 });
+
+app.post('/delete-file', async (req, res) => {
+    const {category, name} = req.body;
+    const filePath = path.join(rootFolderPath, category, name);
+
+    try {
+        await fs.unlink(filePath);
+        clearRelevantCaches([category]);
+        console.log(`File deleted: ${filePath}`);
+        console.log('Related caches cleared');
+        res.json({success: true});
+    } catch (error) {
+        console.error('Error deleting file:', error);
+        res.status(500).json({error: 'Failed to delete file'});
+    }
+});
+
+app.post('/move-file-category', async (req, res) => {
+    const {oldCategory, newCategory, fileName} = req.body;
+    const oldPath = path.join(rootFolderPath, oldCategory, fileName);
+    const newPath = path.join(rootFolderPath, newCategory, fileName);
+
+    try {
+        await fs.mkdir(path.join(rootFolderPath, newCategory), {recursive: true});
+        await fs.rename(oldPath, newPath);
+        clearRelevantCaches([oldCategory, newCategory]);
+        res.json({success: true});
+    } catch (error) {
+        console.error('Error moving file:', error);
+        res.status(500).json({error: 'Failed to move file'});
+    }
+});
+
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send('Something broke!');
 });
-
 
 // Initialize the server
 initializeServer();
