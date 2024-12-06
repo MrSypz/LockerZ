@@ -1,20 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { X, ZoomIn, ZoomOut, RotateCcw, ExternalLink, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from "@/hooks/use-toast";
+import {
+    ContextMenu,
+    ContextMenuContent,
+    ContextMenuItem,
+    ContextMenuTrigger,
+} from "@/components/ui/context-menu"
+import { File } from "@/types/file";
 
 interface ImageViewerProps {
+    file: File;
     src: string;
     alt: string;
     onClose: () => void;
+    fileUrl: string;
 }
 
-export function ImageViewer({ src, alt, onClose }: ImageViewerProps) {
+export function ImageViewer({ file, src, alt, onClose, fileUrl }: ImageViewerProps) {
     const [scale, setScale] = useState(1);
+    const imgRef = useRef<HTMLImageElement>(null);
+
+    const isViewable = ['jpg', 'jpeg', 'png', 'gif', 'webp'].some(ext => src.toLowerCase().endsWith(`.${ext}`));
+
+    const handleViewFullImage = useCallback(() => {
+        if (isViewable) {
+            window.open(src, '_blank');
+        } else {
+            toast({
+                title: "Unsupported file type",
+                description: "This file type cannot be opened in a new tab.",
+                variant: "destructive",
+            });
+        }
+    }, [src, isViewable]);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                onClose();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [onClose, file]);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-            <div className="relative w-full h-full max-w-[90vw] max-h-[90vh] bg-background/10 rounded-lg overflow-hidden shadow-lg">
+            <div className="relative w-screen h-screen bg-background/10 overflow-hidden">
                 <TransformWrapper
                     initialScale={1}
                     initialPositionX={0}
@@ -24,19 +63,30 @@ export function ImageViewer({ src, alt, onClose }: ImageViewerProps) {
                     maxScale={8}
                     onZoom={(ref) => setScale(ref.state.scale)}
                 >
-                    {({ zoomIn, zoomOut, resetTransform, setTransform }) => (
+                    {({ zoomIn, zoomOut, resetTransform }) => (
                         <>
                             <TransformComponent
                                 wrapperClass="!w-full !h-full"
                                 contentClass="!w-full !h-full flex items-center justify-center"
                             >
-                                <img
-                                    src={src}
-                                    alt={alt}
-                                    className="max-w-full max-h-full object-contain"
-                                />
+                                <ContextMenu>
+                                    <ContextMenuTrigger>
+                                        <img
+                                            ref={imgRef}
+                                            src={src}
+                                            alt={alt}
+                                            className="max-w-full h-screen object-contain"
+                                        />
+                                    </ContextMenuTrigger>
+                                    <ContextMenuContent>
+                                        <ContextMenuItem onClick={handleViewFullImage} disabled={!isViewable}>
+                                            <ExternalLink className="mr-2 h-4 w-4" />
+                                            View Full Image
+                                        </ContextMenuItem>
+                                    </ContextMenuContent>
+                                </ContextMenu>
                             </TransformComponent>
-                            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center space-y-2">
+                            <div className="absolute bottom-4 right-4 flex flex-col items-end space-y-2">
                                 <div className="flex items-center space-x-2 bg-background/80 rounded-full p-1">
                                     <Button variant="ghost" size="icon" onClick={() => zoomOut()}>
                                         <ZoomOut className="h-4 w-4" />
@@ -49,6 +99,11 @@ export function ImageViewer({ src, alt, onClose }: ImageViewerProps) {
                                     <RotateCcw className="h-4 w-4 mr-2" />
                                     Reset
                                 </Button>
+                                {fileUrl && (
+                                    <div className="bg-background/80 text-foreground px-2 py-1 rounded-md text-xs max-w-xs truncate">
+                                        {fileUrl}
+                                    </div>
+                                )}
                             </div>
                             <div className="absolute top-4 left-4 bg-background/80 text-foreground px-2 py-1 rounded-full text-sm font-medium">
                                 {Math.round(scale * 100)}%
