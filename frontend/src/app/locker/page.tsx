@@ -1,16 +1,10 @@
 'use client'
 
-import {useState, useEffect, useCallback} from 'react'
-import Image from 'next/image'
-import {Sidebar} from "@/components/sidebar"
-import {Card, CardContent} from "@/components/ui/card"
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
-import {Button} from "@/components/ui/button"
-import {toast} from "@/hooks/use-toast"
-import {AlertCircle, Loader2, Upload, Tag, ChevronLeft, ChevronRight} from 'lucide-react'
-import {useDropzone} from 'react-dropzone'
-import {FileContextMenu} from '@/components/context-menu'
-import {MoveDialog} from '@/components/move-dialog'
+import React, { useState, useEffect, useCallback } from 'react'
+import { Sidebar } from "@/components/sidebar"
+import { toast } from "@/hooks/use-toast"
+import { AlertCircle, Loader2 } from 'lucide-react'
+import { MoveDialog } from '@/components/move-dialog'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -21,23 +15,11 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {ImageViewer} from '@/components/image-viewer'
-
-interface File {
-    name: string;
-    category: string;
-    url: string;
-    size: number;
-    createdAt: string;
-    tags?: string[];
-}
-
-interface PaginatedResponse {
-    files: File[];
-    currentPage: number;
-    totalPages: number;
-    totalFiles: number;
-}
+import { ImageViewer } from '@/components/image-viewer'
+import { FileGrid } from '@/components/FileGrid'
+import { CategorySelector } from '@/components/CategorySelector'
+import { PaginationControls } from '@/components/PaginationControls'
+import { File } from '@/types/file'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -53,29 +35,14 @@ export default function Locker() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [imagesPerPage, setImagesPerPage] = useState(10)
-    const [rememberPage, setRememberPage] = useState(false)
     const [selectedImage, setSelectedImage] = useState<string | null>(null)
     const [isViewerOpen, setIsViewerOpen] = useState(false)
-
 
     useEffect(() => {
         const storedCategory = localStorage.getItem('selectedCategory')
         if (storedCategory) {
             setSelectedCategory(storedCategory)
         }
-
-        const storedRememberPage = localStorage.getItem('rememberPage')
-        if (storedRememberPage) {
-            setRememberPage(storedRememberPage === 'true')
-        }
-
-        if (rememberPage) {
-            const storedPage = localStorage.getItem('currentPage')
-            if (storedPage) {
-                setCurrentPage(parseInt(storedPage, 10))
-            }
-        }
-
         fetchFiles()
         fetchCategories()
     }, [])
@@ -85,17 +52,8 @@ export default function Locker() {
     }, [selectedCategory])
 
     useEffect(() => {
-        if (rememberPage) {
-            localStorage.setItem('currentPage', currentPage.toString())
-        }
-    }, [currentPage, rememberPage])
-
-    useEffect(() => {
-        if (!rememberPage || (rememberPage && currentPage === 1)) {
-            fetchFiles()
-            fetchCategories()
-        }
-    }, [selectedCategory, currentPage, imagesPerPage, rememberPage])
+        fetchFiles()
+    }, [selectedCategory, currentPage, imagesPerPage])
 
     const fetchFiles = async () => {
         setIsLoading(true)
@@ -104,12 +62,9 @@ export default function Locker() {
             if (!response.ok) {
                 throw new Error('Failed to fetch files')
             }
-            const data: PaginatedResponse = await response.json()
+            const data = await response.json()
             setFiles(data.files)
             setTotalPages(data.totalPages)
-            if (!rememberPage) {
-                setCurrentPage(1)
-            }
         } catch (error) {
             console.error('Error fetching files:', error)
             toast({
@@ -142,9 +97,9 @@ export default function Locker() {
             setIsCategoriesLoading(false)
         }
     }
+
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jfif']
-        // @ts-ignore
         const validFiles = acceptedFiles.filter(file => allowedTypes.includes(file.type))
 
         if (validFiles.length === 0) {
@@ -158,7 +113,6 @@ export default function Locker() {
 
         for (const file of validFiles) {
             const formData = new FormData()
-            // @ts-ignore
             formData.append('file', file)
             formData.append('category', selectedCategory === 'all' ? 'uncategorized' : selectedCategory)
 
@@ -187,9 +141,6 @@ export default function Locker() {
         }
         setCurrentPage(1)
     }, [selectedCategory])
-
-    // @ts-ignore
-    const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop})
 
     const handleDelete = async (file: File) => {
         try {
@@ -253,173 +204,69 @@ export default function Locker() {
                 variant: "destructive",
             })
         }
+        setMoveDialogOpen(false)
+        fetchFiles()
     }
 
     return (
         <div className="flex h-screen bg-background">
-            <Sidebar/>
+            <Sidebar />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto p-4 md:p-8">
                     <div className="container mx-auto max-w-[2000px]">
                         <h1 className="text-4xl font-bold mb-8 text-foreground tracking-tight">Locker</h1>
-                        <div className="flex justify-between items-center mb-8">
-                            <Select
-                                value={selectedCategory}
-                                onValueChange={(value) => {
-                                    setSelectedCategory(value)
-                                    if (!rememberPage) {
-                                        setCurrentPage(1)
-                                    }
-                                }}
-                                disabled={isCategoriesLoading}
-                            >
-                                <SelectTrigger className="w-[200px] bg-card text-card-foreground border-border">
-                                    {isCategoriesLoading ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                    ) : (
-                                        <SelectValue placeholder="Select category"/>
-                                    )}
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Categories</SelectItem>
-                                    {categories.map(category => (
-                                        <SelectItem key={category} value={category}>{category}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <div {...getRootProps()}
-                                 className={`p-6 border-2 border-dashed rounded-lg transition-all duration-300 ease-in-out
-                                    ${isDragActive ? 'border-primary bg-primary/50' : 'border-border hover:border-primary/50'}
-                                    cursor-pointer bg-card text-card-foreground hover:scale-95`}
-                            >
-                                <input {...getInputProps()} />
-                                <div className="flex flex-col items-center space-y-2">
-                                    <Upload className="h-10 w-10"/>
-                                    <p className="text-center text-sm font-medium leading-5 max-w-[150px]">
-                                        {isDragActive ? "Drag & Drop files here!" : "Drag & drop files or click to select"}
-                                    </p>
-                                </div>
-
-                            </div>
-                        </div>
-
-                        <div
-                            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4 bg-background/50 backdrop-blur-sm rounded-lg border border-border">
-                            {files.map((file, index) => (
-                                <FileContextMenu
-                                    key={`${file.category}-${file.name}`}
-                                    file={file}
-                                    onDelete={(file) => {
-                                        // @ts-ignore
-                                        setSelectedFile(file)
-                                        setDeleteDialogOpen(true)
-                                    }}
-                                    onMove={(file) => {
-                                        // @ts-ignore
-                                        setSelectedFile(file)
-                                        setMoveDialogOpen(true)
-                                    }}
-                                >
-                                    <Card
-                                        className="overflow-hidden transition-all duration-300 ease-in-out hover:ring-2 hover:ring-primary/50 bg-card border-border cursor-pointer"
-                                        onClick={() => {
-                                            setSelectedImage(`${API_URL}${file.url}`)
-                                            setIsViewerOpen(true)
-                                        }}
-                                    >
-                                        <CardContent className="p-0">
-                                            <div className="relative aspect-[3/4]">
-                                                <Image
-                                                    src={`${API_URL}${file.url}`}
-                                                    alt={file.name}
-                                                    fill
-                                                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                                                    className="object-cover"
-                                                    loading="lazy"
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement;
-                                                        target.src = '/placeholder-image.jpg';
-                                                        target.onerror = null;
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className="p-2 space-y-1">
-                                                <p className="text-xs font-medium text-foreground truncate">{file.name}</p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {new Date(file.createdAt).toLocaleDateString()}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">{file.category}</p>
-                                                <p className="text-xs text-muted-foreground italic truncate">
-                                                    {file.tags?.length ? file.tags.join(', ') : 'No tags'}
-                                                </p>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </FileContextMenu>
-                            ))}
-                        </div>
-
-                        {isLoading && (
+                        <CategorySelector
+                            selectedCategory={selectedCategory}
+                            categories={categories}
+                            isCategoriesLoading={isCategoriesLoading}
+                            onCategoryChange={(value) => {
+                                setSelectedCategory(value)
+                                setCurrentPage(1)
+                            }}
+                            onDrop={onDrop}
+                        />
+                        {isLoading ? (
                             <div className="flex justify-center items-center h-24 mt-8">
-                                <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary"/>
+                                <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary" />
                                 <p className="text-foreground font-medium">Loading images...</p>
                             </div>
-                        )}
-                        {!isLoading && files.length === 0 && (
+                        ) : files.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-64 mt-8">
-                                <AlertCircle className="w-12 h-12 text-muted-foreground mb-4"/>
+                                <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
                                 <p className="text-muted-foreground font-medium">No images found in this category</p>
                             </div>
-                        )}
-
-                        <div className="flex justify-between items-center mt-8">
-                            <div className="flex items-center space-x-2">
-                                <Button
-                                    onClick={() => {
-                                        const newPage = Math.max(currentPage - 1, 1)
-                                        setCurrentPage(newPage)
-                                        fetchFiles()
-                                    }}
-                                    disabled={currentPage === 1}
-                                    variant="outline"
-                                    size="icon"
-                                >
-                                    <ChevronLeft className="h-4 w-4"/>
-                                </Button>
-                                <span className="text-sm text-muted-foreground">
-                                    Page {currentPage} of {totalPages}
-                                </span>
-                                <Button
-                                    onClick={() => {
-                                        const newPage = Math.min(currentPage + 1, totalPages)
-                                        setCurrentPage(newPage)
-                                        fetchFiles()
-                                    }}
-                                    disabled={currentPage === totalPages}
-                                    variant="outline"
-                                    size="icon"
-                                >
-                                    <ChevronRight className="h-4 w-4"/>
-                                </Button>
-                            </div>
-                            <Select
-                                value={imagesPerPage.toString()}
-                                onValueChange={(value) => {
-                                    setImagesPerPage(Number(value))
-                                    setCurrentPage(1)
-                                    fetchFiles()
+                        ) : (
+                            <FileGrid
+                                files={files}
+                                onDeleteFile={(file) => {
+                                    setSelectedFile(file)
+                                    setDeleteDialogOpen(true)
                                 }}
-                            >
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Images per page"/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="10">10 per page</SelectItem>
-                                    <SelectItem value="20">20 per page</SelectItem>
-                                    <SelectItem value="40">40 per page</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                                onMoveFile={(file) => {
+                                    setSelectedFile(file)
+                                    setMoveDialogOpen(true)
+                                }}
+                                onSelectImage={(imageUrl) => {
+                                    setSelectedImage(imageUrl)
+                                    setIsViewerOpen(true)
+                                }}
+                                apiUrl={API_URL}
+                            />
+                        )}
+                        <PaginationControls
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            imagesPerPage={imagesPerPage}
+                            onPageChange={(page) => {
+                                setCurrentPage(page)
+                                fetchFiles()
+                            }}
+                            onImagesPerPageChange={(value) => {
+                                setImagesPerPage(value)
+                                setCurrentPage(1)
+                                fetchFiles()
+                            }}
+                        />
                     </div>
                 </main>
             </div>
@@ -435,7 +282,7 @@ export default function Locker() {
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                             This action cannot be undone. This will permanently delete the file.
                         </AlertDialogDescription>
@@ -451,6 +298,7 @@ export default function Locker() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
             {isViewerOpen && selectedImage && (
                 <ImageViewer
                     src={selectedImage}
@@ -461,5 +309,4 @@ export default function Locker() {
         </div>
     )
 }
-
 
