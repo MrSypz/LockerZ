@@ -4,6 +4,8 @@ import Link from "next/link"
 import { Home, FolderOpen, Image, Settings, Menu } from 'lucide-react'
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { ModeToggle } from "@/components/mode-toggle"
+
 
 const menuItems = [
   { icon: Home, label: "Dashboard", href: "/" },
@@ -35,7 +37,7 @@ export function Sidebar() {
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="p-2 rounded-md hover:bg-primary/20"
           >
-            <Menu size={24} />
+            <Menu size={24}/>
           </button>
         </div>
         <nav className="flex-1">
@@ -54,6 +56,7 @@ export function Sidebar() {
                 </li>
             ))}
           </ul>
+          <ModeToggle/>
         </nav>
       </aside>
   )
