@@ -13,7 +13,18 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export function ModeToggle({ collapsed }: { collapsed?: boolean }) {
-    const { setTheme } = useTheme()
+    const { theme, setTheme } = useTheme()
+    const [currentTheme, setCurrentTheme] = React.useState<'light' | 'dark'>('light')
+
+    React.useEffect(() => {
+        setCurrentTheme(theme as 'light' | 'dark')
+    }, [theme])
+
+    const toggleTheme = () => {
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light'
+        setTheme(newTheme)
+        setCurrentTheme(newTheme)
+    }
 
     return (
         <DropdownMenu>
@@ -22,10 +33,14 @@ export function ModeToggle({ collapsed }: { collapsed?: boolean }) {
                     variant="ghost"
                     size="icon"
                     className="w-full flex items-center justify-start p-2 rounded-md hover:bg-primary/20 hover-lift"
+                    onClick={toggleTheme}
                 >
-                    <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                    {!collapsed && <span className="ml-4">Toggle theme</span>}
+                    {currentTheme === 'light' ? (
+                        <Sun className="h-[1.2rem] w-[1.2rem]" />
+                    ) : (
+                        <Moon className="h-[1.2rem] w-[1.2rem]" />
+                    )}
+                    {!collapsed && <span className="ml-4">{currentTheme === 'light' ? 'Dark mode' : 'Light mode'}</span>}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -43,12 +58,6 @@ export function ModeToggle({ collapsed }: { collapsed?: boolean }) {
                     className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
                 >
                     Dark
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                    onClick={() => setTheme("system")}
-                    className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
-                >
-                    System
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
