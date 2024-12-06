@@ -1,16 +1,16 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import {useState, useEffect, useCallback} from 'react'
 import Image from 'next/image'
-import { Sidebar } from "@/components/sidebar"
-import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
-import { toast } from "@/hooks/use-toast"
-import { AlertCircle, Loader2, Upload, Tag, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useDropzone } from 'react-dropzone'
-import { FileContextMenu } from '@/components/context-menu'
-import { MoveDialog } from '@/components/move-dialog'
+import {Sidebar} from "@/components/sidebar"
+import {Card, CardContent} from "@/components/ui/card"
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
+import {Button} from "@/components/ui/button"
+import {toast} from "@/hooks/use-toast"
+import {AlertCircle, Loader2, Upload, Tag, ChevronLeft, ChevronRight} from 'lucide-react'
+import {useDropzone} from 'react-dropzone'
+import {FileContextMenu} from '@/components/context-menu'
+import {MoveDialog} from '@/components/move-dialog'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -21,7 +21,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ImageViewer } from '@/components/image-viewer'
+import {ImageViewer} from '@/components/image-viewer'
 
 interface File {
     name: string;
@@ -93,6 +93,7 @@ export default function Locker() {
     useEffect(() => {
         if (!rememberPage || (rememberPage && currentPage === 1)) {
             fetchFiles()
+            fetchCategories()
         }
     }, [selectedCategory, currentPage, imagesPerPage, rememberPage])
 
@@ -141,7 +142,6 @@ export default function Locker() {
             setIsCategoriesLoading(false)
         }
     }
-
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jfif']
         // @ts-ignore
@@ -189,7 +189,7 @@ export default function Locker() {
     }, [selectedCategory])
 
     // @ts-ignore
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
+    const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop})
 
     const handleDelete = async (file: File) => {
         try {
@@ -257,7 +257,7 @@ export default function Locker() {
 
     return (
         <div className="flex h-screen bg-background">
-            <Sidebar />
+            <Sidebar/>
             <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto p-4 md:p-8">
                     <div className="container mx-auto max-w-[2000px]">
@@ -294,7 +294,7 @@ export default function Locker() {
                             >
                                 <input {...getInputProps()} />
                                 <div className="flex flex-col items-center space-y-2">
-                                    <Upload className="h-10 w-10" />
+                                    <Upload className="h-10 w-10"/>
                                     <p className="text-center text-sm font-medium leading-5 max-w-[150px]">
                                         {isDragActive ? "Drag & Drop files here!" : "Drag & drop files or click to select"}
                                     </p>
@@ -361,13 +361,13 @@ export default function Locker() {
 
                         {isLoading && (
                             <div className="flex justify-center items-center h-24 mt-8">
-                                <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary" />
+                                <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary"/>
                                 <p className="text-foreground font-medium">Loading images...</p>
                             </div>
                         )}
                         {!isLoading && files.length === 0 && (
                             <div className="flex flex-col items-center justify-center h-64 mt-8">
-                                <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+                                <AlertCircle className="w-12 h-12 text-muted-foreground mb-4"/>
                                 <p className="text-muted-foreground font-medium">No images found in this category</p>
                             </div>
                         )}
@@ -375,23 +375,31 @@ export default function Locker() {
                         <div className="flex justify-between items-center mt-8">
                             <div className="flex items-center space-x-2">
                                 <Button
-                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    onClick={() => {
+                                        const newPage = Math.max(currentPage - 1, 1)
+                                        setCurrentPage(newPage)
+                                        fetchFiles()
+                                    }}
                                     disabled={currentPage === 1}
                                     variant="outline"
                                     size="icon"
                                 >
-                                    <ChevronLeft className="h-4 w-4" />
+                                    <ChevronLeft className="h-4 w-4"/>
                                 </Button>
                                 <span className="text-sm text-muted-foreground">
                                     Page {currentPage} of {totalPages}
                                 </span>
                                 <Button
-                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    onClick={() => {
+                                        const newPage = Math.min(currentPage + 1, totalPages)
+                                        setCurrentPage(newPage)
+                                        fetchFiles()
+                                    }}
                                     disabled={currentPage === totalPages}
                                     variant="outline"
                                     size="icon"
                                 >
-                                    <ChevronRight className="h-4 w-4" />
+                                    <ChevronRight className="h-4 w-4"/>
                                 </Button>
                             </div>
                             <Select
@@ -399,10 +407,11 @@ export default function Locker() {
                                 onValueChange={(value) => {
                                     setImagesPerPage(Number(value))
                                     setCurrentPage(1)
+                                    fetchFiles()
                                 }}
                             >
                                 <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Images per page" />
+                                    <SelectValue placeholder="Images per page"/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="10">10 per page</SelectItem>
@@ -426,7 +435,7 @@ export default function Locker() {
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                             This action cannot be undone. This will permanently delete the file.
                         </AlertDialogDescription>
