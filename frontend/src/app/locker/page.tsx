@@ -26,7 +26,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 export default function Locker() {
     const [files, setFiles] = useState<File[]>([])
     const [categories, setCategories] = useState<string[]>([])
-    const [selectedCategory, setSelectedCategory] = useState<string>('all')
+    const [selectedCategory, setSelectedCategory] = useState<string>(() => {
+        const storedCategory = localStorage.getItem('lastSelectedCategory')
+        return storedCategory || 'all'
+    })
     const [isLoading, setIsLoading] = useState(true)
     const [isCategoriesLoading, setIsCategoriesLoading] = useState(true)
     const [currentPage, setCurrentPage] = useState(1)
@@ -39,16 +42,12 @@ export default function Locker() {
     const [isViewerOpen, setIsViewerOpen] = useState(false)
 
     useEffect(() => {
-        const storedCategory = localStorage.getItem('selectedCategory')
-        if (storedCategory) {
-            setSelectedCategory(storedCategory)
-        }
         fetchFiles()
         fetchCategories()
     }, [])
 
     useEffect(() => {
-        localStorage.setItem('selectedCategory', selectedCategory)
+        localStorage.setItem('lastSelectedCategory', selectedCategory)
     }, [selectedCategory])
 
     useEffect(() => {
@@ -222,6 +221,7 @@ export default function Locker() {
                             onCategoryChange={(value) => {
                                 setSelectedCategory(value)
                                 setCurrentPage(1)
+                                localStorage.setItem('lastSelectedCategory', value)
                             }}
                             onDrop={onDrop}
                         />
