@@ -64,7 +64,6 @@ export function Dashboard() {
 
   return (
       <div className="space-y-6">
-          <h1 className="absolute bottom-4 left-6 text-4xl font-bold text-white">Dashboard</h1>
         <div className="p-6 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {statsItems.map((stat) => (

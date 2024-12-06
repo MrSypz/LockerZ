@@ -1,31 +1,46 @@
 "use client"
 
 import { motion } from "framer-motion"
+import ReactMarkdown from 'react-markdown'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Sparkles, Wrench, Zap, Gauge, Rocket } from 'lucide-react'
 
+interface ChangelogSection {
+    title: string
+    content: string
+    type?: 'default' | 'feature' | 'concept' | 'category' | 'preview' | 'code'
+}
+
 interface ChangelogItem {
     version: string
     date: string
-    features?: string[]
-    fixes?: string[]
-    qol?: string[]
-    performance?: string[]
-    optimize?: string[]
+    sections: ChangelogSection[]
 }
 
 interface ChangelogProps {
     items: ChangelogItem[]
 }
 
-const iconMap = {
-    features: Sparkles,
-    fixes: Wrench,
-    qol: Zap,
-    performance: Gauge,
-    optimize: Rocket
+const iconMap: { [key: string]: React.ComponentType } = {
+    Features: Sparkles,
+    Fixes: Wrench,
+    "Quality of Life": Zap,
+    Performance: Gauge,
+    Optimize: Rocket
+}
+
+const getTypeColor = (type: string = 'default') => {
+    const colors: { [key: string]: string } = {
+        feature: 'text-blue-500 dark:text-blue-400',
+        concept: 'text-purple-500 dark:text-purple-400',
+        category: 'text-green-500 dark:text-green-400',
+        preview: 'text-amber-500 dark:text-amber-400',
+        code: 'text-rose-500 dark:text-rose-400',
+        default: 'text-foreground'
+    }
+    return colors[type] || colors.default
 }
 
 export function Changelog({ items }: ChangelogProps) {
@@ -45,36 +60,46 @@ export function Changelog({ items }: ChangelogProps) {
                                 transition={{ duration: 0.5, delay: index * 0.1 }}
                             >
                                 <div className="flex items-center space-x-3 mb-4">
-                                    <Badge variant="secondary" className="text-lg px-3 py-1">
-                                        v{item.version}
-                                    </Badge>
+                                    <div className="text-lg font-semibold text-blue-500 dark:text-blue-400">
+                                        [{item.version}]
+                                    </div>
                                     <span className="text-sm text-muted-foreground">{item.date}</span>
                                 </div>
                                 <Card>
                                     <CardContent className="grid gap-6 p-6">
-                                        {(Object.keys(iconMap) as Array<keyof typeof iconMap>).map((key) => {
-                                            const Icon = iconMap[key]
-                                            const changes = item[key]
-                                            if (!changes || changes.length === 0) return null
+                                        {item.sections.map((section, sectionIndex) => {
+                                            const Icon = iconMap[section.title] || Sparkles
                                             return (
-                                                <div key={key} className="space-y-3">
-                                                    <h3 className="flex items-center space-x-2 text-lg font-medium">
-                                                        <Icon className="h-5 w-5 text-primary" />
-                                                        <span>{key.charAt(0).toUpperCase() + key.slice(1)}</span>
+                                                <div key={sectionIndex} className="space-y-3">
+                                                    <h3 className={`flex items-center space-x-2 text-lg font-medium ${getTypeColor(section.type)}`}>
+                                                        <Icon className="h-5 w-5" />
+                                                        <span>{section.title}</span>
                                                     </h3>
-                                                    <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground pl-5">
-                                                        {changes.map((change, changeIndex) => (
-                                                            <motion.li
-                                                                key={changeIndex}
-                                                                initial={{ opacity: 0, x: -20 }}
-                                                                animate={{ opacity: 1, x: 0 }}
-                                                                transition={{ duration: 0.3, delay: changeIndex * 0.05 }}
-                                                                className="leading-relaxed"
-                                                            >
-                                                                {change}
-                                                            </motion.li>
-                                                        ))}
-                                                    </ul>
+                                                    <div className="text-sm text-muted-foreground pl-5">
+                                                        <ReactMarkdown
+                                                            components={{
+                                                                ul: ({ children }) => <ul className="list-disc list-inside space-y-2">{children}</ul>,
+                                                                li: ({ children }) => (
+                                                                    <motion.li
+                                                                        initial={{ opacity: 0, x: -20 }}
+                                                                        animate={{ opacity: 1, x: 0 }}
+                                                                        transition={{ duration: 0.3 }}
+                                                                        className="leading-relaxed"
+                                                                    >
+                                                                        {children}
+                                                                    </motion.li>
+                                                                ),
+                                                                p: ({ children }) => <p className="mb-2">{children}</p>,
+                                                                code: ({ children }) => (
+                                                                    <code className="px-1 py-0.5 bg-muted rounded text-rose-500 dark:text-rose-400">
+                                                                        {children}
+                                                                    </code>
+                                                                ),
+                                                            }}
+                                                        >
+                                                            {section.content}
+                                                        </ReactMarkdown>
+                                                    </div>
                                                 </div>
                                             )
                                         })}
