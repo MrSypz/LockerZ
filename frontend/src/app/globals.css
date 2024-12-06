@@ -33,16 +33,6 @@
     --ring: 0 0% 3.9%;
 
     --radius: 0.5rem;
-
-    --chart-1: 12 76% 61%;
-
-    --chart-2: 173 58% 39%;
-
-    --chart-3: 197 37% 24%;
-
-    --chart-4: 43 74% 66%;
-
-    --chart-5: 27 87% 67%;
   }
 
   .dark {
@@ -73,11 +63,6 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
   }
 }
 
@@ -91,27 +76,22 @@
 }
 
 .gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500;
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500 dark:from-blue-400 dark:to-purple-300;
 }
 
 .glass-effect {
-  @apply bg-black/10 backdrop-blur-lg border border-white/10;
+  @apply bg-white/10 backdrop-blur-lg border border-white/10 dark:bg-black/30 dark:border-blue-500/20;
 }
 
 .card-shadow {
-  @apply shadow-lg shadow-black/5;
+  @apply shadow-lg shadow-black/5 dark:shadow-blue-500/10;
 }
 
 .hover-lift {
   @apply transition-transform duration-200 hover:-translate-y-1;
 }
 
-.animate-fade-in {
-  @apply animate-[fade-in_0.5s_ease-out];
-}
-
-
-/* Add these new animations */
+/* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -121,26 +101,6 @@
   from { max-height: 0; opacity: 0; }
   to { max-height: 1000px; opacity: 1; }
 }
-
-@keyframes slide-up {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { filter: brightness(100%); }
-  50% { filter: brightness(150%); }
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
 
 .animate-fadeIn {
   animation: fadeIn 0.5s ease-out;
@@ -153,5 +113,45 @@
 .collapsible-content {
   overflow: hidden;
   transition: height 0.3s ease-in-out;
+}
+
+/* Dark mode specific styles */
+
+.dark .nav-item {
+  @apply text-blue-300 hover:text-blue-100 transition-colors;
+}
+
+.dark .card {
+  @apply bg-gradient-to-br from-neutral-800 to-neutral-700;
+}
+
+.dark .header {
+  @apply bg-neutral-800 border-b border-blue-500/20;
+}
+
+.dark .footer {
+  @apply bg-neutral-800 border-t border-blue-500/20;
+}
+
+.dark .highlight {
+  @apply text-blue-300 font-semibold;
+}
+
+.dark .glow {
+  @apply relative;
+}
+
+.dark .glow::after {
+  content: '';
+  @apply absolute inset-0 rounded-md bg-blue-500 opacity-20 blur-sm -z-10;
+}
+
+.dark .button-glow:hover {
+  @apply relative overflow-hidden;
+}
+
+.dark .button-glow:hover::after {
+  content: '';
+  @apply absolute inset-0 bg-blue-400 opacity-20 blur-md;
 }
 
