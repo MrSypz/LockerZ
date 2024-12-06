@@ -8,7 +8,7 @@ import {
     ContextMenuItem,
     ContextMenuTrigger,
 } from "@/components/ui/context-menu"
-import { Trash2, FolderInput, Info } from 'lucide-react'
+import { Trash2, FolderInput } from 'lucide-react'
 
 interface FileContextMenuProps {
     children: React.ReactNode
