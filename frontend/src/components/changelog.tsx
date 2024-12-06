@@ -3,9 +3,9 @@
 import { motion } from "framer-motion"
 import ReactMarkdown from 'react-markdown'
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Sparkles, Wrench, Zap, Gauge, Rocket } from 'lucide-react'
+import React from "react";
 
 interface ChangelogSection {
     title: string
