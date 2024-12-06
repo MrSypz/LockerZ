@@ -180,15 +180,6 @@ export default function Settings() {
                   />
                   <Label htmlFor="remember-category">Remember selected category in Locker</Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                      id="remember-page"
-                      checked={rememberPage}
-                      onCheckedChange={handleRememberPageToggle}
-                      disabled={!rememberCategory}
-                  />
-                  <Label htmlFor="remember-page">Remember current page in Locker</Label>
-                </div>
               </CardContent>
             </Card>
           </main>
