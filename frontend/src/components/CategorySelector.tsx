@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Upload } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 
+
 interface CategorySelectorProps {
     selectedCategory: string
     categories: string[]
@@ -18,7 +19,15 @@ export function CategorySelector({
                                      onCategoryChange,
                                      onDrop
                                  }: CategorySelectorProps) {
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        onDrop,
+        accept: {
+            'image/jpeg': ['.jpg', '.jpeg'],
+            'image/png': ['.png'],
+            'image/jfif': ['.jfif']
+        },
+        multiple: true
+    })
 
     return (
         <div className="flex justify-between items-center mb-8">

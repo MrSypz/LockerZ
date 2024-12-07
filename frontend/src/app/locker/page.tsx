@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Sidebar } from "@/components/sidebar"
 import { toast } from "@/hooks/use-toast"
 import { AlertCircle, Loader2 } from 'lucide-react'
+import { open } from '@tauri-apps/plugin-dialog'
 import { MoveDialog } from '@/components/move-dialog'
 import {
     AlertDialog,
@@ -22,6 +23,9 @@ import { PaginationControls } from '@/components/PaginationControls'
 import { File } from '@/types/file'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+const ALLOWED_FILE_TYPES = ['.png', '.jpg', '.jpeg', '.jfif', '.webp'];
+
 
 export default function Locker() {
     const [files, setFiles] = useState<File[]>([])
@@ -121,20 +125,134 @@ export default function Locker() {
         }
     }
 
+    async function uploadImgFiles() {
+        try {
+            const selectedFiles = await open({
+                multiple: true,
+                directory: false,
+                filters: [{
+                    name: 'Images',
+                    extensions: ['png', 'jpg', 'jpeg', 'jfif', 'webp']
+                }]
+            });
+
+            if (selectedFiles && Array.isArray(selectedFiles) && selectedFiles.length > 0) {
+                const validFiles = selectedFiles.filter(file =>
+                    ALLOWED_FILE_TYPES.some(type => file.toLowerCase().endsWith(type))
+                );
+
+                if (validFiles.length > 0) {
+                    const duplicateFiles = validFiles.filter(file =>
+                        files.some(existingFile => existingFile.name === file.split('/').pop() && existingFile.category === selectedCategory)
+                    );
+
+                    if (duplicateFiles.length > 0) {
+                        toast({
+                            title: "Warning",
+                            description: `${duplicateFiles.length} file(s) already exist in this category and will be skipped.`,
+                            variant: "warning",
+                        });
+                    }
+
+                    const newFiles = validFiles.filter(file =>
+                        !files.some(existingFile => existingFile.name === file.split('/').pop() && existingFile.category === selectedCategory)
+                    );
+
+                    if (newFiles.length === 0) {
+                        toast({
+                            title: "No New Files",
+                            description: "All selected files already exist in this category.",
+                            variant: "warning",
+                        });
+                        return;
+                    }
+
+                    for (const filePath of newFiles) {
+                        const formData = new FormData();
+                        formData.append('originalPath', filePath);
+                        formData.append('category', selectedCategory === 'all' ? 'uncategorized' : selectedCategory);
+
+                        try {
+                            const response = await fetch(`${API_URL}/move-file`, {
+                                method: 'POST',
+                                body: formData,
+                            });
+                            if (!response.ok) {
+                                throw new Error('File move failed');
+                            }
+                            const data = await response.json();
+                            setFiles(prevFiles => [data.file, ...prevFiles]);
+                            toast({
+                                title: "Success",
+                                description: `File ${filePath.split('/').pop()} moved successfully`,
+                            });
+                        } catch (error) {
+                            console.error('Error moving file:', error);
+                            toast({
+                                title: "Error",
+                                description: `Failed to move file ${filePath.split('/').pop()}`,
+                                variant: "destructive",
+                            });
+                        }
+                    }
+                    setCurrentPage(1);
+                } else {
+                    toast({
+                        title: "No Valid Files",
+                        description: "No files of the allowed types were selected.",
+                        variant: "warning",
+                    });
+                }
+
+                if (validFiles.length < selectedFiles.length) {
+                    toast({
+                        title: "Some Files Skipped",
+                        description: `${selectedFiles.length - validFiles.length} file(s) were skipped due to invalid file type.`,
+                        variant: "warning",
+                    });
+                }
+            } else {
+                toast({
+                    title: "No Files Selected",
+                    description: "No files were selected.",
+                    variant: "warning",
+                });
+                console.log('No files selected');
+            }
+        } catch (error) {
+            console.error('Error opening dialog:', error);
+            toast({
+                title: "Error",
+                description: "An error occurred while opening the file dialog.",
+                variant: "destructive",
+            });
+        }
+    }
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jfif']
         const validFiles = acceptedFiles.filter(file => allowedTypes.includes(file.type))
 
-        if (validFiles.length === 0) {
+        const duplicateFiles = validFiles.filter(file =>
+            files.some(existingFile => existingFile.name === file.name && existingFile.category === selectedCategory)
+        );
+
+        if (duplicateFiles.length > 0) {
             toast({
-                title: "Error",
-                description: "Only JPG, PNG, and JFIF files are allowed",
-                variant: "destructive",
-            })
-            return
+                title: "Warning",
+                description: `${duplicateFiles.length} file(s) already exist in this category and will be skipped.`,
+                variant: "warning",
+            });
         }
 
-        for (const file of validFiles) {
+        const newFiles = validFiles.filter(file =>
+            !files.some(existingFile => existingFile.name === file.name && existingFile.category === selectedCategory)
+        );
+
+        if (newFiles.length === 0) {
+            return;
+        }
+
+        for (const file of newFiles) {
             const formData = new FormData()
             formData.append('file', file)
             formData.append('category', selectedCategory === 'all' ? 'uncategorized' : selectedCategory)
@@ -163,7 +281,7 @@ export default function Locker() {
             }
         }
         setCurrentPage(1)
-    }, [selectedCategory])
+    }, [selectedCategory, files])
 
     const handleDelete = async (file: File) => {
         try {
@@ -237,7 +355,7 @@ export default function Locker() {
             <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto p-4 md:p-8">
                     <div className="container mx-auto max-w-[2000px]">
-                        <h1 className="text-4xl font-bold mb-8 text-foreground tracking-tight">Locker</h1>
+                        <h1 className="text-3xl font-bold gradient-text">Locker</h1>
                         <CategorySelector
                             selectedCategory={selectedCategory}
                             categories={categories}
@@ -249,7 +367,7 @@ export default function Locker() {
                                     localStorage.setItem('lastSelectedCategory', value)
                                 }
                             }}
-                            onDrop={onDrop}
+                            onDrop={uploadImgFiles}
                         />
                         {isLoading ? (
                             <div className="flex justify-center items-center h-24 mt-8">
