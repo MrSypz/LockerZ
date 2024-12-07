@@ -13,7 +13,6 @@ export default function Settings() {
   const [folderPath, setFolderPath] = useState('')
   const [newFolderPath, setNewFolderPath] = useState('')
   const [rememberCategory, setRememberCategory] = useState(false)
-  const [rememberPage, setRememberPage] = useState(false)
 
   useEffect(() => {
     fetchCurrentSettings()
@@ -25,7 +24,6 @@ export default function Settings() {
       const data = await response.json()
       setFolderPath(data.folderPath)
       setRememberCategory(data.rememberCategory)
-      setRememberPage(data.rememberPage)
     } catch (error) {
       console.error('Error fetching current settings:', error)
       toast({
@@ -94,36 +92,6 @@ export default function Settings() {
       toast({
         title: "Error",
         description: "An error occurred while updating the remember category setting",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleRememberPageToggle = async (checked: boolean) => {
-    try {
-      const response = await fetch('http://localhost:3001/update-settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ rememberPage: checked }),
-      })
-      const data = await response.json()
-      if (data.success) {
-        setRememberPage(checked)
-        toast({
-          title: "Success",
-          description: `Remember page ${checked ? 'enabled' : 'disabled'}`,
-          variant: "default",
-        })
-      } else {
-        throw new Error('Failed to update remember page setting')
-      }
-    } catch (error) {
-      console.error('Error updating remember page setting:', error)
-      toast({
-        title: "Error",
-        description: "An error occurred while updating the remember page setting",
         variant: "destructive",
       })
     }
