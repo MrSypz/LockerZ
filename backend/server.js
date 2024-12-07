@@ -287,18 +287,19 @@ app.post('/move-file', async (req, res) => {
     form.keepExtensions = true;
 
     try {
-        const [fields, files] = await form.parse(req);
+        const [fields] = await form.parse(req);
 
-        if (!files.file || files.file.length === 0) {
-            return res.status(400).json({ error: 'No file provided' });
+        const originalPath = fields.originalPath ? fields.originalPath[0] : null;
+        const category = fields.category ? fields.category[0] : 'uncategorized';
+
+        if (!originalPath) {
+            return res.status(400).json({ error: 'No file path provided' });
         }
 
-        const uploadedFile = files.file[0];
-        const fileName = uploadedFile.originalFilename;
-        const category = fields.category ? fields.category[0] : 'uncategorized';
-        const originalPath = fields.originalPath ? fields.originalPath[0] : uploadedFile.filepath;
-
         console.log('Original file path:', originalPath);
+        const fileName = path.basename(originalPath);
+        console.log('File name:', fileName);
+        console.log('Category:', category);
 
         const targetDir = path.join(rootFolderPath, category);
         const targetPath = path.join(targetDir, fileName);
@@ -306,20 +307,18 @@ app.post('/move-file', async (req, res) => {
         console.log('Target directory:', targetDir);
         console.log('Target path:', targetPath);
 
-        await fsPromises.mkdir(targetDir, { recursive: true });
+        const stats = await fsPromises.stat(originalPath);
+        console.log('File stats:', stats);
 
-        // Copy the file from its original location to the target path
+        await fsPromises.mkdir(targetDir, {recursive: true});
+
         await fsPromises.copyFile(originalPath, targetPath);
         console.log('File copied successfully');
 
-        // Remove the original file
         await fsPromises.unlink(originalPath);
         console.log('Original file removed');
 
-        const stats = await fsPromises.stat(targetPath);
-        console.log('File stats:', stats);
         clearRelevantCaches([category]);
-
 
         res.json({
             success: true,
@@ -329,14 +328,15 @@ app.post('/move-file', async (req, res) => {
                 url: `/images/${category}/${fileName}`,
                 size: stats.size,
                 createdAt: stats.birthtime,
-                originalPath: originalPath
+                originalPath: targetPath // Now using the new path
             }
         });
     } catch (error) {
-        console.error('Error moving file:', error);
-        res.status(500).json({ error: 'Failed to move file', details: error.message });
+        console.error('Error processing file:', error);
+        res.status(500).json({ error: 'Failed to process file', details: error.message });
     }
 });
+
 
 app.post('/delete-file', async (req, res) => {
     const { category, name } = req.body;

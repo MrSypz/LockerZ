@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/sidebar"
 import { toast } from "@/hooks/use-toast"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { open } from '@tauri-apps/plugin-dialog'
 
 export default function Settings() {
   const [folderPath, setFolderPath] = useState('')
@@ -29,6 +30,26 @@ export default function Settings() {
       toast({
         title: "Error",
         description: "Error fetching current settings",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleSelectFolder = async () => {
+    try {
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        defaultPath: folderPath,
+      })
+      if (selected) {
+        setNewFolderPath(selected as string)
+      }
+    } catch (error) {
+      console.error('Error selecting folder:', error)
+      toast({
+        title: "Error",
+        description: "An error occurred while selecting the folder",
         variant: "destructive",
       })
     }
@@ -121,7 +142,7 @@ export default function Settings() {
                 </div>
                 <div>
                   <label htmlFor="newPath" className="text-sm font-medium text-muted-foreground">New folder path:</label>
-                  <div className="flex mt-1">
+                  <div className="flex mt-1 space-x-2">
                     <Input
                         id="newPath"
                         value={newFolderPath}
@@ -129,6 +150,7 @@ export default function Settings() {
                         placeholder="Select a new folder"
                         className="flex-grow"
                     />
+                    <Button onClick={handleSelectFolder}>Select Folder</Button>
                   </div>
                 </div>
                 <Button onClick={handleApplyNewPath} disabled={!newFolderPath}>Apply New Path</Button>
@@ -155,3 +177,4 @@ export default function Settings() {
       </div>
   )
 }
+
