@@ -2,33 +2,56 @@
 
 import { useEffect, useState } from 'react'
 import i18n from 'i18next'
-import { initReactI18next } from 'react-i18next'
+import { initReactI18next, I18nextProvider } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import resourcesToBackend from 'i18next-resources-to-backend'
 
-i18n
-    .use(initReactI18next)
-    .use(LanguageDetector)
-    .use(resourcesToBackend((language: string, namespace: string) => import(`../../public/locales/${language}/${namespace}.json`)))
-    .init({
-        fallbackLng: 'en',
-        supportedLngs: ['en', 'th'],
-        interpolation: {
-            escapeValue: false,
-        },
-    })
+interface I18nProviderProps {
+    children: React.ReactNode;
+    initialLang: string;
+    onLanguageChange: (lang: string) => void;
+}
 
-export default function I18nProvider({ children }: { children: React.ReactNode }) {
-    const [isClient, setIsClient] = useState(false)
+const initI18n = async (initialLang: string) => {
+    if (!i18n.isInitialized) {
+        await i18n
+            .use(initReactI18next)
+            .use(LanguageDetector)
+            .use(resourcesToBackend((language: string, namespace: string) => import(`../../public/locales/${language}/${namespace}.json`)))
+            .init({
+                fallbackLng: initialLang,
+                supportedLngs: ['en', 'th'],
+                lng: initialLang,
+                interpolation: {
+                    escapeValue: false,
+                },
+            });
+    } else {
+        await i18n.changeLanguage(initialLang);
+    }
+}
+
+export default function I18nProvider({ children, initialLang, onLanguageChange }: I18nProviderProps) {
+    const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
-        setIsClient(true)
-    }, [])
+        initI18n(initialLang).then(() => setIsInitialized(true));
 
-    if (!isClient) {
-        return null
+        const handleLanguageChanged = (lang: string) => {
+            onLanguageChange(lang);
+        };
+
+        i18n.on('languageChanged', handleLanguageChanged);
+
+        return () => {
+            i18n.off('languageChanged', handleLanguageChanged);
+        };
+    }, [initialLang, onLanguageChange]);
+
+    if (!isInitialized) {
+        return null; // or a loading spinner
     }
 
-    return <>{children}</>
+    return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
 }
 
