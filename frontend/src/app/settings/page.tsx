@@ -1,21 +1,22 @@
 'use client'
 
-import React, {useState, useEffect} from 'react'
-import {Button} from "@/components/ui/button"
-import {Input} from "@/components/ui/input"
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
-import {Sidebar} from "@/components/sidebar"
-import {toast} from "@/hooks/use-toast"
-import {Switch} from "@/components/ui/switch"
-import {Label} from "@/components/ui/label"
-import {open} from '@tauri-apps/plugin-dialog'
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
+import React, { useState, useEffect } from 'react'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Sidebar } from "@/components/sidebar"
+import { toast } from "@/hooks/use-toast"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { open } from '@tauri-apps/plugin-dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useTranslation } from 'react-i18next'
 
 export default function Settings() {
+    const { t, i18n } = useTranslation()
     const [folderPath, setFolderPath] = useState('')
     const [newFolderPath, setNewFolderPath] = useState('')
     const [rememberCategory, setRememberCategory] = useState(false)
-    const [language, setLanguage] = useState('en');
 
     useEffect(() => {
         fetchCurrentSettings()
@@ -27,7 +28,7 @@ export default function Settings() {
             const data = await response.json()
             setFolderPath(data.folderPath)
             setRememberCategory(data.rememberCategory)
-            setLanguage(data.language || 'en'); // Set default language if not found
+            i18n.changeLanguage(data.lang || 'en')
         } catch (error) {
             console.error('Error fetching current settings:', error)
             toast({
@@ -121,25 +122,25 @@ export default function Settings() {
         }
     }
 
-    const handleLanguageChange = async (key: string) => {
+    const handleLanguageChange = async (lang: string) => {
         try {
             const response = await fetch('http://localhost:3001/update-settings', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({lang: key}),
+                body: JSON.stringify({lang}),
             })
             const data = await response.json()
             if (data.success) {
-                setLanguage(key);
+                i18n.changeLanguage(lang)
                 toast({
                     title: "Success",
-                    description: `Change The language to ${key}`,
+                    description: `Changed the language to ${lang}`,
                     variant: "default",
                 })
             } else {
-                throw new Error('Failed to update remember category setting')
+                throw new Error('Failed to update language setting')
             }
         } catch (error) {
             toast({
@@ -148,24 +149,24 @@ export default function Settings() {
                 variant: "destructive",
             })
         }
-    };
+    }
 
     return (
         <div className="flex h-screen bg-background">
             <Sidebar/>
             <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto p-6">
-                    <h1 className="text-3xl font-bold mb-6 text-foreground">Settings</h1>
+                    <h1 className="text-3xl font-bold mb-6 text-foreground">{t('settings.title')}</h1>
                     <Card className="w-full max-w-2xl mx-auto">
                         <CardHeader>
-                            <CardTitle>Root Folder Configuration</CardTitle>
-                            <CardDescription>Set the root folder for LockerZ to manage your files and
-                                categories</CardDescription>
+                            <CardTitle>{t('settings.rootFolder.title')}</CardTitle>
+                            <CardDescription>{t('settings.rootFolder.description')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <label htmlFor="currentPath" className="text-sm font-medium text-muted-foreground">Current
-                                    folder path:</label>
+                                <label htmlFor="currentPath" className="text-sm font-medium text-muted-foreground">
+                                    {t('settings.rootFolder.currentPath')}
+                                </label>
                                 <Input
                                     id="currentPath"
                                     value={folderPath}
@@ -175,26 +176,29 @@ export default function Settings() {
                                 />
                             </div>
                             <div>
-                                <label htmlFor="newPath" className="text-sm font-medium text-muted-foreground">New
-                                    folder path:</label>
+                                <label htmlFor="newPath" className="text-sm font-medium text-muted-foreground">
+                                    {t('settings.rootFolder.newPath')}
+                                </label>
                                 <div className="flex mt-1 space-x-2">
                                     <Input
                                         id="newPath"
                                         value={newFolderPath}
                                         onChange={(e) => setNewFolderPath(e.target.value)}
-                                        placeholder="Select a new folder"
+                                        placeholder={t('settings.rootFolder.newPath')}
                                         className="flex-grow"
                                     />
-                                    <Button onClick={handleSelectFolder}>Select Folder</Button>
+                                    <Button onClick={handleSelectFolder}>{t('settings.rootFolder.selectFolder')}</Button>
                                 </div>
                             </div>
-                            <Button onClick={handleApplyNewPath} disabled={!newFolderPath}>Apply New Path</Button>
+                            <Button onClick={handleApplyNewPath} disabled={!newFolderPath}>
+                                {t('settings.rootFolder.applyNewPath')}
+                            </Button>
                         </CardContent>
                     </Card>
                     <Card className="w-full max-w-2xl mx-auto mt-6">
                         <CardHeader>
-                            <CardTitle>Locker Settings</CardTitle>
-                            <CardDescription>Configure additional settings for the Locker page</CardDescription>
+                            <CardTitle>{t('settings.lockerSettings.title')}</CardTitle>
+                            <CardDescription>{t('settings.lockerSettings.description')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex items-center space-x-2">
@@ -203,17 +207,17 @@ export default function Settings() {
                                     checked={rememberCategory}
                                     onCheckedChange={handleRememberCategoryToggle}
                                 />
-                                <Label htmlFor="remember-category">Remember selected category in Locker</Label>
+                                <Label htmlFor="remember-category">{t('settings.lockerSettings.rememberCategory')}</Label>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="language-select">Language</Label>
-                                <Select value={language} onValueChange={handleLanguageChange}>
+                                <Label htmlFor="language-select">{t('settings.lockerSettings.language')}</Label>
+                                <Select value={i18n.language} onValueChange={handleLanguageChange}>
                                     <SelectTrigger id="language-select" className="w-[200px]">
-                                        <SelectValue placeholder="Select Language"/>
+                                        <SelectValue placeholder={t('settings.lockerSettings.language')} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="en">English (EN)</SelectItem>
-                                        <SelectItem value="th">ไทย (TH)</SelectItem>
+                                        <SelectItem value="en">English</SelectItem>
+                                        <SelectItem value="th">ไทย</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

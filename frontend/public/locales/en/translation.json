@@ -1,0 +1,20 @@
+{
+  "settings": {
+    "title": "Settings",
+    "rootFolder": {
+      "title": "Root Folder Configuration",
+      "description": "Set the root folder for LockerZ to manage your files and categories",
+      "currentPath": "Current folder path:",
+      "newPath": "New folder path:",
+      "selectFolder": "Select Folder",
+      "applyNewPath": "Apply New Path"
+    },
+    "lockerSettings": {
+      "title": "Locker Settings",
+      "description": "Configure additional settings for the Locker page",
+      "rememberCategory": "Remember selected category in Locker",
+      "language": "Language"
+    }
+  }
+}
+

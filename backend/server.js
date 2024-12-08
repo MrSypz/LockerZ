@@ -11,7 +11,7 @@ const port = 3001;
 const cache = new NodeCache({ stdTTL: 600 }); // Cache for 10 minutes
 
 // Middleware
-// app.use(cors());
+app.use(cors());
 app.use(express.json());
 
 // Config paths

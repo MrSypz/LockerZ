@@ -1,0 +1,20 @@
+{
+  "settings": {
+    "title": "การตั้งค่า",
+    "rootFolder": {
+      "title": "การกำหนดค่าโฟลเดอร์หลัก",
+      "description": "ตั้งค่าโฟลเดอร์หลักสำหรับ LockerZ เพื่อจัดการไฟล์และหมวดหมู่ของคุณ",
+      "currentPath": "เส้นทางโฟลเดอร์ปัจจุบัน:",
+      "newPath": "เส้นทางโฟลเดอร์ใหม่:",
+      "selectFolder": "เลือกโฟลเดอร์",
+      "applyNewPath": "ใช้เส้นทางใหม่"
+    },
+    "lockerSettings": {
+      "title": "การตั้งค่า Locker",
+      "description": "กำหนดค่าเพิ่มเติมสำหรับหน้า Locker",
+      "rememberCategory": "จดจำหมวดหมู่ที่เลือกใน Locker",
+      "language": "ภาษา"
+    }
+  }
+}
+
