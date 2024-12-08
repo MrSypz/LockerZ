@@ -130,7 +130,6 @@ app.get('/files', async (req, res) => {
                             category: cat.name,
                             url: `/images/${cat.name}/${file}`,
                             size: stats.size,
-                            createdAt: stats.birthtime
                         };
                     }));
                 })
@@ -309,7 +308,7 @@ app.post('/move-file', async (req, res) => {
         console.log('Target path:', targetPath);
 
         const stats = await fsPromises.stat(originalPath);
-        console.log('File stats:', stats);
+        // console.log('File stats:', stats);
 
         await fsPromises.mkdir(targetDir, {recursive: true});
 
@@ -328,8 +327,6 @@ app.post('/move-file', async (req, res) => {
                 category: category,
                 url: `/images/${category}/${fileName}`,
                 size: stats.size,
-                createdAt: stats.birthtime,
-                originalPath: targetPath // Now using the new path
             }
         });
     } catch (error) {
@@ -353,45 +350,6 @@ app.post('/delete-file', async (req, res) => {
         console.error('Error deleting file:', error);
         res.status(500).json({ error: 'Failed to delete file' });
     }
-});
-app.post('/api/copy-file', (req, res) => {
-    const { category, name } = req.body;
-    const filePath = path.join(rootFolderPath, category, name);
-
-    console.log(filePath);
-    if (!filePath) {
-        return res.status(400).json({ success: false, error: 'No file path provided' });
-    }
-
-    const absolutePath = path.resolve(filePath);
-
-    fs.readFile(absolutePath, (err, data) => {
-        if (err) {
-            console.error('Error reading file:', err);
-            return res.status(500).json({ success: false, error: 'Failed to read file' });
-        }
-
-        // Use different clipboard commands based on the operating system
-        let clipboardCommand;
-        switch (process.platform) {
-            case 'darwin':
-                clipboardCommand = `echo "${data.toString('base64')}" | base64 --decode | pbcopy`;
-                break;
-            case 'win32':
-                clipboardCommand = `echo ${data.toString('base64')} | clip`;
-                break;
-            default:
-                clipboardCommand = `echo "${data.toString('base64')}" | base64 --decode | xclip -selection clipboard`;
-        }
-
-        exec(clipboardCommand, (error) => {
-            if (error) {
-                console.error('Error copying to clipboard:', error);
-                return res.status(500).json({ success: false, error: 'Failed to copy to clipboard' });
-            }
-            res.json({ success: true });
-        });
-    });
 });
 
 app.post('/move-file-category', async (req, res) => {
