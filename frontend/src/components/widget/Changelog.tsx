@@ -78,17 +78,6 @@ export function Changelog({ items }: ChangelogProps) {
                                                     <div className="text-sm text-muted-foreground pl-5">
                                                         <ReactMarkdown
                                                             components={{
-                                                                ul: ({ children }) => <ul className="list-disc list-inside space-y-2">{children}</ul>,
-                                                                li: ({ children }) => (
-                                                                    <motion.li
-                                                                        initial={{ opacity: 0, x: -20 }}
-                                                                        animate={{ opacity: 1, x: 0 }}
-                                                                        transition={{ duration: 0.3 }}
-                                                                        className="leading-relaxed"
-                                                                    >
-                                                                        {children}
-                                                                    </motion.li>
-                                                                ),
                                                                 p: ({ children }) => <p className="mb-2">{children}</p>,
                                                                 code: ({ children }) => (
                                                                     <code className="px-1 py-0.5 bg-muted rounded text-rose-500 dark:text-rose-400">
