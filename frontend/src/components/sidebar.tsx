@@ -5,6 +5,7 @@ import { Home, FolderOpen, Image, Settings, Menu } from 'lucide-react'
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { ModeToggle } from "@/components/mode-toggle"
+import { getVersion } from "@tauri-apps/api/app";
 
 const menuItems = [
   { icon: Home, label: "Dashboard", href: "/" },
@@ -13,7 +14,7 @@ const menuItems = [
   { icon: Settings, label: "Settings", href: "/settings" },
 ]
 
-const APP_VERSION = "0.2.0"
+const APP_VERSION = await getVersion();
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
