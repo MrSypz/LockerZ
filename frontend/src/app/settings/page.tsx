@@ -28,7 +28,7 @@ export default function Settings() {
             const data = await response.json()
             setFolderPath(data.folderPath)
             setRememberCategory(data.rememberCategory)
-            i18n.changeLanguage(data.lang || 'en')
+            await i18n.changeLanguage(data.lang || 'en')
         } catch (error) {
             console.error('Error fetching current settings:', error)
             toast({
@@ -133,7 +133,7 @@ export default function Settings() {
             })
             const data = await response.json()
             if (data.success) {
-                i18n.changeLanguage(lang)
+                await i18n.changeLanguage(lang)
                 toast({
                     title: "Success",
                     description: `Changed the language to ${lang}`,
