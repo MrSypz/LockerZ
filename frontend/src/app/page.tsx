@@ -123,7 +123,6 @@ export default function Home() {
             <Sidebar/>
             <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto">
-                    <h1 className="text-3xl font-bold p-6 gradient-text">Dashboard</h1>
                     <Dashboard/>
                     <Changelog items={changelogItems}/>
                 </main>
