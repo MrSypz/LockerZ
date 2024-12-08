@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import { useTranslation } from 'react-i18next'
+
 
 interface MoveDialogProps {
     isOpen: boolean
@@ -21,7 +23,7 @@ interface MoveDialogProps {
 
 export function MoveDialog({ isOpen, onClose, onMove, categories, currentCategory }: MoveDialogProps) {
     const [selectedCategory, setSelectedCategory] = useState<string>(currentCategory)
-
+    const { t } = useTranslation();
     const handleMove = () => {
         onMove(selectedCategory)
         onClose()
@@ -31,15 +33,15 @@ export function MoveDialog({ isOpen, onClose, onMove, categories, currentCategor
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Move to Category</DialogTitle>
+                    <DialogTitle>{t('locker.dialog.move.title')}</DialogTitle>
                     <DialogDescription>
-                        Select a category to move this file to
+                        {t('locker.dialog.move.desc')}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
+                            <SelectValue placeholder={t('locker.dialog.move.selector')}/>
                         </SelectTrigger>
                         <SelectContent>
                             {categories.map((category) => (
@@ -50,8 +52,8 @@ export function MoveDialog({ isOpen, onClose, onMove, categories, currentCategor
                         </SelectContent>
                     </Select>
                     <div className="flex justify-end space-x-2">
-                        <Button variant="outline" onClick={onClose}>Cancel</Button>
-                        <Button onClick={handleMove}>Move</Button>
+                        <Button variant="outline" onClick={onClose}>{t('locker.dialog.move.cancel')}</Button>
+                        <Button onClick={handleMove}>{t('locker.dialog.move.move')}</Button>
                     </div>
                 </div>
             </DialogContent>
