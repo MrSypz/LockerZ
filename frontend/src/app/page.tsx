@@ -1,6 +1,6 @@
-import {Sidebar} from "@/components/sidebar"
-import {Dashboard} from "@/components/dashboard"
-import {Changelog} from "@/components/changelog"
+import {Sidebar} from "@/components/widget/Sidebar"
+import {Dashboard} from "@/components/widget/Dashboard"
+import {Changelog} from "@/components/widget/Changelog"
 
 const changelogItems = [
     {

@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Sidebar } from "@/components/sidebar"
+import { Sidebar } from "@/components/widget/Sidebar"
 import { toast } from "@/hooks/use-toast"
 import { AlertCircle, Loader2 } from 'lucide-react'
 import { open } from '@tauri-apps/plugin-dialog'
-import { MoveDialog } from '@/components/move-dialog'
+import { MoveDialog } from '@/components/widget/Move-dialog'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -16,10 +16,10 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ImageViewer } from '@/components/image-viewer'
-import { FileGrid } from '@/components/FileGrid'
-import { CategorySelector } from '@/components/CategorySelector'
-import { PaginationControls } from '@/components/PaginationControls'
+import { ImageViewer } from '@/components/widget/Image-viewer'
+import { FileGrid } from '@/components/widget/FileGrid'
+import { CategorySelector } from '@/components/widget/CategorySelector'
+import { PaginationControls } from '@/components/widget/PaginationControls'
 import { File } from '@/types/file'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';

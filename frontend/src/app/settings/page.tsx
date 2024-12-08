@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Sidebar } from "@/components/sidebar"
+import { Sidebar } from "@/components/widget/Sidebar"
 import { toast } from "@/hooks/use-toast"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -28,12 +28,12 @@ export default function Settings() {
             const data = await response.json()
             setFolderPath(data.folderPath)
             setRememberCategory(data.rememberCategory)
-            await i18n.changeLanguage(data.lang || 'en')
+            await i18n.changeLanguage(data.lang)
         } catch (error) {
             console.error('Error fetching current settings:', error)
             toast({
-                title: "Error",
-                description: "Error fetching current settings",
+                title: t('toast.titleType.error'),
+                description: t('toast.errorFetchingSettings'),
                 variant: "destructive",
             })
         }
@@ -52,8 +52,8 @@ export default function Settings() {
         } catch (error) {
             console.error('Error selecting folder:', error)
             toast({
-                title: "Error",
-                description: "An error occurred while selecting the folder",
+                title: t('toast.titleType.error'),
+                description: t('toast.errorSelectingFolder'),
                 variant: "destructive",
             })
         }
@@ -75,9 +75,8 @@ export default function Settings() {
                 setFolderPath(newFolderPath)
                 setNewFolderPath('')
                 toast({
-                    title: "Success",
-                    description: "Folder path updated successfully!",
-                    variant: "default",
+                    title: t('toast.titleType.success'),
+                    description: t('toast.folderPathUpdated'),
                 })
             } else {
                 throw new Error('Failed to update folder path')
@@ -85,8 +84,8 @@ export default function Settings() {
         } catch (error) {
             console.error('Error updating folder path:', error)
             toast({
-                title: "Error",
-                description: "An error occurred while updating the folder path",
+                title: t('toast.titleType.error'),
+                description: t('toast.errorUpdatingFolderPath'),
                 variant: "destructive",
             })
         }
@@ -105,9 +104,8 @@ export default function Settings() {
             if (data.success) {
                 setRememberCategory(checked)
                 toast({
-                    title: "Success",
-                    description: `Remember category ${checked ? 'enabled' : 'disabled'}`,
-                    variant: "default",
+                    title: t('toast.titleType.success'),
+                    description: checked ? t('toast.rememberCategoryEnabled') : t('toast.rememberCategoryDisabled'),
                 })
             } else {
                 throw new Error('Failed to update remember category setting')
@@ -115,8 +113,8 @@ export default function Settings() {
         } catch (error) {
             console.error('Error updating remember category setting:', error)
             toast({
-                title: "Error",
-                description: "An error occurred while updating the remember category setting",
+                title: t('toast.titleType.error'),
+                description: t('toast.errorUpdatingRememberCategory'),
                 variant: "destructive",
             })
         }
@@ -135,17 +133,16 @@ export default function Settings() {
             if (data.success) {
                 await i18n.changeLanguage(lang)
                 toast({
-                    title: "Success",
-                    description: `Changed the language to ${lang}`,
-                    variant: "default",
+                    title: t('toast.titleType.success'),
+                    description: t('toast.languageChanged', { lang }),
                 })
             } else {
                 throw new Error('Failed to update language setting')
             }
         } catch (error) {
             toast({
-                title: "Error",
-                description: "An error occurred while updating the language setting",
+                title: t('toast.titleType.error'),
+                description: t('toast.errorUpdatingLanguage'),
                 variant: "destructive",
             })
         }
