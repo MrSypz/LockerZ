@@ -1,15 +1,14 @@
-import React from 'react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Upload } from 'lucide-react'
-import { useDropzone } from 'react-dropzone'
-
+import React, {DragEvent, useEffect, useState} from 'react'
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
+import {Loader2, Upload} from 'lucide-react'
+import {getCurrentWindow} from "@tauri-apps/api/window"; // Import Tauri API
 
 interface CategorySelectorProps {
-    selectedCategory: string
-    categories: string[]
-    isCategoriesLoading: boolean
-    onCategoryChange: (category: string) => void
-    onDrop: (acceptedFiles: File[]) => void
+    selectedCategory: string;
+    categories: string[];
+    isCategoriesLoading: boolean;
+    onCategoryChange: (category: string) => void;
+    uploadImgFiles: (droppedFiles?: string[]) => Promise<void>;
 }
 
 export function CategorySelector({
@@ -17,17 +16,50 @@ export function CategorySelector({
                                      categories,
                                      isCategoriesLoading,
                                      onCategoryChange,
-                                     onDrop
+                                     uploadImgFiles
                                  }: CategorySelectorProps) {
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
-        onDrop,
-        accept: {
-            'image/jpeg': ['.jpg', '.jpeg'],
-            'image/png': ['.png'],
-            'image/jfif': ['.jfif']
-        },
-        multiple: true
-    })
+    const [isDragActive, setIsDragActive] = useState(false);
+
+    useEffect(() => {
+        const setupDragDropListener = async () => {
+            return await getCurrentWindow().onDragDropEvent((event) => {
+                if (event.payload.type === 'over') {
+                    setIsDragActive(true);
+                } else if (event.payload.type === 'drop') {
+                    // console.log('User dropped files:', event.payload.paths);
+                    uploadImgFiles(event.payload.paths);
+                    setIsDragActive(false);
+                } else {
+                    setIsDragActive(false);
+                }
+            });
+        };
+
+        setupDragDropListener().then((unlisten) => {
+            return () => {
+                unlisten();
+            };
+        });
+    }, []);
+
+    const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragActive(true);
+    };
+
+    const handleDragLeave = () => {
+        setIsDragActive(false);
+    };
+
+    const handleDrop = async (e: DragEvent<HTMLDivElement>) => {
+        // only for mimic the real thing is one useEffect
+        e.preventDefault();
+        setIsDragActive(false);
+    };
+
+    const handleClick = () => {
+        uploadImgFiles();  // Handle click if needed to upload files
+    };
 
     return (
         <div className="flex justify-between items-center mb-8">
@@ -45,25 +77,30 @@ export function CategorySelector({
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map(category => (
+                    {categories.map((category) => (
                         <SelectItem key={category} value={category}>{category}</SelectItem>
                     ))}
                 </SelectContent>
             </Select>
-            <div {...getRootProps()}
-                 className={`p-6 border-2 border-dashed rounded-lg transition-all duration-300 ease-in-out
-          ${isDragActive ? 'border-primary bg-primary/50' : 'border-border hover:border-primary/50'}
-          cursor-pointer bg-card text-card-foreground hover:scale-95`}
+            <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={handleClick}
+                className={`p-6 border-2 border-dashed rounded-lg transition-all duration-300 ease-in-out
+                    ${isDragActive ? 'border-primary bg-primary/50' : 'border-border hover:border-primary/50'}
+                    cursor-pointer bg-card text-card-foreground hover:scale-95`}
             >
-                <input {...getInputProps()} />
                 <div className="flex flex-col items-center space-y-2">
                     <Upload className="h-10 w-10" />
-                    <p className="text-center text-sm font-medium leading-5 max-w-[150px]">
-                        {isDragActive ? "Drag & Drop files here!" : "Drag & drop files or click to select"}
+                    <p
+                        className="text-center text-sm font-medium leading-5 max-w-[150px] truncate"
+                        title={isDragActive ? "Drop files here!" : "Drag & drop files or click to select"}
+                    >
+                        {isDragActive ? "Drop files here!" : "Drag & drop files or click to select"}
                     </p>
                 </div>
             </div>
         </div>
-    )
+    );
 }
-
