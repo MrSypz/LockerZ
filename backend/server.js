@@ -43,6 +43,7 @@ async function readConfig() {
             return {
                 folderPath: path.join(process.env.USERPROFILE || process.env.HOME, 'Documents', 'LockerZ'),
                 rememberCategory: true,
+                lang: "en-US"
             };
         }
         throw error;
