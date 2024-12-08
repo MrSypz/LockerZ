@@ -21,6 +21,7 @@ import { FileGrid } from '@/components/widget/FileGrid'
 import { CategorySelector } from '@/components/widget/CategorySelector'
 import { PaginationControls } from '@/components/widget/PaginationControls'
 import { File } from '@/types/file'
+import {useTranslation} from "react-i18next";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -44,6 +45,8 @@ export default function Locker() {
     const [rememberCategory, setRememberCategory] = useState(false)
 
     const categoryRef = useRef(selectedCategory);
+    const { t } = useTranslation();
+
 
     const isRememberCategory = async () => {
         try {
@@ -61,7 +64,7 @@ export default function Locker() {
         } catch (error) {
             console.error('Error fetching current settings:', error)
             toast({
-                title: "Error",
+                title: t('toast.titleType.error'),
                 description: "Error fetching current settings",
                 variant: "destructive",
             })
@@ -75,6 +78,7 @@ export default function Locker() {
     }, [])
 
     useEffect(() => {
+        console.log("selectedCategory changed:", selectedCategory);
         categoryRef.current = selectedCategory;
         if (rememberCategory) {
             localStorage.setItem('lastSelectedCategory', selectedCategory)
@@ -98,7 +102,7 @@ export default function Locker() {
         } catch (error) {
             console.error('Error fetching files:', error)
             toast({
-                title: "Error",
+                title: t('toast.titleType.error'),
                 description: "Failed to fetch files",
                 variant: "destructive",
             })
@@ -119,7 +123,7 @@ export default function Locker() {
         } catch (error) {
             console.error('Error fetching categories:', error)
             toast({
-                title: "Error",
+                title: t('toast.titleType.error'),
                 description: "Failed to fetch categories",
                 variant: "destructive",
             })
@@ -130,9 +134,10 @@ export default function Locker() {
 
     const handleFileDrop = useCallback(async (droppedFiles?: globalThis.File[]) => {
         let filesToProcess: (globalThis.File | string)[] = [];
+        if (droppedFiles?.length === 0) return;
 
         if (droppedFiles && droppedFiles.length > 0) {
-            console.log("Upload image select Category:", categoryRef.current);
+            // console.log("Upload image select Category:", categoryRef.current);
             filesToProcess = droppedFiles;
         } else {
             try {
@@ -157,7 +162,7 @@ export default function Locker() {
             } catch (error) {
                 console.error('Error opening dialog:', error);
                 toast({
-                    title: "Error",
+                    title: t('toast.titleType.error'),
                     description: "An error occurred while opening the file dialog.",
                     variant: "destructive",
                 });
@@ -193,7 +198,7 @@ export default function Locker() {
 
         if (duplicateFiles.length > 0) {
             toast({
-                title: "Warning",
+                title: t('toast.titleType.warning'),
                 description: `${duplicateFiles.length} file(s) already exist in this category and will be skipped.`,
                 variant: "warning",
             });
@@ -235,13 +240,13 @@ export default function Locker() {
                 const data = await response.json();
                 setFiles(prevFiles => [data.file, ...prevFiles]);
                 toast({
-                    title: "Success",
+                    title: t('toast.titleType.success'),
                     description: `File ${getFileName(file)} moved successfully`,
                 });
             } catch (error) {
                 console.error('Error moving file:', error);
                 toast({
-                    title: "Error",
+                    title: t('toast.titleType.error'),
                     description: `Failed to move file ${getFileName(file)}`,
                     variant: "destructive",
                 });
@@ -258,10 +263,6 @@ export default function Locker() {
             });
         }
     }, [selectedCategory, files, API_URL]);
-
-    useEffect(() => {
-        console.log("selectedCategory changed:", selectedCategory);
-    }, [selectedCategory]);
 
     const onCategoryChange = useCallback((value: string) => {
         console.log("Category changed to:", value);
@@ -289,13 +290,13 @@ export default function Locker() {
             }
             setFiles(prevFiles => prevFiles.filter(f => f.name !== file.name || f.category !== file.category))
             toast({
-                title: "Success",
+                title: t('toast.titleType.success'),
                 description: "File deleted successfully",
             })
         } catch (error) {
             console.error('Error deleting file:', error)
             toast({
-                title: "Error",
+                title: t('toast.titleType.error'),
                 description: "Failed to delete file",
                 variant: "destructive",
             })
@@ -323,13 +324,13 @@ export default function Locker() {
             }
             setFiles(prevFiles => prevFiles.filter(f => f.name !== selectedFile.name || f.category !== selectedFile.category))
             toast({
-                title: "Success",
+                title: t('toast.titleType.success'),
                 description: "File moved successfully",
             })
         } catch (error) {
             console.error('Error moving file:', error)
             toast({
-                title: "Error",
+                title: t('toast.titleType.error'),
                 description: "Failed to move file",
                 variant: "destructive",
             })

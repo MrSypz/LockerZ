@@ -1,8 +1,9 @@
 import React, {DragEvent, useEffect, useState} from 'react'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
-import {Loader2, Upload} from 'lucide-react'
+import { Loader2, Upload } from 'lucide-react'
 import {getCurrentWindow} from "@tauri-apps/api/window";
 import { useTranslation } from 'react-i18next'
+import { useCallback } from 'react'
 
 
 interface CategorySelectorProps {
@@ -24,26 +25,38 @@ export function CategorySelector({
     const { t } = useTranslation();
 
     useEffect(() => {
+        let isMounted = true;
+        let unlistenFunction: (() => void) | undefined;
+
         const setupDragDropListener = async () => {
-            return await getCurrentWindow().onDragDropEvent((event) => {
+            if (!isMounted) return;
+
+            const unlisten = await getCurrentWindow().onDragDropEvent((event) => {
+                if (!isMounted) return;
+
                 if (event.payload.type === 'over') {
                     setIsDragActive(true);
                 } else if (event.payload.type === 'drop') {
-                    // console.log('User dropped files:', event.payload.paths);
+                    console.log('User dropped files:', event.payload.paths);
                     uploadImgFiles(event.payload.paths);
                     setIsDragActive(false);
                 } else {
                     setIsDragActive(false);
                 }
             });
+
+            unlistenFunction = unlisten;
         };
 
-        setupDragDropListener().then((unlisten) => {
-            return () => {
-                unlisten();
-            };
-        });
-    }, []);
+        setupDragDropListener();
+
+        return () => {
+            isMounted = false;
+            if (unlistenFunction) {
+                unlistenFunction();
+            }
+        };
+    }, [uploadImgFiles]);
 
     const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -60,9 +73,9 @@ export function CategorySelector({
         setIsDragActive(false);
     };
 
-    const handleClick = () => {
-        uploadImgFiles();  // Handle click if needed to upload files
-    };
+    const handleClick = useCallback(() => {
+        uploadImgFiles();
+    }, [uploadImgFiles]);
 
     return (
         <div className="flex justify-between items-center mb-8">
@@ -107,3 +120,4 @@ export function CategorySelector({
         </div>
     );
 }
+
