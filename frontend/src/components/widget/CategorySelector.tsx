@@ -1,7 +1,9 @@
 import React, {DragEvent, useEffect, useState} from 'react'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
 import {Loader2, Upload} from 'lucide-react'
-import {getCurrentWindow} from "@tauri-apps/api/window"; // Import Tauri API
+import {getCurrentWindow} from "@tauri-apps/api/window";
+import { useTranslation } from 'react-i18next'
+
 
 interface CategorySelectorProps {
     selectedCategory: string;
@@ -19,6 +21,7 @@ export function CategorySelector({
                                      uploadImgFiles
                                  }: CategorySelectorProps) {
     const [isDragActive, setIsDragActive] = useState(false);
+    const { t } = useTranslation();
 
     useEffect(() => {
         const setupDragDropListener = async () => {
@@ -95,9 +98,9 @@ export function CategorySelector({
                     <Upload className="h-10 w-10" />
                     <p
                         className="text-center text-sm font-medium leading-5 max-w-[150px] truncate"
-                        title={isDragActive ? "Drop files here!" : "Drag & drop files or click to select"}
+                        title={isDragActive ? t('category.dragdrop.idle') : t('category.dragdrop.hover')}
                     >
-                        {isDragActive ? "Drop files here!" : "Drag & drop files or click to select"}
+                        {isDragActive ? t('category.dragdrop.idle') : t('category.dragdrop.hover')}
                     </p>
                 </div>
             </div>
