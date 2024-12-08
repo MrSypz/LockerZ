@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { FileContextMenu } from '@/components/widget/Context-menu'
 import { File } from '@/types/file'
 import { motion } from "framer-motion"
+import { useTranslation } from 'react-i18next'
 
 function useColumnCount() {
     const [columnCount, setColumnCount] = useState(5)
@@ -77,6 +78,7 @@ interface FileCardProps {
 
 function FileCard({ file, onDelete, onMove, onSelect, apiUrl, index, column, totalColumns }: FileCardProps) {
     const [isLoaded, setIsLoaded] = useState(false)
+    const { t } = useTranslation();
 
     const row = Math.floor(index / totalColumns)
     const isDarkSquare = (row + column) % 2 === 0
@@ -158,9 +160,10 @@ function FileCard({ file, onDelete, onMove, onSelect, apiUrl, index, column, tot
                             </p>
                             <p className="text-xs opacity-80">{file.category}</p>
                             <p className="text-xs italic truncate opacity-80">
-                                {file.tags?.length ? file.tags.join(', ') : 'No tags'}
+                                {file.tags?.length ? file.tags.join(', ') : t('category.tags-empty')}
                             </p>
-                            <p className="text-xs font-semibold">Column: {column + 1} / {totalColumns}</p>
+                            {/*For debug perpose*/}
+                            {/*<p className="text-xs font-semibold">Column: {column + 1} / {totalColumns}</p>*/}
                         </motion.div>
                     </CardContent>
                 </Card>

@@ -5,6 +5,8 @@ import { BarChart, FolderOpen, ImageIcon, ChevronDown } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { useTranslation } from 'react-i18next'
+
 
 interface Category {
   name: string;
@@ -28,6 +30,7 @@ function formatBytes(bytes: number, decimals = 2) {
 }
 
 export function Dashboard() {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<Category[]>([]);
   const [stats, setStats] = useState<Stats>({
     totalImages: 0,
@@ -57,14 +60,15 @@ export function Dashboard() {
   }, []);
 
   const statsItems = [
-    { icon: ImageIcon, label: "Total Images", value: stats.totalImages.toString() },
-    { icon: FolderOpen, label: "Categories", value: stats.categories.toString() },
-    { icon: BarChart, label: "Storage Used", value: formatBytes(stats.storageUsed) },
+    { icon: ImageIcon, label: t("dashboard.content.totalimg"), value: stats.totalImages.toString() },
+    { icon: FolderOpen, label: t("dashboard.content.category"), value: stats.categories.toString() },
+    { icon: BarChart, label: t("dashboard.content.storageused"), value: formatBytes(stats.storageUsed) },
   ];
 
   return (
       <div className="space-y-6">
         <div className="p-6 space-y-8">
+          <h1 className="text-3xl font-bold p-6 gradient-text">{t('dashboard.header')}</h1>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {statsItems.map((stat) => (
                 <Card key={stat.label} className="overflow-hidden transition-all hover:shadow-lg">
@@ -76,7 +80,7 @@ export function Dashboard() {
                           {stat.value}
                         </p>
                       </div>
-                      <stat.icon size={32} className="text-primary" />
+                      <stat.icon size={32} className="text-primary"/>
                     </div>
                   </CardContent>
                 </Card>
@@ -90,9 +94,11 @@ export function Dashboard() {
           >
             <div className="flex items-center justify-between space-x-4 px-4">
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="p-0 hover:bg-transparent flex items-center space-x-2 w-full justify-start">
-                  <FolderOpen className="h-5 w-5" />
-                  <span className="text-lg font-semibold">Categories</span>
+                <Button variant="ghost"
+                        className="p-0 hover:bg-transparent flex items-center space-x-2 w-full justify-start">
+                  <FolderOpen className="h-5 w-5"/>
+                  <span className="text-lg font-semibold">{t('dashboard.content.categories')}</span>
+
                   <ChevronDown className={`h-5 w-5 transition-transform duration-300 ease-in-out ml-auto ${
                       isOpen ? "transform rotate-180" : ""
                   }`}/>
@@ -103,7 +109,8 @@ export function Dashboard() {
               <div className="rounded-md border px-4 py-3 font-mono text-sm shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {categories.map((category) => (
-                      <Card key={category.name} className="overflow-hidden transition-all hover:shadow-lg animate-fadeIn">
+                      <Card key={category.name}
+                            className="overflow-hidden transition-all hover:shadow-lg animate-fadeIn">
                         <CardContent className="p-4">
                           <h3 className="text-lg font-semibold">{category.name}</h3>
                           <p className="text-sm text-muted-foreground">{category.fileCount} files</p>
