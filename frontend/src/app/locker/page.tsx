@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Sidebar } from "@/components/widget/Sidebar"
 import { toast } from "@/hooks/use-toast"
 import { AlertCircle, Loader2 } from 'lucide-react'
@@ -43,6 +43,8 @@ export default function Locker() {
     const [isViewerOpen, setIsViewerOpen] = useState(false)
     const [rememberCategory, setRememberCategory] = useState(false)
 
+    const categoryRef = useRef(selectedCategory);
+
     const isRememberCategory = async () => {
         try {
             const response = await fetch(`${API_URL}/get-settings`)
@@ -73,6 +75,8 @@ export default function Locker() {
     }, [])
 
     useEffect(() => {
+        console.log("selectedCategory changed:", selectedCategory);
+        categoryRef.current = selectedCategory;
         if (rememberCategory) {
             localStorage.setItem('lastSelectedCategory', selectedCategory)
         }
@@ -125,10 +129,11 @@ export default function Locker() {
         }
     }
 
-    const uploadImgFiles = useCallback(async (droppedFiles?: globalThis.File[]) => {
+    const handleFileDrop = useCallback(async (droppedFiles?: globalThis.File[]) => {
         let filesToProcess: (globalThis.File | string)[] = [];
 
         if (droppedFiles && droppedFiles.length > 0) {
+            console.log("Upload image select Category:", categoryRef.current);
             filesToProcess = droppedFiles;
         } else {
             try {
@@ -161,9 +166,13 @@ export default function Locker() {
             }
         }
 
+        const getFileName = (file: globalThis.File | string): string => {
+            return file instanceof globalThis.File ? file.name : file.split('/').pop() || file;
+        };
+
         const validFiles = filesToProcess.filter(file =>
             ALLOWED_FILE_TYPES.some(type =>
-                (file instanceof globalThis.File ? file.name : file as string).toLowerCase().endsWith(type)
+                getFileName(file).toLowerCase().endsWith(type)
             )
         );
 
@@ -177,7 +186,7 @@ export default function Locker() {
         }
 
         const duplicateFiles = validFiles.filter(file => {
-            const fileName = file instanceof globalThis.File ? file.name : (file as string).split('/').pop();
+            const fileName = getFileName(file);
             return files.some(existingFile =>
                 existingFile.name === fileName && existingFile.category === selectedCategory
             );
@@ -192,7 +201,7 @@ export default function Locker() {
         }
 
         const newFiles = validFiles.filter(file => {
-            const fileName = file instanceof globalThis.File ? file.name : (file as string).split('/').pop();
+            const fileName = getFileName(file);
             return !files.some(existingFile =>
                 existingFile.name === fileName && existingFile.category === selectedCategory
             );
@@ -214,8 +223,8 @@ export default function Locker() {
             } else {
                 formData.append('originalPath', file);
             }
-            formData.append('category', selectedCategory === 'all' ? 'uncategorized' : selectedCategory);
-            console.log(file)
+            formData.append('category', categoryRef.current === 'all' ? 'uncategorized' : categoryRef.current);
+
             try {
                 const response = await fetch(`${API_URL}/move-file`, {
                     method: 'POST',
@@ -228,18 +237,19 @@ export default function Locker() {
                 setFiles(prevFiles => [data.file, ...prevFiles]);
                 toast({
                     title: "Success",
-                    description: `File ${file instanceof globalThis.File ? file.name : (file as string).split('/').pop()} moved successfully`,
+                    description: `File ${getFileName(file)} moved successfully`,
                 });
             } catch (error) {
                 console.error('Error moving file:', error);
                 toast({
                     title: "Error",
-                    description: `Failed to move file ${file instanceof globalThis.File ? file.name : (file as string).split('/').pop()}`,
+                    description: `Failed to move file ${getFileName(file)}`,
                     variant: "destructive",
                 });
             }
         }
-        setCurrentPage(1);
+        // Remove this line to prevent resetting the category
+        // setCurrentPage(1);
 
         if (validFiles.length < filesToProcess.length) {
             toast({
@@ -249,6 +259,19 @@ export default function Locker() {
             });
         }
     }, [selectedCategory, files, API_URL]);
+
+    useEffect(() => {
+        console.log("selectedCategory changed:", selectedCategory);
+    }, [selectedCategory]);
+
+    const onCategoryChange = useCallback((value: string) => {
+        console.log("Category changed to:", value);
+        setSelectedCategory(value);
+        setCurrentPage(1);
+        if (rememberCategory) {
+            localStorage.setItem('lastSelectedCategory', value);
+        }
+    }, [rememberCategory]);
 
     const handleDelete = async (file: File) => {
         try {
@@ -327,14 +350,8 @@ export default function Locker() {
                             selectedCategory={selectedCategory}
                             categories={categories}
                             isCategoriesLoading={isCategoriesLoading}
-                            onCategoryChange={(value) => {
-                                setSelectedCategory(value)
-                                setCurrentPage(1)
-                                if (rememberCategory) {
-                                    localStorage.setItem('lastSelectedCategory', value)
-                                }
-                            }}
-                            uploadImgFiles={uploadImgFiles}
+                            onCategoryChange={onCategoryChange}
+                            uploadImgFiles={handleFileDrop}
                         />
                         {isLoading ? (
                             <div className="flex justify-center items-center h-24 mt-8">
