@@ -1,4 +1,10 @@
 {
+  "toast": {
+    "titleType": {
+      "error": "ข้อผิดพลาด",
+      "success": "สำเร็จ"
+    }
+  },
   "settings": {
     "title": "การตั้งค่า",
     "rootFolder": {
@@ -14,6 +20,17 @@
       "description": "กำหนดค่าเพิ่มเติมสำหรับหน้า Locker",
       "rememberCategory": "จดจำหมวดหมู่ที่เลือกใน Locker",
       "language": "ภาษา"
+    },
+    "toast": {
+      "errorFetchingSettings": "เกิดข้อผิดพลาดในการดึงการตั้งค่าปัจจุบัน",
+      "errorSelectingFolder": "เกิดข้อผิดพลาดขณะเลือกโฟลเดอร์",
+      "folderPathUpdated": "อัปเดตเส้นทางโฟลเดอร์สำเร็จ!",
+      "errorUpdatingFolderPath": "เกิดข้อผิดพลาดขณะอัปเดตเส้นทางโฟลเดอร์",
+      "rememberCategoryEnabled": "เปิดใช้งานการจดจำหมวดหมู่แล้ว",
+      "rememberCategoryDisabled": "ปิดใช้งานการจดจำหมวดหมู่แล้ว",
+      "errorUpdatingRememberCategory": "เกิดข้อผิดพลาดขณะอัปเดตการตั้งค่าจดจำหมวดหมู่",
+      "languageChanged": "เปลี่ยนภาษาเป็น {{lang}}",
+      "errorUpdatingLanguage": "เกิดข้อผิดพลาดขณะอัปเดตการตั้งค่าภาษา"
     }
   }
 }

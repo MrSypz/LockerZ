@@ -1,4 +1,61 @@
 {
+  "toast": {
+    "titleType": {
+      "error": "Error",
+      "success": "Success",
+      "warning": "Warning"
+    }
+  },
+  "sidebar": {
+    "home": "Dashboard",
+    "image": "My Locker",
+    "folder": "My Category",
+    "settings" : "Settings"
+  },
+  "dashboard": {
+    "content": {
+      "totalimg": "Total Images",
+      "category":"Categories",
+      "storageused":"Storage Used",
+      "categories":"Categories"
+    },
+    "header": "Dashboard"
+  },
+  "category": {
+    "dragdrop": {
+      "idle": "Drop files here!",
+      "hover": "Drag & drop files or click to select"
+    },
+    "tags-empty": "No tags",
+    "page": {
+      "head":"My Categories",
+      "createcat": "Create Category",
+      "dialog": {
+        "title": "Create New Category",
+        "desc": "Enter a name for the new category.",
+        "input": "Category name",
+        "action": "Create"
+      }
+    }
+  },
+  "locker": {
+    "dialog": {
+      "move": {
+        "title": "Move to Category",
+        "desc": "Select a category to move this file to",
+        "selector": "Select category",
+        "cancel": "Cancel",
+        "click": "Move"
+      },
+      "menu": {
+        "move": "Move to...",
+        "delete": "Delete"
+      }
+    },
+    "toast": {
+      "errorfetching" : "Error fetching current settings"
+    }
+  },
   "settings": {
     "title": "Settings",
     "rootFolder": {
@@ -14,6 +71,17 @@
       "description": "Configure additional settings for the Locker page",
       "rememberCategory": "Remember selected category in Locker",
       "language": "Language"
+    },
+    "toast": {
+      "errorFetchingSettings": "Error fetching current settings",
+      "errorSelectingFolder": "An error occurred while selecting the folder",
+      "folderPathUpdated": "Folder path updated successfully!",
+      "errorUpdatingFolderPath": "An error occurred while updating the folder path",
+      "rememberCategoryEnabled": "Remember category enabled",
+      "rememberCategoryDisabled": "Remember category disabled",
+      "errorUpdatingRememberCategory": "An error occurred while updating the remember category setting",
+      "languageChanged": "Changed the language to {{lang}}",
+      "errorUpdatingLanguage": "An error occurred while updating the language setting"
     }
   }
 }
