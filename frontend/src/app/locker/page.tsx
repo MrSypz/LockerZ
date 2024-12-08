@@ -137,7 +137,6 @@ export default function Locker() {
         if (droppedFiles?.length === 0) return;
 
         if (droppedFiles && droppedFiles.length > 0) {
-            // console.log("Upload image select Category:", categoryRef.current);
             filesToProcess = droppedFiles;
         } else {
             try {
@@ -171,8 +170,13 @@ export default function Locker() {
         }
 
         const getFileName = (file: globalThis.File | string): string => {
-            return file instanceof globalThis.File ? file.name : file.split('/').pop() || file;
+            if (file instanceof globalThis.File) {
+                return file.name;
+            } else {
+                return file.replace(/^.*[\\/]/, ''); // This removes everything up to the last slash or backslash
+            }
         };
+
 
         const validFiles = filesToProcess.filter(file =>
             ALLOWED_FILE_TYPES.some(type =>
@@ -202,6 +206,7 @@ export default function Locker() {
                 description: `${duplicateFiles.length} file(s) already exist in this category and will be skipped.`,
                 variant: "warning",
             });
+            return;
         }
 
         const newFiles = validFiles.filter(file => {
@@ -228,7 +233,6 @@ export default function Locker() {
                 formData.append('originalPath', file);
             }
             formData.append('category', categoryRef.current === 'all' ? 'uncategorized' : categoryRef.current);
-
             try {
                 const response = await fetch(`${API_URL}/move-file`, {
                     method: 'POST',
