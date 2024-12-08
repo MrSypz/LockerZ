@@ -75,7 +75,6 @@ export default function Locker() {
     }, [])
 
     useEffect(() => {
-        console.log("selectedCategory changed:", selectedCategory);
         categoryRef.current = selectedCategory;
         if (rememberCategory) {
             localStorage.setItem('lastSelectedCategory', selectedCategory)
