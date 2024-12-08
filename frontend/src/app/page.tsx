@@ -1,6 +1,6 @@
-import { Sidebar } from "@/components/sidebar"
-import { Dashboard } from "@/components/dashboard"
-import { Changelog } from "@/components/changelog"
+import {Sidebar} from "@/components/sidebar"
+import {Dashboard} from "@/components/dashboard"
+import {Changelog} from "@/components/changelog"
 
 const changelogItems = [
     {
@@ -120,12 +120,12 @@ Now if you want to define your image in the category like posture you can add a 
 export default function Home() {
     return (
         <div className="flex h-screen bg-background">
-            <Sidebar />
+            <Sidebar/>
             <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto">
                     <h1 className="text-3xl font-bold p-6 gradient-text">Dashboard</h1>
-                    <Dashboard />
-                    <Changelog items={changelogItems} />
+                    <Dashboard/>
+                    <Changelog items={changelogItems}/>
                 </main>
             </div>
         </div>
