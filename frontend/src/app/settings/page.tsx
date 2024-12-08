@@ -33,7 +33,7 @@ export default function Settings() {
             console.error('Error fetching current settings:', error)
             toast({
                 title: t('toast.titleType.error'),
-                description: t('toast.errorFetchingSettings'),
+                description: t('settings.toast.errorFetchingSettings'),
                 variant: "destructive",
             })
         }
@@ -53,7 +53,7 @@ export default function Settings() {
             console.error('Error selecting folder:', error)
             toast({
                 title: t('toast.titleType.error'),
-                description: t('toast.errorSelectingFolder'),
+                description: t('settings.toast.errorSelectingFolder'),
                 variant: "destructive",
             })
         }
@@ -76,7 +76,7 @@ export default function Settings() {
                 setNewFolderPath('')
                 toast({
                     title: t('toast.titleType.success'),
-                    description: t('toast.folderPathUpdated'),
+                    description: t('settings.toast.folderPathUpdated'),
                 })
             } else {
                 throw new Error('Failed to update folder path')
@@ -85,7 +85,7 @@ export default function Settings() {
             console.error('Error updating folder path:', error)
             toast({
                 title: t('toast.titleType.error'),
-                description: t('toast.errorUpdatingFolderPath'),
+                description: t('settings.toast.errorUpdatingFolderPath'),
                 variant: "destructive",
             })
         }
@@ -105,7 +105,7 @@ export default function Settings() {
                 setRememberCategory(checked)
                 toast({
                     title: t('toast.titleType.success'),
-                    description: checked ? t('toast.rememberCategoryEnabled') : t('toast.rememberCategoryDisabled'),
+                    description: checked ? t('settings.toast.rememberCategoryEnabled') : t('settings.toast.rememberCategoryDisabled'),
                 })
             } else {
                 throw new Error('Failed to update remember category setting')
@@ -114,7 +114,7 @@ export default function Settings() {
             console.error('Error updating remember category setting:', error)
             toast({
                 title: t('toast.titleType.error'),
-                description: t('toast.errorUpdatingRememberCategory'),
+                description: t('settings.toast.errorUpdatingRememberCategory'),
                 variant: "destructive",
             })
         }
@@ -134,7 +134,7 @@ export default function Settings() {
                 await i18n.changeLanguage(lang)
                 toast({
                     title: t('toast.titleType.success'),
-                    description: t('toast.languageChanged', { lang }),
+                    description: t('settings.toast.languageChanged', { lang }),
                 })
             } else {
                 throw new Error('Failed to update language setting')
@@ -142,7 +142,7 @@ export default function Settings() {
         } catch (error) {
             toast({
                 title: t('toast.titleType.error'),
-                description: t('toast.errorUpdatingLanguage'),
+                description: t('settings.toast.errorUpdatingLanguage'),
                 variant: "destructive",
             })
         }
