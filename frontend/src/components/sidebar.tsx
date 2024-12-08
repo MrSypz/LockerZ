@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Home, FolderOpen, Image, Settings, Menu } from 'lucide-react'
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { ModeToggle } from "@/components/mode-toggle"
 import { getVersion } from "@tauri-apps/api/app";
@@ -14,10 +14,23 @@ const menuItems = [
   { icon: Settings, label: "Settings", href: "/settings" },
 ]
 
-const APP_VERSION = await getVersion();
-
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [appVersion, setAppVersion] = useState("0.0.0")
+
+  useEffect(() => {
+    const fetchVersion = async () => {
+      try {
+        const version = await getVersion();
+        setAppVersion(version);
+      } catch (error) {
+        console.error("Failed to fetch app version:", error);
+        setAppVersion("Unknown");
+      }
+    };
+
+    fetchVersion();
+  }, []);
 
   return (
       <aside
@@ -65,7 +78,7 @@ export function Sidebar() {
               "text-xs text-muted-foreground",
               isCollapsed ? "text-center" : "px-2"
           )}>
-            {isCollapsed ? APP_VERSION : `LockerZ ${APP_VERSION}`}
+            {isCollapsed ? appVersion : `LockerZ ${appVersion}`}
           </div>
         </div>
       </aside>
