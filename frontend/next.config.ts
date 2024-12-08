@@ -1,10 +1,13 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-    output: 'export',
-
+const nextConfig: import('next').NextConfig = {
     images: {
-        loader: 'custom',
-        loaderFile: './src/utils/imageLoader.js',
+        remotePatterns: [
+            {
+                protocol: 'http',
+                hostname: 'localhost',
+                port: '3001',
+            },
+        ],
     },
 }
 
