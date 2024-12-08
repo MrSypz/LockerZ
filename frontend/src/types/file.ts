@@ -3,7 +3,6 @@ export interface File {
     category: string;
     url: string;
     size: number;
-    createdAt: string;
     tags?: string[];
 }
 

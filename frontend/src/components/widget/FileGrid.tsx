@@ -123,6 +123,8 @@ function FileCard({ file, onDelete, onMove, onSelect, apiUrl, index, column, tot
                         <div className="relative aspect-[2/3] rounded-t-lg overflow-hidden">
                             <Image
                                 src={`${apiUrl}${file.url}`}
+                                priority={false}
+                                quality={100}
                                 alt={file.name}
                                 fill
                                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
@@ -155,9 +157,6 @@ function FileCard({ file, onDelete, onMove, onSelect, apiUrl, index, column, tot
                             transition={{ delay: 0.2 }}
                         >
                             <p className="text-sm font-medium truncate">{file.name}</p>
-                            <p className="text-xs opacity-80">
-                                {new Date(file.createdAt).toLocaleDateString()}
-                            </p>
                             <p className="text-xs opacity-80">{file.category}</p>
                             <p className="text-xs italic truncate opacity-80">
                                 {file.tags?.length ? file.tags.join(', ') : t('category.tags-empty')}
