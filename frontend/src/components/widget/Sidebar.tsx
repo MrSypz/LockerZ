@@ -4,19 +4,20 @@ import Link from "next/link"
 import { Home, FolderOpen, Image, Settings, Menu } from 'lucide-react'
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { ModeToggle } from "@/components/mode-toggle"
+import { ModeToggle } from "@/components/widget/Mode-toggle"
 import { getVersion } from "@tauri-apps/api/app";
-
-const menuItems = [
-  { icon: Home, label: "Dashboard", href: "/" },
-  { icon: Image, label: "My Locker", href: "/locker" },
-  { icon: FolderOpen, label: "My Category", href: "/category" },
-  { icon: Settings, label: "Settings", href: "/settings" },
-]
+import { useTranslation } from 'react-i18next'
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [appVersion, setAppVersion] = useState("0.0.0")
+  const { t } = useTranslation();
+  const menuItems = [
+    { icon: Home, label: t('sidebar.home'), href: "/" },
+    { icon: Image, label: t('sidebar.image'), href: "/locker" },
+    { icon: FolderOpen, label: t('sidebar.folder'), href: "/category" },
+    { icon: Settings, label: t('sidebar.settings'), href: "/settings" },
+  ]
 
   useEffect(() => {
     const fetchVersion = async () => {

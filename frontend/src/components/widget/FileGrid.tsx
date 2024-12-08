@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Card, CardContent } from "@/components/ui/card"
-import { FileContextMenu } from '@/components/context-menu'
+import { FileContextMenu } from '@/components/widget/Context-menu'
 import { File } from '@/types/file'
 import { motion } from "framer-motion"
 
