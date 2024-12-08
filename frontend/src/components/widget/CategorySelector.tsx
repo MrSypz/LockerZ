@@ -1,9 +1,8 @@
-import React, {DragEvent, useEffect, useState} from 'react'
+import React, {DragEvent, useCallback, useEffect, useState} from 'react'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
-import { Loader2, Upload } from 'lucide-react'
+import {Loader2, Upload} from 'lucide-react'
 import {getCurrentWindow} from "@tauri-apps/api/window";
-import { useTranslation } from 'react-i18next'
-import { useCallback } from 'react'
+import {useTranslation} from 'react-i18next'
 
 
 interface CategorySelectorProps {
@@ -31,7 +30,7 @@ export function CategorySelector({
         const setupDragDropListener = async () => {
             if (!isMounted) return;
 
-            const unlisten = await getCurrentWindow().onDragDropEvent((event) => {
+            unlistenFunction = await getCurrentWindow().onDragDropEvent((event) => {
                 if (!isMounted) return;
 
                 if (event.payload.type === 'over') {
@@ -44,8 +43,6 @@ export function CategorySelector({
                     setIsDragActive(false);
                 }
             });
-
-            unlistenFunction = unlisten;
         };
 
         setupDragDropListener();
