@@ -15,22 +15,22 @@ import { useTranslation } from 'react-i18next'
 
 interface MoveDialogProps {
     isOpen: boolean
-    onClose: () => void
-    onMove: (category: string) => void
+    onCloseAction: () => void
+    onMoveAction: (category: string) => void
     categories: string[]
     currentCategory: string
 }
 
-export function MoveDialog({ isOpen, onClose, onMove, categories, currentCategory }: MoveDialogProps) {
+export function MoveDialog({ isOpen, onCloseAction, onMoveAction, categories, currentCategory }: MoveDialogProps) {
     const [selectedCategory, setSelectedCategory] = useState<string>(currentCategory)
     const { t } = useTranslation();
     const handleMove = () => {
-        onMove(selectedCategory)
-        onClose()
+        onMoveAction(selectedCategory)
+        onCloseAction()
     }
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
+        <Dialog open={isOpen} onOpenChange={onCloseAction}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>{t('locker.dialog.move.title')}</DialogTitle>
@@ -52,7 +52,7 @@ export function MoveDialog({ isOpen, onClose, onMove, categories, currentCategor
                         </SelectContent>
                     </Select>
                     <div className="flex justify-end space-x-2">
-                        <Button variant="outline" onClick={onClose}>{t('locker.dialog.move.cancel')}</Button>
+                        <Button variant="outline" onClick={onCloseAction}>{t('locker.dialog.move.cancel')}</Button>
                         <Button onClick={handleMove}>{t('locker.dialog.move.move')}</Button>
                     </div>
                 </div>

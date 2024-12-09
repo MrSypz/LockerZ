@@ -9,7 +9,7 @@ import resourcesToBackend from 'i18next-resources-to-backend'
 interface I18nProviderProps {
     children: React.ReactNode;
     initialLang: string;
-    onLanguageChange: (lang: string) => void;
+    onLanguageChangeAction: (lang: string) => void;
 }
 
 const initI18n = async (initialLang: string) => {
@@ -31,14 +31,14 @@ const initI18n = async (initialLang: string) => {
     }
 }
 
-export default function I18nProvider({ children, initialLang, onLanguageChange }: I18nProviderProps) {
+export default function I18nProvider({ children, initialLang, onLanguageChangeAction }: I18nProviderProps) {
     const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
         initI18n(initialLang).then(() => setIsInitialized(true));
 
         const handleLanguageChanged = (lang: string) => {
-            onLanguageChange(lang);
+            onLanguageChangeAction(lang);
         };
 
         i18n.on('languageChanged', handleLanguageChanged);
@@ -46,7 +46,7 @@ export default function I18nProvider({ children, initialLang, onLanguageChange }
         return () => {
             i18n.off('languageChanged', handleLanguageChanged);
         };
-    }, [initialLang, onLanguageChange]);
+    }, [initialLang, onLanguageChangeAction]);
 
     if (!isInitialized) {
         return null; // or a loading spinner

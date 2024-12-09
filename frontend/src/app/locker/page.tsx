@@ -94,7 +94,7 @@ export default function Locker() {
         try {
             const response = await fetch(`${API_URL}/files?page=${currentPage}&limit=${imagesPerPage}&category=${selectedCategory}`)
             if (!response.ok) {
-                throw new Error('Failed to fetch files')
+                new Error('Failed to fetch files')
             }
             const data = await response.json()
             setFiles(data.files)
@@ -116,7 +116,7 @@ export default function Locker() {
         try {
             const response = await fetch(`${API_URL}/categories`)
             if (!response.ok) {
-                throw new Error('Failed to fetch categories')
+                new Error('Failed to fetch categories')
             }
             const data = await response.json()
             setCategories(data.map((category: { name: string }) => category.name))
@@ -132,7 +132,7 @@ export default function Locker() {
         }
     }
 
-    const handleFileDrop = useCallback(async (droppedFiles?: globalThis.File[]) => {
+    const handleFileDrop = useCallback(async (droppedFiles?: string[]) => {
         let filesToProcess: (globalThis.File | string)[] = [];
         if (droppedFiles?.length === 0) return;
 
@@ -154,7 +154,7 @@ export default function Locker() {
                     toast({
                         title: "No Files Selected",
                         description: "No files were selected.",
-                        variant: "warning",
+                        variant: "destructive",
                     });
                     return;
                 }
@@ -188,7 +188,7 @@ export default function Locker() {
             toast({
                 title: "No Valid Files",
                 description: "No files of the allowed types were selected.",
-                variant: "warning",
+                variant: "destructive",
             });
             return;
         }
@@ -204,7 +204,7 @@ export default function Locker() {
             toast({
                 title: t('toast.titleType.warning'),
                 description: `${duplicateFiles.length} file(s) already exist in this category and will be skipped.`,
-                variant: "warning",
+                variant: "destructive",
             });
             return;
         }
@@ -220,7 +220,7 @@ export default function Locker() {
             toast({
                 title: "No New Files",
                 description: "All selected files already exist in this category.",
-                variant: "warning",
+                variant: "destructive",
             });
             return;
         }
@@ -239,7 +239,7 @@ export default function Locker() {
                     body: formData,
                 });
                 if (!response.ok) {
-                    throw new Error('File move failed');
+                    new Error('File move failed');
                 }
                 const data = await response.json();
                 setFiles(prevFiles => [data.file, ...prevFiles]);
@@ -263,7 +263,7 @@ export default function Locker() {
             toast({
                 title: "Some Files Skipped",
                 description: `${filesToProcess.length - validFiles.length} file(s) were skipped due to invalid file type.`,
-                variant: "warning",
+                variant: "destructive",
             });
         }
     }, [selectedCategory, files, API_URL]);
@@ -290,7 +290,7 @@ export default function Locker() {
                 }),
             })
             if (!response.ok) {
-                throw new Error('Failed to delete file')
+                new Error('Failed to delete file')
             }
             setFiles(prevFiles => prevFiles.filter(f => f.name !== file.name || f.category !== file.category))
             toast({
@@ -324,7 +324,7 @@ export default function Locker() {
                 }),
             })
             if (!response.ok) {
-                throw new Error('Failed to move file')
+                new Error('Failed to move file')
             }
             setFiles(prevFiles => prevFiles.filter(f => f.name !== selectedFile.name || f.category !== selectedFile.category))
             toast({
@@ -370,15 +370,15 @@ export default function Locker() {
                         ) : (
                             <FileGrid
                                 files={files}
-                                onDeleteFile={(file) => {
+                                onDeleteFileAction={(file) => {
                                     setSelectedFile(file)
                                     setDeleteDialogOpen(true)
                                 }}
-                                onMoveFile={(file) => {
+                                onMoveFileAction={(file) => {
                                     setSelectedFile(file)
                                     setMoveDialogOpen(true)
                                 }}
-                                onSelectImage={(imageUrl) => {
+                                onSelectImageAction={(imageUrl) => {
                                     setSelectedImage(imageUrl)
                                     setIsViewerOpen(true)
                                 }}
@@ -405,8 +405,8 @@ export default function Locker() {
 
             <MoveDialog
                 isOpen={moveDialogOpen}
-                onClose={() => setMoveDialogOpen(false)}
-                onMove={handleMove}
+                onCloseAction={() => setMoveDialogOpen(false)}
+                onMoveAction={handleMove}
                 categories={categories}
                 currentCategory={selectedFile?.category || ''}
             />
@@ -430,7 +430,6 @@ export default function Locker() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-
             {isViewerOpen && selectedImage && (
                 <ImageViewer
                     src={selectedImage}

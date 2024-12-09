@@ -3,6 +3,7 @@ import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { X, ZoomIn, ZoomOut, RotateCcw, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from "@/hooks/use-toast";
+import Image from "next/image";
 import {
     ContextMenu,
     ContextMenuContent,
@@ -71,7 +72,7 @@ export function ImageViewer({ file, src, alt, onClose, fileUrl }: ImageViewerPro
                             >
                                 <ContextMenu>
                                     <ContextMenuTrigger>
-                                        <img
+                                        <Image
                                             ref={imgRef}
                                             src={src}
                                             alt={alt}

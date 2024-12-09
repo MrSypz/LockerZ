@@ -79,7 +79,7 @@ export default function Settings() {
                     description: t('settings.toast.folderPathUpdated'),
                 })
             } else {
-                throw new Error('Failed to update folder path')
+                new Error('Failed to update folder path')
             }
         } catch (error) {
             console.error('Error updating folder path:', error)
@@ -108,10 +108,9 @@ export default function Settings() {
                     description: checked ? t('settings.toast.rememberCategoryEnabled') : t('settings.toast.rememberCategoryDisabled'),
                 })
             } else {
-                throw new Error('Failed to update remember category setting')
+                new Error('Failed to update remember category setting')
             }
-        } catch (error) {
-            console.error('Error updating remember category setting:', error)
+        } catch {
             toast({
                 title: t('toast.titleType.error'),
                 description: t('settings.toast.errorUpdatingRememberCategory'),
@@ -137,7 +136,7 @@ export default function Settings() {
                     description: t('settings.toast.languageChanged', { lang }),
                 })
             } else {
-                throw new Error('Failed to update language setting')
+                new Error('Failed to update language setting')
             }
         } catch (error) {
             toast({

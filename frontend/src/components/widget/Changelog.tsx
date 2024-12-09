@@ -10,7 +10,7 @@ import React from "react";
 interface ChangelogSection {
     title: string
     content: string
-    type?: 'default' | 'feature' | 'concept' | 'category' | 'preview' | 'code'
+    type?: string
 }
 
 interface ChangelogItem {
@@ -72,7 +72,7 @@ export function Changelog({ items }: ChangelogProps) {
                                             return (
                                                 <div key={sectionIndex} className="space-y-3">
                                                     <h3 className={`flex items-center space-x-2 text-lg font-medium ${getTypeColor(section.type)}`}>
-                                                        <Icon className="h-5 w-5" />
+                                                        <Icon />
                                                         <span>{section.title}</span>
                                                     </h3>
                                                     <div className="text-sm text-muted-foreground pl-5">

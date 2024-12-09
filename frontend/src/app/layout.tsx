@@ -50,15 +50,15 @@ export default function RootLayout({
     return (
         <html lang={currentLang} suppressHydrationWarning>
         <body className={`${fontClass} custom-scrollbar`}>
-        <I18nProvider initialLang={currentLang} onLanguageChange={setCurrentLang}>
+        <I18nProvider initialLang={currentLang} onLanguageChangeAction={setCurrentLang}>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
                 <div className="flex h-screen bg-background text-foreground">
                     <div className="flex flex-col flex-1 overflow-hidden">
                         <main className="flex-1 overflow-auto">
                             {mounted ? children : null}
                         </main>
+                        <Toaster/>
                     </div>
-                    <Toaster/>
                 </div>
             </ThemeProvider>
         </I18nProvider>

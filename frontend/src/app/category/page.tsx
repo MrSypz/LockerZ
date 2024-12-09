@@ -71,7 +71,7 @@ export default function Category() {
           description: "Category renamed successfully",
         })
       } else {
-        throw new Error('Failed to rename category')
+        new Error('Failed to rename category')
       }
     } catch (error) {
       console.error('Error renaming category:', error)
@@ -99,7 +99,7 @@ export default function Category() {
           description: "Category deleted successfully",
         })
       } else {
-        throw new Error('Failed to delete category')
+        new Error('Failed to delete category')
       }
     } catch (error) {
       console.error('Error deleting category:', error)
@@ -138,7 +138,7 @@ export default function Category() {
           description: "Category created successfully",
         })
       } else {
-        throw new Error('Failed to create category')
+        new Error('Failed to create category')
       }
     } catch (error) {
       console.error('Error creating category:', error)
@@ -223,7 +223,7 @@ export default function Category() {
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
                                           This action cannot be undone. This will permanently delete the
-                                          "{category.name}" category and all its contents.
+                                          {category.name} category and all its contents.
                                         </AlertDialogDescription>
                                       </AlertDialogHeader>
                                       <AlertDialogFooter>

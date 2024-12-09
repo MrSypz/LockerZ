@@ -37,13 +37,13 @@ function useColumnCount() {
 
 interface FileGridProps {
     files: File[]
-    onDeleteFile: (file: File) => void
-    onMoveFile: (file: File) => void
-    onSelectImage: (imageUrl: string) => void
+    onDeleteFileAction: (file: File) => void
+    onMoveFileAction: (file: File) => void
+    onSelectImageAction: (imageUrl: string) => void
     apiUrl: string
 }
 
-export function FileGrid({ files, onDeleteFile, onMoveFile, onSelectImage, apiUrl }: FileGridProps) {
+export function FileGrid({ files, onDeleteFileAction, onMoveFileAction, onSelectImageAction, apiUrl }: FileGridProps) {
     const totalColumns = useColumnCount()
 
     return (
@@ -52,9 +52,9 @@ export function FileGrid({ files, onDeleteFile, onMoveFile, onSelectImage, apiUr
                 <FileCard
                     key={`${file.category}-${file.name}`}
                     file={file}
-                    onDelete={() => onDeleteFile(file)}
-                    onMove={() => onMoveFile(file)}
-                    onSelect={() => onSelectImage(`${apiUrl}${file.url}`)}
+                    onDelete={() => onDeleteFileAction(file)}
+                    onMove={() => onMoveFileAction(file)}
+                    onSelect={() => onSelectImageAction(`${apiUrl}${file.url}`)}
                     apiUrl={apiUrl}
                     index={index}
                     column={index % totalColumns}
@@ -92,8 +92,8 @@ function FileCard({ file, onDelete, onMove, onSelect, apiUrl, index, column, tot
     return (
         <FileContextMenu
             file={file}
-            onDelete={onDelete}
-            onMove={onMove}
+            onDeleteAction={onDelete}
+            onMoveAction={onMove}
         >
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
