@@ -47,6 +47,11 @@ export default function RootLayout({
 
     const fontClass = currentLang === 'th' ? notoSansThai.className : notoSansMono.className
 
+    // Check if the current route is the splash screen
+    if (pathname === '/loading') {
+        return <>{children}</>
+    }
+
     return (
         <html lang={currentLang} suppressHydrationWarning>
         <body className={`${fontClass} custom-scrollbar`}>
