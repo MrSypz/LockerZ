@@ -4,5 +4,6 @@ export interface File {
     url: string;
     size: number;
     tags?: string[];
+    lastModified: string;
 }
 
