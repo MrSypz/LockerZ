@@ -12,11 +12,24 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "LockerZ",
         "width": 1920,
         "height": 1080,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "visible": false
+      },
+      {
+        "label": "loading",
+        "url": "/loading",
+        "decorations": false,
+        "height": 400,
+        "width": 400,
+        "resizable": false,
+        "fullscreen": false,
+        "center": true,
+        "transparent": true
       }
     ],
     "security": {
