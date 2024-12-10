@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { X, ZoomIn, ZoomOut, RotateCcw, ExternalLink } from 'lucide-react';
+import { X, ZoomIn, ZoomOut, RotateCcw, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from "@/hooks/use-toast";
 import {
@@ -12,16 +12,21 @@ import {
 import { File } from "@/types/file";
 
 interface ImageViewerProps {
-    file: File;
-    src: string;
-    alt: string;
+    files: File[];
+    initialIndex: number;
     onClose: () => void;
-    fileUrl: string;
+    getFileUrl: (file: File) => string;
 }
 
-export function ImageViewer({ file, src, alt, onClose, fileUrl }: ImageViewerProps) {
+export function ImageViewer({ files, initialIndex, onClose, getFileUrl }: ImageViewerProps) {
+    const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [scale, setScale] = useState(1);
     const imgRef = useRef<HTMLImageElement>(null);
+
+    const currentFile = files[currentIndex];
+    const src = getFileUrl(currentFile);
+    const alt = currentFile.name;
+    const fileUrl = src;
 
     const isViewable = ['jpg', 'jpeg', 'png', 'gif', 'webp'].some(ext => src.toLowerCase().endsWith(`.${ext}`));
 
@@ -37,10 +42,25 @@ export function ImageViewer({ file, src, alt, onClose, fileUrl }: ImageViewerPro
         }
     }, [src, isViewable]);
 
+    const handleNavigate = useCallback((direction: 'prev' | 'next') => {
+        setCurrentIndex(prevIndex => {
+            if (direction === 'prev' && prevIndex > 0) {
+                return prevIndex - 1;
+            } else if (direction === 'next' && prevIndex < files.length - 1) {
+                return prevIndex + 1;
+            }
+            return prevIndex;
+        });
+    }, [files.length]);
+
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 onClose();
+            } else if (event.key === 'ArrowLeft' && currentIndex > 0) {
+                handleNavigate('prev');
+            } else if (event.key === 'ArrowRight' && currentIndex < files.length - 1) {
+                handleNavigate('next');
             }
         };
 
@@ -49,7 +69,7 @@ export function ImageViewer({ file, src, alt, onClose, fileUrl }: ImageViewerPro
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [onClose, file]);
+    }, [onClose, handleNavigate, currentIndex, files.length]);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
@@ -63,7 +83,7 @@ export function ImageViewer({ file, src, alt, onClose, fileUrl }: ImageViewerPro
                     maxScale={8}
                     onZoom={(ref) => setScale(ref.state.scale)}
                 >
-                    {({ zoomIn, zoomOut, resetTransform }) => (
+                    {({zoomIn, zoomOut, resetTransform}) => (
                         <>
                             <TransformComponent
                                 wrapperClass="!w-full !h-full"
@@ -80,7 +100,7 @@ export function ImageViewer({ file, src, alt, onClose, fileUrl }: ImageViewerPro
                                     </ContextMenuTrigger>
                                     <ContextMenuContent>
                                         <ContextMenuItem onClick={handleViewFullImage} disabled={!isViewable}>
-                                            <ExternalLink className="mr-2 h-4 w-4" />
+                                            <ExternalLink className="mr-2 h-4 w-4"/>
                                             View Full Image
                                         </ContextMenuItem>
                                     </ContextMenuContent>
@@ -89,24 +109,29 @@ export function ImageViewer({ file, src, alt, onClose, fileUrl }: ImageViewerPro
                             <div className="absolute bottom-4 right-4 flex flex-col items-end space-y-2">
                                 <div className="flex items-center space-x-2 bg-background/80 rounded-full p-1">
                                     <Button variant="ghost" size="icon" onClick={() => zoomOut()}>
-                                        <ZoomOut className="h-4 w-4" />
+                                        <ZoomOut className="h-4 w-4"/>
                                     </Button>
                                     <Button variant="ghost" size="icon" onClick={() => zoomIn()}>
-                                        <ZoomIn className="h-4 w-4" />
+                                        <ZoomIn className="h-4 w-4"/>
                                     </Button>
                                 </div>
                                 <Button variant="secondary" size="sm" onClick={() => resetTransform()}>
-                                    <RotateCcw className="h-4 w-4 mr-2" />
+                                    <RotateCcw className="h-4 w-4 mr-2"/>
                                     Reset
                                 </Button>
                                 {fileUrl && (
-                                    <div className="bg-background/80 text-foreground px-2 py-1 rounded-md text-xs max-w-xs truncate">
+                                    <div
+                                        className="bg-background/80 text-foreground px-2 py-1 rounded-md text-xs max-w-xs truncate">
                                         {fileUrl}
                                     </div>
                                 )}
                             </div>
-                            <div className="absolute top-4 left-4 bg-background/80 text-foreground px-2 py-1 rounded-full text-sm font-medium">
+                            <div
+                                className="absolute top-4 left-4 bg-background/80 text-foreground px-2 py-1 rounded-full text-sm font-medium">
                                 {Math.round(scale * 100)}%
+                            </div>
+                            <div
+                                className="absolute bottom-4 left-4 bg-background/80 text-foreground px-2 py-1 rounded-md text-sm">
                             </div>
                         </>
                     )}
@@ -117,7 +142,25 @@ export function ImageViewer({ file, src, alt, onClose, fileUrl }: ImageViewerPro
                     className="absolute top-4 right-4 rounded-full bg-background/80 hover:bg-background/100"
                     onClick={onClose}
                 >
-                    <X className="h-5 w-5" />
+                    <X className="h-5 w-5"/>
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 rounded-full bg-background/80 hover:bg-background/100"
+                    onClick={() => handleNavigate('prev')}
+                    disabled={currentIndex === 0}
+                >
+                    <ChevronLeft className="h-5 w-5"/>
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 rounded-full bg-background/80 hover:bg-background/100"
+                    onClick={() => handleNavigate('next')}
+                    disabled={currentIndex === files.length - 1}
+                >
+                    <ChevronRight className="h-5 w-5"/>
                 </Button>
             </div>
         </div>
