@@ -4,6 +4,13 @@ import {Changelog} from "@/components/widget/Changelog"
 
 const changelogItems = [
     {
+        version: "0.2.0",
+        date: "10-12-2024",
+        sections: [
+
+        ]
+    },
+    {
         version: "0.1.3",
         date: "10-11-2024",
         sections: [
