@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
 const fsPromises = require('fs').promises;
 const path = require('path');
 const formidable = require('formidable');
