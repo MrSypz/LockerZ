@@ -3,22 +3,47 @@
   "identifier": "default",
   "description": "enables the default permissions",
   "windows": [
-    "main"
+    "main",
+    "loading"
   ],
   "permissions": [
     "core:default",
     "dialog:default",
-    "fs:default",
     "shell:default",
+    "fs:allow-app-read-recursive",
     {
       "identifier": "shell:allow-execute",
       "allow": [
         {
           "name": "binaries/zaphire",
+          "args": [
+            "-c",
+            {
+              "validator": "\\S+"
+            }
+          ],
           "sidecar": true
         }
       ]
     },
-    "shell:allow-open"
+    "shell:allow-open",
+    "fs:default",
+    {
+      "identifier": "fs:allow-read-text-file-lines-next",
+      "allow": [
+        {
+          "path": "$APPDATA/logs/*"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [
+        {
+          "path": "$APPDATA/logs/*"
+        }
+      ]
+    },
+    "fs:default"
   ]
 }
