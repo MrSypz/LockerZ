@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Sidebar } from "@/components/widget/Sidebar"
 import { toast } from "@/hooks/use-toast"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -146,7 +145,6 @@ export default function Settings() {
 
     return (
         <div className="flex h-screen bg-background">
-            <Sidebar/>
             <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto p-6">
                     <h1 className="text-3xl font-bold mb-6 text-foreground">{t('settings.title')}</h1>

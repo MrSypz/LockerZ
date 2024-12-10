@@ -127,7 +127,6 @@ Now if you want to define your image in the category like posture you can add a 
 export default function Home() {
     return (
         <div className="flex h-screen bg-background">
-            <Sidebar/>
             <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto">
                     <Dashboard/>

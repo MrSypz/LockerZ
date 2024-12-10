@@ -8,6 +8,7 @@ import I18nProvider from '@/components/I18nProvider'
 import { notoSansMono, notoSansThai } from '@/lib/fonts'
 import React, { useEffect, useState, useCallback } from "react"
 import { usePathname } from 'next/navigation'
+import {Sidebar} from "@/components/widget/Sidebar";
 
 export default function RootLayout({
                                        children,
@@ -58,6 +59,7 @@ export default function RootLayout({
         <I18nProvider initialLang={currentLang} onLanguageChangeAction={setCurrentLang}>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
                 <div className="flex h-screen bg-background text-foreground">
+                    <Sidebar/>
                     <div className="flex flex-col flex-1 overflow-hidden">
                         <main className="flex-1 overflow-auto">
                             {mounted ? children : null}

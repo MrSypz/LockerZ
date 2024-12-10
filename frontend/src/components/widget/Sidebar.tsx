@@ -1,17 +1,20 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Home, FolderOpen, Image, Settings, Menu } from 'lucide-react'
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { ModeToggle } from "@/components/widget/Mode-toggle"
-import { getVersion } from "@tauri-apps/api/app";
+import { getVersion } from "@tauri-apps/api/app"
 import { useTranslation } from 'react-i18next'
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [appVersion, setAppVersion] = useState("0.0.0")
-  const { t } = useTranslation();
+  const { t } = useTranslation()
+  const pathname = usePathname()
+
   const menuItems = [
     { icon: Home, label: t('sidebar.home'), href: "/" },
     { icon: Image, label: t('sidebar.image'), href: "/locker" },
@@ -22,15 +25,15 @@ export function Sidebar() {
   useEffect(() => {
     const fetchVersion = async () => {
       try {
-        const version = await getVersion();
-        setAppVersion(version);
+        const version = await getVersion()
+        setAppVersion(version)
       } catch (error) {
-        setAppVersion("Unknown");
+        setAppVersion("Unknown")
       }
-    };
+    }
 
-    fetchVersion();
-  }, []);
+    fetchVersion()
+  }, [])
 
   return (
       <aside
@@ -61,7 +64,10 @@ export function Sidebar() {
                 <li key={item.label}>
                   <Link
                       href={item.href}
-                      className="flex items-center p-2 rounded-md hover:bg-primary/20 hover-lift"
+                      className={cn(
+                          "flex items-center p-2 rounded-md hover:bg-primary/20 hover-lift",
+                          pathname === item.href && "bg-primary/20"
+                      )}
                   >
                     <item.icon size={24} className="text-primary" />
                     {!isCollapsed && (
