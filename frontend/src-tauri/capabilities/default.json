@@ -8,7 +8,17 @@
   "permissions": [
     "core:default",
     "dialog:default",
-    "dialog:default",
-    "fs:default"
+    "fs:default",
+    "shell:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "binaries/zaphire",
+          "sidecar": true
+        }
+      ]
+    },
+    "shell:allow-open"
   ]
 }
