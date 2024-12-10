@@ -4,6 +4,7 @@ const fsPromises = require('fs').promises;
 const path = require('path');
 const formidable = require('formidable');
 const NodeCache = require('node-cache');
+const {readline } = require("readline");
 
 const app = express();
 const port = 3001;
@@ -71,6 +72,18 @@ async function getDirStats(dirPath) {
 
     return { size: totalSize, count: fileCount };
 }
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+rl.on('line', (input) => {
+    if (input.trim() === 'exit') {
+        console.log('Exit signal received. Shutting down...');
+        rl.close();
+        process.exit(0);
+    }
+});
 
 let config;
 let rootFolderPath;
