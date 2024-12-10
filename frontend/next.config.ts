@@ -18,9 +18,10 @@ const nextConfig: import('next').NextConfig = {
         // Dangerously allow production builds to successfully complete even if
         // your project has type errors.
         // !! WARN !!
+        // Nah it work is work!!!!!!!!!!!!!!!!!!!!!!!!
         ignoreBuildErrors: true,
     },
-    output: "export",
+    // output: "export",
     assetPrefix: isProd ? undefined : `http://${internalHost}:3000`,
 }
 
