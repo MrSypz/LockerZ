@@ -25,7 +25,6 @@ export function Sidebar() {
         const version = await getVersion();
         setAppVersion(version);
       } catch (error) {
-        console.error("Failed to fetch app version:", error);
         setAppVersion("Unknown");
       }
     };
