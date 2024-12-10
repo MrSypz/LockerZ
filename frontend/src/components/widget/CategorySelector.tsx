@@ -1,9 +1,13 @@
-import React, {DragEvent, useCallback, useEffect, useState} from 'react'
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
-import {Loader2, Upload} from 'lucide-react'
-import {getCurrentWindow} from "@tauri-apps/api/window";
-import {useTranslation} from 'react-i18next'
+'use client'
 
+import React, { useState, useCallback, useEffect } from 'react'
+import { Loader2, Upload, Check } from 'lucide-react'
+import { getCurrentWindow } from "@tauri-apps/api/window"
+import { useTranslation } from 'react-i18next'
+import { Button } from "@/components/ui/button"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
 
 interface CategorySelectorProps {
     selectedCategory: string;
@@ -20,81 +24,117 @@ export function CategorySelector({
                                      onCategoryChange,
                                      uploadImgFiles
                                  }: CategorySelectorProps) {
-    const [isDragActive, setIsDragActive] = useState(false);
-    const { t } = useTranslation();
+    const [open, setOpen] = useState(false)
+    const [isDragActive, setIsDragActive] = useState(false)
+    const { t } = useTranslation()
 
     useEffect(() => {
-        let isMounted = true;
-        let unlistenFunction: (() => void) | undefined;
+        let isMounted = true
+        let unlistenFunction: (() => void) | undefined
 
         const setupDragDropListener = async () => {
-            if (!isMounted) return;
+            if (!isMounted) return
 
             unlistenFunction = await getCurrentWindow().onDragDropEvent((event) => {
-                if (!isMounted) return;
+                if (!isMounted) return
 
                 if (event.payload.type === 'over') {
-                    setIsDragActive(true);
+                    setIsDragActive(true)
                 } else if (event.payload.type === 'drop') {
-                    console.log('User dropped files:', event.payload.paths);
-                    uploadImgFiles(event.payload.paths);
-                    setIsDragActive(false);
+                    uploadImgFiles(event.payload.paths)
+                    setIsDragActive(false)
                 } else {
-                    setIsDragActive(false);
+                    setIsDragActive(false)
                 }
-            });
-        };
+            })
+        }
 
-        setupDragDropListener();
+        setupDragDropListener()
 
         return () => {
-            isMounted = false;
+            isMounted = false
             if (unlistenFunction) {
-                unlistenFunction();
+                unlistenFunction()
             }
-        };
-    }, [uploadImgFiles]);
+        }
+    }, [uploadImgFiles])
 
-    const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        setIsDragActive(true);
-    };
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        setIsDragActive(true)
+    }
 
     const handleDragLeave = () => {
-        setIsDragActive(false);
-    };
+        setIsDragActive(false)
+    }
 
-    const handleDrop = async (e: DragEvent<HTMLDivElement>) => {
-        // only for mimic the real thing is one useEffect
-        e.preventDefault();
-        setIsDragActive(false);
-    };
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        setIsDragActive(false)
+    }
 
     const handleClick = useCallback(() => {
-        uploadImgFiles();
-    }, [uploadImgFiles]);
+        uploadImgFiles()
+    }, [uploadImgFiles])
 
     return (
         <div className="flex justify-between items-center mb-8">
-            <Select
-                value={selectedCategory}
-                onValueChange={onCategoryChange}
-                disabled={isCategoriesLoading}
-            >
-                <SelectTrigger className="w-[200px] bg-card text-card-foreground border-border">
-                    {isCategoriesLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <SelectValue placeholder="Select category" />
-                    )}
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map((category) => (
-                        <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className="w-[200px] justify-between"
+                        disabled={isCategoriesLoading}
+                    >
+                        {isCategoriesLoading ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            selectedCategory || "Select category"
+                        )}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0">
+                    <Command>
+                        <CommandInput placeholder="Search category..." className="h-9" />
+                        <CommandEmpty>No category found.</CommandEmpty>
+                        <CommandGroup className="max-h-[300px] overflow-auto">
+                            <CommandItem
+                                onSelect={() => {
+                                    onCategoryChange("all")
+                                    setOpen(false)
+                                }}
+                            >
+                                <Check
+                                    className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedCategory === "all" ? "opacity-100" : "opacity-0"
+                                    )}
+                                />
+                                All Categories
+                            </CommandItem>
+                            {categories.map((category) => (
+                                <CommandItem
+                                    key={category}
+                                    onSelect={() => {
+                                        onCategoryChange(category)
+                                        setOpen(false)
+                                    }}
+                                >
+                                    <Check
+                                        className={cn(
+                                            "mr-2 h-4 w-4",
+                                            selectedCategory === category ? "opacity-100" : "opacity-0"
+                                        )}
+                                    />
+                                    {category}
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </Command>
+                </PopoverContent>
+            </Popover>
             <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -115,6 +155,6 @@ export function CategorySelector({
                 </div>
             </div>
         </div>
-    );
+    )
 }
 
