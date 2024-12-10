@@ -4,6 +4,7 @@ use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
@@ -25,8 +26,8 @@ pub fn run() {
 
                     let mut child_lock = child_clone.lock().unwrap();
                     if let Some(mut child_process) = child_lock.take() {
-                        if let Err(e) = child_process.write("Exit message from Rust\n".as_bytes())
-                        {
+                        app.emit_all();
+                        if let Err(e) = child_process.write("exit\n".as_bytes()) {
                             println!("Fail to send to stdin of Python: {}", e);
                         }
 
