@@ -62,7 +62,6 @@ export default function Locker() {
                 localStorage.removeItem('lastSelectedCategory')
             }
         } catch (error) {
-            console.error('Error fetching current settings:', error)
             toast({
                 title: t('toast.titleType.error'),
                 description: "Error fetching current settings",
@@ -100,7 +99,6 @@ export default function Locker() {
             setFiles(data.files)
             setTotalPages(data.totalPages)
         } catch (error) {
-            console.error('Error fetching files:', error)
             toast({
                 title: t('toast.titleType.error'),
                 description: "Failed to fetch files",
@@ -121,7 +119,6 @@ export default function Locker() {
             const data = await response.json()
             setCategories(data.map((category: { name: string }) => category.name))
         } catch (error) {
-            console.error('Error fetching categories:', error)
             toast({
                 title: t('toast.titleType.error'),
                 description: "Failed to fetch categories",
@@ -159,7 +156,6 @@ export default function Locker() {
                     return;
                 }
             } catch (error) {
-                console.error('Error opening dialog:', error);
                 toast({
                     title: t('toast.titleType.error'),
                     description: "An error occurred while opening the file dialog.",
@@ -248,7 +244,6 @@ export default function Locker() {
                     description: `File ${getFileName(file)} moved successfully`,
                 });
             } catch (error) {
-                console.error('Error moving file:', error);
                 toast({
                     title: t('toast.titleType.error'),
                     description: `Failed to move file ${getFileName(file)}`,
@@ -269,7 +264,7 @@ export default function Locker() {
     }, [selectedCategory, files, API_URL]);
 
     const onCategoryChange = useCallback((value: string) => {
-        console.log("Category changed to:", value);
+        // console.log("Category changed to:", value);
         setSelectedCategory(value);
         setCurrentPage(1);
         if (rememberCategory) {
@@ -298,7 +293,6 @@ export default function Locker() {
                 description: "File deleted successfully",
             })
         } catch (error) {
-            console.error('Error deleting file:', error)
             toast({
                 title: t('toast.titleType.error'),
                 description: "Failed to delete file",
@@ -332,7 +326,6 @@ export default function Locker() {
                 description: "File moved successfully",
             })
         } catch (error) {
-            console.error('Error moving file:', error)
             toast({
                 title: t('toast.titleType.error'),
                 description: "Failed to move file",

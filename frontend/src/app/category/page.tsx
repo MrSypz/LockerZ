@@ -35,7 +35,7 @@ export default function Category() {
       const data = await response.json()
       setCategories(data)
     } catch (error) {
-      console.error('Error fetching categories:', error)
+      console.error('Error fetching categories:', 'error')
       toast({
         title: "Error",
         description: "Failed to fetch categories",

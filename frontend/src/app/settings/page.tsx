@@ -30,7 +30,6 @@ export default function Settings() {
             setRememberCategory(data.rememberCategory)
             await i18n.changeLanguage(data.lang)
         } catch (error) {
-            console.error('Error fetching current settings:', error)
             toast({
                 title: t('toast.titleType.error'),
                 description: t('settings.toast.errorFetchingSettings'),
@@ -50,7 +49,6 @@ export default function Settings() {
                 setNewFolderPath(selected as string)
             }
         } catch (error) {
-            console.error('Error selecting folder:', error)
             toast({
                 title: t('toast.titleType.error'),
                 description: t('settings.toast.errorSelectingFolder'),
@@ -82,7 +80,6 @@ export default function Settings() {
                 new Error('Failed to update folder path')
             }
         } catch (error) {
-            console.error('Error updating folder path:', error)
             toast({
                 title: t('toast.titleType.error'),
                 description: t('settings.toast.errorUpdatingFolderPath'),
