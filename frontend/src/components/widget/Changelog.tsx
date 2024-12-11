@@ -80,7 +80,7 @@ export function Changelog({ items }: ChangelogProps) {
                                             return (
                                                 <div key={sectionIndex} className="space-y-3">
                                                     <h3 className={`flex items-center space-x-2 text-base sm:text-lg font-medium ${getTypeColor(section.type)}`}>
-                                                        <Icon className="flex-shrink-0" />
+                                                        <Icon />
                                                         <span>{section.title}</span>
                                                     </h3>
                                                     <div className="text-sm text-muted-foreground pl-5">
