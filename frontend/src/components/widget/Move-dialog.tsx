@@ -53,7 +53,7 @@ export function MoveDialog({ isOpen, onCloseAction, onMoveAction, categories, cu
                     </Select>
                     <div className="flex justify-end space-x-2">
                         <Button variant="outline" onClick={onCloseAction}>{t('locker.dialog.move.cancel')}</Button>
-                        <Button onClick={handleMove}>{t('locker.dialog.move.move')}</Button>
+                        <Button onClick={handleMove}>{t('locker.dialog.move.click')}</Button>
                     </div>
                 </div>
             </DialogContent>
