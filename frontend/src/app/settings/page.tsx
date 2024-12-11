@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { open } from '@tauri-apps/plugin-dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTranslation } from 'react-i18next'
-
+import {API_URL} from "@/lib/zaphire";
 export default function Settings() {
     const { t, i18n } = useTranslation()
     const [folderPath, setFolderPath] = useState('')
@@ -23,7 +23,7 @@ export default function Settings() {
 
     const fetchCurrentSettings = async () => {
         try {
-            const response = await fetch('http://localhost:3001/get-settings')
+            const response = await fetch(`${API_URL}/get-settings`)
             const data = await response.json()
             setFolderPath(data.folderPath)
             setRememberCategory(data.rememberCategory)
@@ -60,7 +60,7 @@ export default function Settings() {
         if (!newFolderPath) return
 
         try {
-            const response = await fetch('http://localhost:3001/update-settings', {
+            const response = await fetch(`${API_URL}/update-settings`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -89,7 +89,7 @@ export default function Settings() {
 
     const handleRememberCategoryToggle = async (checked: boolean) => {
         try {
-            const response = await fetch('http://localhost:3001/update-settings', {
+            const response = await fetch(`${API_URL}/update-settings`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -117,7 +117,7 @@ export default function Settings() {
 
     const handleLanguageChange = async (lang: string) => {
         try {
-            const response = await fetch('http://localhost:3001/update-settings', {
+            const response = await fetch(`${API_URL}/update-settings`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

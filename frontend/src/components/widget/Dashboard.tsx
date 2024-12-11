@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { useTranslation } from 'react-i18next'
-
+import {API_URL} from "@/lib/zaphire";
 
 interface Category {
   name: string;
@@ -43,8 +43,8 @@ export function Dashboard() {
     async function fetchData() {
       try {
         const [categoriesResponse, statsResponse] = await Promise.all([
-          fetch('http://localhost:3001/categories'),
-          fetch('http://localhost:3001/stats')
+          fetch(`${API_URL}/categories`),
+          fetch(`${API_URL}/stats`)
         ]);
         const categoriesData = await categoriesResponse.json();
         const statsData = await statsResponse.json(); // Corrected variable name here
