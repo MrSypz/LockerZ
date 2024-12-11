@@ -214,10 +214,10 @@ async function initializeServer() {
 // Routes
 app.get('/files', async (req, res) => {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = req.query.limit === 'no-limit' ? null : parseInt(req.query.limit) || 20; // Handle "no-limit"
     const category = req.query.category || 'all';
 
-    const cacheKey = `files_${category}_${page}_${limit}`;
+    const cacheKey = `files_${category}_${page}_${limit || 'no-limit'}`;
     const cachedResult = cache.get(cacheKey);
 
     if (cachedResult) {
@@ -225,7 +225,7 @@ app.get('/files', async (req, res) => {
     }
 
     try {
-        const categories = await fsPromises.readdir(rootFolderPath, {withFileTypes: true});
+        const categories = await fsPromises.readdir(rootFolderPath, { withFileTypes: true });
         const files = await Promise.all(
             categories
                 .filter(cat => cat.isDirectory() && (category === 'all' || cat.name === category) && cat.name !== 'temp')
@@ -248,16 +248,16 @@ app.get('/files', async (req, res) => {
 
         const flattenedFiles = files.flat();
         const totalFiles = flattenedFiles.length;
-        const totalPages = Math.ceil(totalFiles / limit);
-        const startIndex = (page - 1) * limit;
-        const endIndex = page * limit;
+        const totalPages = limit ? Math.ceil(totalFiles / limit) : 1; // 1 page if no limit
+        const startIndex = limit ? (page - 1) * limit : 0;
+        const endIndex = limit ? page * limit : totalFiles;
 
-        const paginatedFiles = flattenedFiles.slice(startIndex, endIndex);
+        const paginatedFiles = limit ? flattenedFiles.slice(startIndex, endIndex) : flattenedFiles;
 
         const result = {
             files: paginatedFiles,
-            currentPage: page,
-            totalPages: totalPages,
+            currentPage: limit ? page : 1,
+            totalPages: limit ? totalPages : 1,
             totalFiles: totalFiles
         };
 
@@ -266,7 +266,7 @@ app.get('/files', async (req, res) => {
         res.json(result);
     } catch (err) {
         logger.error('Error reading files:' + err);
-        res.status(500).json({error: 'Error reading files'});
+        res.status(500).json({ error: 'Error reading files' });
     }
 });
 
