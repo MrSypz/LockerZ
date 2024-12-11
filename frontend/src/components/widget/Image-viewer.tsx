@@ -73,7 +73,7 @@ export function ImageViewer({ files, initialIndex, onClose, getFileUrl }: ImageV
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-            <div className="relative w-screen h-screen bg-background/10 overflow-hidden">
+            <div className="relative w-full h-full max-w-[90vw] max-h-[90vh]">
                 <TransformWrapper
                     initialScale={1}
                     initialPositionX={0}
