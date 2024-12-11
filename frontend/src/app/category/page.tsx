@@ -6,15 +6,17 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Pencil, Trash2, FolderPlus } from 'lucide-react'
+import { Pencil, Trash2, FolderPlus, ImageIcon, FolderOpen } from 'lucide-react'
 import { toast } from "@/hooks/use-toast"
-import {useTranslation} from "react-i18next";
-import {API_URL} from "@/lib/zaphire";
+import { useTranslation } from "react-i18next"
+import { API_URL } from "@/lib/zaphire"
+import Image from 'next/image'
 
 interface Category {
-  name: string;
-  fileCount: number;
-  size: number;
+  name: string
+  fileCount: number
+  size: number
+  imageUrl?: string
 }
 
 export default function Category() {
@@ -23,7 +25,7 @@ export default function Category() {
   const [newCategoryName, setNewCategoryName] = useState('')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [newCategory, setNewCategory] = useState('')
-  const { t } = useTranslation();
+  const { t } = useTranslation()
 
   useEffect(() => {
     fetchCategories()
@@ -35,7 +37,7 @@ export default function Category() {
       const data = await response.json()
       setCategories(data)
     } catch (error) {
-      console.error('Error fetching categories:', 'error')
+      console.error('Error fetching categories:', error)
       toast({
         title: "Error",
         description: "Failed to fetch categories",
@@ -71,7 +73,7 @@ export default function Category() {
           description: "Category renamed successfully",
         })
       } else {
-        new Error('Failed to rename category')
+        throw new Error('Failed to rename category')
       }
     } catch (error) {
       console.error('Error renaming category:', error)
@@ -99,7 +101,7 @@ export default function Category() {
           description: "Category deleted successfully",
         })
       } else {
-        new Error('Failed to delete category')
+        throw new Error('Failed to delete category')
       }
     } catch (error) {
       console.error('Error deleting category:', error)
@@ -138,7 +140,7 @@ export default function Category() {
           description: "Category created successfully",
         })
       } else {
-        new Error('Failed to create category')
+        throw new Error('Failed to create category')
       }
     } catch (error) {
       console.error('Error creating category:', error)
@@ -185,65 +187,87 @@ export default function Category() {
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {categories.map((category) => (
-                  <Card key={category.name} className="flex flex-col justify-between">
-                    <CardContent className="pt-6">
-                      {editingCategory === category.name ? (
-                          <div className="flex items-center space-x-2">
-                            <Input
-                                value={newCategoryName}
-                                onChange={(e) => setNewCategoryName(e.target.value)}
-                                className="flex-grow"
-                            />
-                            <Button onClick={() => handleSaveEdit(category.name)} size="sm">
-                              Save
-                            </Button>
-                            <Button onClick={handleCancelEdit} variant="outline" size="sm">
-                              Cancel
-                            </Button>
-                          </div>
-                      ) : (
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold">{category.name}</h3>
-                            {category.name !== "uncategorized" && (
-                                <div className="space-x-2">
-                                  <Button onClick={() => handleEdit(category.name)} size="sm" variant="outline">
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button size="sm" variant="outline">
-                                        <Trash2 className="h-4 w-4" />
+            {categories.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+                  <FolderOpen className="h-24 w-24 text-muted-foreground mb-4" />
+                  <p className="text-xl text-muted-foreground">No categories found. Create a new category to get started.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {categories.map((category) => (
+                      <Card key={category.name} className="overflow-hidden">
+                        <div className="relative h-48">
+                          {category.imageUrl ? (
+                              <Image
+                                  src={category.imageUrl}
+                                  alt={category.name}
+                                  fill
+                                  className="object-cover"
+                              />
+                          ) : (
+                              <div className="flex items-center justify-center h-full bg-muted">
+                                <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                              </div>
+                          )}
+                        </div>
+                        <CardContent className="p-4">
+                          {editingCategory === category.name ? (
+                              <div className="flex items-center space-x-2">
+                                <Input
+                                    value={newCategoryName}
+                                    onChange={(e) => setNewCategoryName(e.target.value)}
+                                    className="flex-grow"
+                                />
+                                <Button onClick={() => handleSaveEdit(category.name)} size="sm">
+                                  Save
+                                </Button>
+                                <Button onClick={handleCancelEdit} variant="outline" size="sm">
+                                  Cancel
+                                </Button>
+                              </div>
+                          ) : (
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold">{category.name}</h3>
+                                {category.name !== "uncategorized" && (
+                                    <div className="space-x-2">
+                                      <Button onClick={() => handleEdit(category.name)} size="sm" variant="outline">
+                                        <Pencil className="h-4 w-4" />
                                       </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          This action cannot be undone. This will permanently delete the
-                                          {category.name} category and all its contents.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDelete(category.name)}>
-                                          Delete
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </div>
-                            )}
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button size="sm" variant="outline">
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              This action cannot be undone. This will permanently delete the
+                                              {category.name} category and all its contents.
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDelete(category.name)}>
+                                              Delete
+                                            </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    </div>
+                                )}
+                              </div>
+                          )}
+                          <div className="mt-2 space-y-1">
+                            <p className="text-sm text-muted-foreground">{category.fileCount} files</p>
+                            <p className="text-sm text-muted-foreground">Size: {(category.size / 1024 / 1024).toFixed(2)} MB</p>
                           </div>
-                      )}
-                      <p className="text-sm text-muted-foreground mt-2">{category.fileCount} files</p>
-                      <p className="text-sm text-muted-foreground">Size: {(category.size / 1024 / 1024).toFixed(2)} MB</p>
-                    </CardContent>
-                  </Card>
-              ))}
-
-            </div>
+                        </CardContent>
+                      </Card>
+                  ))}
+                </div>
+            )}
           </main>
         </div>
       </div>
