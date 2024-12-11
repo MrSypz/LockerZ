@@ -340,13 +340,43 @@ app.get('/get-settings', async (req, res) => {
 
 app.post('/update-settings', async (req, res) => {
     try {
-        const config = await readConfig();
-        const updatedConfig = {...config, ...req.body};
+        const oldConfig = await readConfig();
+        const updatedConfig = { ...oldConfig, ...req.body };
         await writeConfig(updatedConfig);
-        res.json({success: true});
+
+        if (req.body.folderPath && req.body.folderPath !== rootFolderPath) {
+            rootFolderPath = req.body.folderPath;
+            app.use('/images', express.static(rootFolderPath));
+            clearRelevantCaches();
+            logger.info(`Root folder path updated to: ${rootFolderPath}`);
+        }
+
+        res.json({ success: true });
     } catch (error) {
-        logger.error('Error updating settings:' + error);
-        res.status(500).json({error: 'Failed to update settings'});
+        logger.error('Error updating settings: ' + error);
+        res.status(500).json({ error: 'Failed to update settings' });
+    }
+});
+
+app.post('/update-root-path', async (req, res) => {
+    const { newRootPath } = req.body;
+    logger.info(`Received request to update root path to: ${newRootPath}`);
+
+    try {
+        await fsPromises.access(newRootPath);
+        rootFolderPath = newRootPath;
+        config.folderPath = newRootPath;
+        await writeConfig(config);
+
+        app.use('/images', express.static(rootFolderPath));
+
+        clearRelevantCaches();
+
+        logger.info('Root folder path updated successfully');
+        res.json({ success: true });
+    } catch (error) {
+        logger.error('Error updating root folder path: ' + error);
+        res.status(400).json({ success: false, message: 'Invalid folder path or permission denied' });
     }
 });
 
