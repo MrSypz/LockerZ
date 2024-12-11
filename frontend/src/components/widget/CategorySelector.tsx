@@ -97,7 +97,7 @@ export function CategorySelector({
                 </PopoverTrigger>
                 <PopoverContent className="w-[200px] p-0">
                     <Command>
-                        <CommandInput placeholder="Search category..." className="h-9" />
+                        <CommandInput placeholder={t('category.search')} className="h-9" />
                         <CommandEmpty>No category found.</CommandEmpty>
                         <CommandGroup className="max-h-[300px] overflow-auto">
                             <CommandItem
