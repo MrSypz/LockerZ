@@ -273,6 +273,7 @@ export default function Locker() {
                     title: t('toast.titleType.success'),
                     description: `File ${getFileName(file)} moved successfully`,
                 });
+                fetchAllFiles();
             } catch (error) {
                 toast({
                     title: t('toast.titleType.error'),
