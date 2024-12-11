@@ -20,8 +20,7 @@ import { CategorySelector } from '@/components/widget/CategorySelector'
 import { PaginationControls } from '@/components/widget/PaginationControls'
 import { File } from '@/types/file'
 import {useTranslation} from "react-i18next";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import {API_URL} from "@/lib/zaphire";
 
 const ALLOWED_FILE_TYPES = ['.png', '.jpg', '.jpeg', '.jfif', '.webp'];
 

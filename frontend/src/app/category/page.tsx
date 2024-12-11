@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Pencil, Trash2, FolderPlus } from 'lucide-react'
 import { toast } from "@/hooks/use-toast"
 import {useTranslation} from "react-i18next";
+import {API_URL} from "@/lib/zaphire";
 
 interface Category {
   name: string;
@@ -30,7 +31,7 @@ export default function Category() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('http://localhost:3001/categories')
+      const response = await fetch(`${API_URL}/categories`)
       const data = await response.json()
       setCategories(data)
     } catch (error) {
@@ -55,7 +56,7 @@ export default function Category() {
 
   const handleSaveEdit = async (oldName: string) => {
     try {
-      const response = await fetch('http://localhost:3001/rename-category', {
+      const response = await fetch(`${API_URL}/rename-category`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +85,7 @@ export default function Category() {
 
   const handleDelete = async (categoryName: string) => {
     try {
-      const response = await fetch('http://localhost:3001/delete-category', {
+      const response = await fetch(`${API_URL}/delete-category`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -121,7 +122,7 @@ export default function Category() {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/create-category', {
+      const response = await fetch(`${API_URL}/create-category`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
