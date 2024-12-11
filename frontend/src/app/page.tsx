@@ -1,5 +1,5 @@
-import {Dashboard} from "@/components/widget/Dashboard"
-import {Changelog} from "@/components/widget/Changelog"
+import { Dashboard } from "@/components/widget/Dashboard"
+import { Changelog } from "@/components/widget/Changelog"
 
 const changelogItems = [
     {
@@ -8,26 +8,28 @@ const changelogItems = [
         sections: [
             {
                 title: "Rewrite",
-                content: "**Framework Migration**: Moved the main application from Electron.js to Tauri 2.0 for improved performance and smaller bundle size.\n" +
-                    "\n" +
-                    "- Note: Node.js is still used for the server; future plans include moving to native Tauri for further performance improvements.\n" +
-                    "\n\n   "+
-                    "**Complete Rewrite**: The application has been entirely rewritten, which may result in some features not being immediately available in this version."
-            },
-            {
-                title: "Optimize",
-                content: "Significant performance enhancements have been made, resulting in faster load times and smoother user experience.",
-                type: "concept"
+                content: `
+                    <h3 class="text-lg font-semibold mb-2">Framework Migration</h3>
+                    <p class="mb-4">Moved the main application from Electron.js to Tauri 2.0 for improved performance and smaller bundle size.</p>
+                    <div class="bg-blue-100 dark:bg-blue-900 p-4 rounded-md mb-4">
+                        <p class="text-blue-800 dark:text-blue-200"><em>Note: Node.js is still used for the server; future plans include moving to native Tauri for further performance improvements.</em></p>
+                    </div>
+                    <h4 class="text-md font-semibold mb-2">Complete Rewrite</h4>
+                    <p>The application has been entirely rewritten, which may result in some features not being immediately available in this version.</p>
+                `
             },
             {
                 title: "Config",
                 type: "preview",
-                content: "New Config path are now moving to \n\n" + `\`%appdata%\\lockerz\\config\\config.json\``,
+                content: `
+                    <p>New Config path is now located at:</p>
+                    <code class="block bg-gray-100 dark:bg-gray-800 p-2 rounded-md my-2">%appdata%\\lockerz\\config\\config.json</code>
+                `
             },
             {
                 title: "Dashboard",
                 type: "preview",
-                content: "Re-write and design on dashboard",
+                content: "<p>Complete re-design and re-implementation of the dashboard for improved user experience and functionality.</p>",
                 images: {
                     after: "/img/Screenshot 2024-12-11 204117.png",
                     before: "/img/Screenshot 2024-12-11 204029.png"
@@ -36,24 +38,141 @@ const changelogItems = [
             {
                 title: "Settings",
                 type: "preview",
-                content: "Make more configable than before and I'll add more config in the future",
+                content: `
+                    <p>Enhanced configurability with more options:</p>
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>Expanded user preferences</li>
+                        <li>Advanced system settings</li>
+                        <li>Customizable UI options</li>
+                    </ul>
+                    <p class="mt-2">More configurations will be added in future updates.</p>
+                `,
                 images: {
                     after: "/img/Screenshot 2024-12-11 205513.png",
                     before: "/img/Screenshot 2024-12-11 205502.png"
                 }
             },
             {
-                title: "Localize",
-                type: "concept",
-                content: "It now can change to the langauage you like :)",
+                title: "Localization",
+                type: "preview",
+                content: `
+                    <p>Introduced multi-language support! 🌍</p>
+                    <p>You can now change the application language to your preference.</p>
+                    <p class="mt-2">Currently supported languages:</p>
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>English</li>
+                        <li>Thai</li>
+                    </ul>
+                `,
                 images: {
                     after: "/img/Screenshot 2024-12-11 205513.png",
                     before: "/img/Screenshot 2024-12-11 205523.png"
                 }
             },
             {
+                title: "Categories",
+                type: "preview",
+                content: `
+                    <p>Overhauled category management system:</p>
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>New intuitive design for easier navigation</li>
+                        <li>Improved editing capabilities</li>
+                        <li>Enhanced categorization algorithms</li>
+                    </ul>
+                `,
+                images: {
+                    after: "/img/Screenshot 2024-12-12 025855.png",
+                    before: "/img/Screenshot 2024-12-12 030004.png"
+                }
+            },
+            {
+                title: "Viewport",
+                type: "preview",
+                content: "<p>Introduced a new viewport style for improved content viewing and management.</p>",
+                images: {
+                    after: "/img/Screenshot 2024-12-12 015911.png",
+                    before: "/img/Screenshot 2024-12-12 030623.png"
+                }
+            },
+            {
+                title: "Image Viewer",
+                type: "preview",
+                content: `
+                    <p>Major improvements to the image viewer:</p>
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>Smooth panning and zooming capabilities</li>
+                        <li>Easy navigation between nearby images</li>
+                        <li>Enhanced image quality and loading speed</li>
+                    </ul>
+                `,
+                images: {
+                    before: "/img/Screenshot 2024-12-12 031524.png",
+                    after: "/img/Screenshot 2024-12-12 031515.png"
+                }
+            },
+            {
+                title: "Image Sorting",
+                type: "feature",
+                content: `
+                    <p><strong>New Feature:</strong> Image sorting functionality</p>
+                    <p>Current sorting options include:</p>
+                    <ol class="list-decimal pl-5 mt-2">
+                        <li>Date added</li>
+                        <li>File name</li>
+                        <li>File size</li>
+                    </ol>
+                    <p class="mt-2">More sorting options will be added in future updates.</p>
+                `,
+                image: "/img/Screenshot 2024-12-12 030706.png"
+            },
+            {
+                title: "Searching",
+                type: "feature",
+                content: `
+                    <p><strong>New Feature:</strong> Advanced search capabilities</p>
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>Search across all categories</li>
+                        <li>Filter by file type, date, and size</li>
+                        <li>Sort search results</li>
+                    </ul>
+                `,
+                image: "/img/Screenshot 2024-12-12 030732.png"
+            },
+            {
+                title: "Optimize",
+                content: `
+                    <h4 class="font-semibold mb-2">Performance Enhancements:</h4>
+                    <ul class="list-disc pl-5">
+                        <li>Fuxking huge improved image loading speed</li>
+                        <li>Optimized image viewing experience</li>
+                        <li>Reduced memory usage for large image collections</li>
+                    </ul>
+                `,
+                type: "concept"
+            },
+            {
+                title: "Fixes",
+                content: `
+                    <h4 class="font-semibold mb-2">Bug Fixes:</h4>
+                    <ul class="list-disc pl-5">
+                        <li>Resolved spike lag issues when viewing images</li>
+                        <li>Fixed problems with drag and drop functionality</li>
+                        <li>Addressed various minor UI glitches</li>
+                    </ul>
+                `,
+                type: "concept"
+            },
+            {
                 title: "Features",
-                content: "- Improved navigation with new sidebar\n- Enhanced image handling with drag-and-drop and click-to-select\n- Added category search functionality",
+                content: `
+                    <h4 class="font-semibold mb-2">New and Improved Features:</h4>
+                    <ul class="list-disc pl-5">
+                        <li>Redesigned sidebar for improved navigation</li>
+                        <li>Enhanced image handling with drag-and-drop and click-to-select</li>
+                        <li>Implemented category search functionality for easier organization</li>
+                        <li>Added customizable hotkeys for frequently used actions</li>
+                    </ul>
+                `,
                 type: "feature"
             }
         ]
@@ -65,14 +184,20 @@ const changelogItems = [
             {
                 title: "Features",
                 type: "feature",
-                content: "- Now you can move files from category to other category without closing the program Yay!!"
+                content: `
+                    <p><strong>New Capability:</strong> Move files between categories without restarting the application.</p>
+                    <p class="mt-2">This feature greatly improves workflow efficiency for managing large image collections.</p>
+                `
             },
             {
                 title: "Fixes",
                 content: `
-- Content are offset image when scrolling down
-- Can't drag and drop the images
-        `
+                    <h4 class="font-semibold mb-2">Resolved Issues:</h4>
+                    <ul class="list-disc pl-5">
+                        <li>Fixed content offset when scrolling through images</li>
+                        <li>Resolved issues with drag and drop functionality</li>
+                    </ul>
+                `
             }
         ]
     },
@@ -84,25 +209,36 @@ const changelogItems = [
                 title: "Features",
                 type: "feature",
                 content: `
-## Tag Feature
-Now if you want to define your image in the category like posture you can add a tag in your image like action, sexy, etc.! More Manage by you !!
-        `
+                    <h3 class="text-lg font-semibold mb-2">Tag Feature</h3>
+                    <p>Introducing a powerful tagging system for your images:</p>
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>Add custom tags to images (e.g., action, sexy, etc.)</li>
+                        <li>Organize and find images based on tags</li>
+                        <li>Improve categorization within your image collections</li>
+                    </ul>
+                    <p class="mt-2">This feature allows for more granular organization and easier image retrieval.</p>
+                `
             },
             {
                 title: "Quality of Life",
                 type: "Qol",
                 content: `
-- Move the file instead of copy image to avoid redundancy.
-- Add Modal when adding image to category
-- Fading image when loading
-- Category now selects the last one browsed, not the first category anymore
-- Discord RPC built-in
-- More progress logs when loading
-        `
+                    <h4 class="font-semibold mb-2">Improvements:</h4>
+                    <ul class="list-disc pl-5">
+                        <li>Implemented file moving instead of copying to avoid redundancy</li>
+                        <li>Added confirmation modal when adding images to categories</li>
+                        <li>Introduced fading effect for smoother image loading</li>
+                        <li>Category selection now remembers the last browsed category</li>
+                        <li>Integrated Discord Rich Presence support</li>
+                        <li>Enhanced progress logging for better user feedback during operations</li>
+                    </ul>
+                `
             },
             {
                 title: "Optimize",
-                content: "- Free the image if can't see"
+                content: `
+                    <p><strong>Performance Improvement:</strong> Implemented image unloading for off-screen content to reduce memory usage.</p>
+                `
             }
         ]
     },
@@ -113,21 +249,27 @@ Now if you want to define your image in the category like posture you can add a 
             {
                 title: "Performance",
                 content: `
-- Optimize Multithread for flaskLog and flaskProcess.
-- Optimize Responding on http request.
-        `
+                    <h4 class="font-semibold mb-2">Optimizations:</h4>
+                    <ul class="list-disc pl-5">
+                        <li>Enhanced multithreading for flaskLog and flaskProcess</li>
+                        <li>Improved response times for HTTP requests</li>
+                    </ul>
+                `
             },
             {
                 title: "Quality of Life",
                 content: `
-- Add Modal when clicking delete category.
-- Add Modal when creating new category.
-- Add Modal when edit is successful or not.
-        `
+                    <h4 class="font-semibold mb-2">UI Enhancements:</h4>
+                    <ul class="list-disc pl-5">
+                        <li>Added confirmation dialog for category deletion</li>
+                        <li>Implemented modal for creating new categories</li>
+                        <li>Introduced feedback modals for successful or failed edits</li>
+                    </ul>
+                `
             },
             {
                 title: "Fixes",
-                content: "- Edit Category is now editing correctly."
+                content: "<p><strong>Bug Fix:</strong> Resolved issues with category editing functionality.</p>"
             }
         ]
     },
@@ -138,40 +280,77 @@ Now if you want to define your image in the category like posture you can add a 
             {
                 title: "Initial Beta",
                 type: "feature",
-                content: "The first problem that I create this program is I'm too tired when trying to look for ref and it a real time spent for looking into that that I didn't manage the file, So instead of create the folder by manual why just make like this to preview the image in real time and easy to navigate the folder!"
+                content: `
+                    <p>Welcome to the first beta release of LockerZ!</p>
+                    <p class="mt-2">This application aims to solve the problem of inefficient reference image management for artists and designers.</p>
+                    <p class="mt-2">Key features:</p>
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>Real-time image preview</li>
+                        <li>Easy navigation through categorized images</li>
+                        <li>Streamlined workflow for managing large image collections</li>
+                    </ul>
+                `
             },
             {
                 title: "Concept",
                 type: "concept",
-                content: `The concept of this program is the locker you can have many as many as your can / you can store and it store only img the category file path are \`C:\\Users\\"YourUser"\\LockerZ\` and all your categories and files are in here! just simple by this when you want to look into that you can just look into the locker it self and because it not the real world imaging that you're in the matrix and in the locker room your can navigate by just the 'Word'!`
+                content: `
+                    <p>LockerZ is designed around the concept of a digital locker room for your images:</p>
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>Store and organize images in virtual "lockers" (categories)</li>
+                        <li>Navigate your image collection using intuitive category names</li>
+                        <li>All files are stored locally at: <code>C:\\Users\\"YourUser"\\LockerZ</code></li>
+                    </ul>
+                    <p class="mt-2">Think of it as a matrix-like environment where you can navigate your visual references effortlessly!</p>
+                `
             },
             {
                 title: "Category",
                 type: "category",
                 content: `
-- First when your program install you can't find any category because this program are base on user need! so make your own category and go!
-- Now you are navigate your file by category!
-- You can edit or delete it anytime! but for edit make sure your category is empty!`
+                    <h4 class="font-semibold mb-2">Category Management:</h4>
+                    <ul class="list-disc pl-5">
+                        <li>Start with a clean slate - create categories based on your needs</li>
+                        <li>Navigate your files efficiently using custom categories</li>
+                        <li>Edit or delete categories as your needs evolve (ensure categories are empty before editing)</li>
+                    </ul>
+                `
             },
             {
                 title: "Locker",
                 type: "feature",
-                content: "Your image are now gonna in the Locker( folder with name of your category ) and it have image preview Feature too!"
+                content: `
+                    <p>The core of LockerZ - your personal image vaults:</p>
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>Each category acts as a separate "locker" for your images</li>
+                        <li>Built-in image preview functionality for quick reference</li>
+                        <li>Efficient storage and retrieval of your visual assets</li>
+                    </ul>
+                `
             },
             {
                 title: "Image Preview",
                 type: "preview",
-                content: "You're able to see your image without Zooming 300% and you are now can click too see the full image!"
+                content: `
+                    <p>Enhanced image viewing experience:</p>
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>View images without excessive zooming (no more 300% zoom required!)</li>
+                        <li>Click to see full-size images for detailed inspection</li>
+                        <li>Smooth and responsive image loading for a seamless experience</li>
+                    </ul>
+                `
             },
             {
                 title: "Drag n Drop",
                 type: "feature",
-                content: "You can upload your image into the category that you have made"
+                content: `
+                    <p><strong>Intuitive File Management:</strong> Easily upload images to your categories using drag and drop functionality.</p>
+                    <p class="mt-2">This feature streamlines the process of populating your image collection, making organization a breeze.</p>
+                `
             }
         ]
     }
 ];
-
 
 export default function Home() {
     return (
