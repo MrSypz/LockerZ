@@ -15,7 +15,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ImageViewer } from '@/components/widget/Image-viewer'
 import { FileGrid } from '@/components/widget/FileGrid'
 import { CategorySelector } from '@/components/widget/CategorySelector'
 import { PaginationControls } from '@/components/widget/PaginationControls'
@@ -39,8 +38,6 @@ export default function Locker() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [imagesPerPage, setImagesPerPage] = useState(10)
-    const [selectedImage, setSelectedImage] = useState<string | null>(null)
-    const [isViewerOpen, setIsViewerOpen] = useState(false)
     const [rememberCategory, setRememberCategory] = useState(false)
 
     const categoryRef = useRef(selectedCategory);
@@ -369,10 +366,6 @@ export default function Locker() {
                                     setSelectedFile(file)
                                     setMoveDialogOpen(true)
                                 }}
-                                onSelectImageAction={(imageUrl) => {
-                                    setSelectedImage(imageUrl)
-                                    setIsViewerOpen(true)
-                                }}
                                 apiUrl={API_URL}
                             />
                         )}
@@ -421,13 +414,6 @@ export default function Locker() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-            {isViewerOpen && selectedImage && (
-                <ImageViewer
-                    src={selectedImage}
-                    alt="Selected image"
-                    onClose={() => setIsViewerOpen(false)}
-                />
-            )}
         </div>
     )
 }
