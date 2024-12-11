@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { X, ZoomIn, ZoomOut, RotateCcw, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ZoomIn, ZoomOut, RotateCcw, ExternalLink, ChevronLeft, ChevronRight, Move } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from "@/hooks/use-toast";
 import {
@@ -21,7 +21,7 @@ interface ImageViewerProps {
 export function ImageViewer({ files, initialIndex, onClose, getFileUrl }: ImageViewerProps) {
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [scale, setScale] = useState(1);
-    const imgRef = useRef<HTMLImageElement>(null);
+    const [isPanning, setIsPanning] = useState(false);
 
     const currentFile = files[currentIndex];
     const src = getFileUrl(currentFile);
@@ -72,8 +72,8 @@ export function ImageViewer({ files, initialIndex, onClose, getFileUrl }: ImageV
     }, [onClose, handleNavigate, currentIndex, files.length]);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-            <div className="relative w-full h-full max-w-[90vw] max-h-[90vh]">
+        <div className="fixed inset-0 -top-[16px] z-50 bg-black/80 backdrop-blur-sm p-0 m-0 overflow-hidden">
+            <div className="absolute inset-0 overflow-hidden p-0 m-0">
                 <TransformWrapper
                     initialScale={1}
                     initialPositionX={0}
@@ -82,20 +82,26 @@ export function ImageViewer({ files, initialIndex, onClose, getFileUrl }: ImageV
                     minScale={0.1}
                     maxScale={8}
                     onZoom={(ref) => setScale(ref.state.scale)}
+                    onPanning={() => setIsPanning(true)}
+                    onPanningStop={() => setIsPanning(false)}
+                    wheel={{ disabled: false }}
+                    alignmentAnimation={{ disabled: true }}
+                    panning={{ disabled: false }}
+                    doubleClick={{ disabled: false }}
                 >
-                    {({zoomIn, zoomOut, resetTransform}) => (
+                    {({ zoomIn, zoomOut, resetTransform, setTransform }) => (
                         <>
                             <TransformComponent
-                                wrapperClass="!w-full !h-full"
-                                contentClass="!w-full !h-full flex items-center justify-center"
+                                wrapperClass="!w-screen !h-screen !overflow-hidden"
+                                contentClass="!w-full !h-full !flex !items-center !justify-center"
                             >
                                 <ContextMenu>
                                     <ContextMenuTrigger>
                                         <img
-                                            ref={imgRef}
                                             src={src}
                                             alt={alt}
-                                            className="max-w-full h-screen object-contain"
+                                            className="w-auto h-auto max-w-none object-contain"
+                                            style={{ maxHeight: '100vh', maxWidth: '100vw' }}
                                         />
                                     </ContextMenuTrigger>
                                     <ContextMenuContent>
@@ -106,32 +112,27 @@ export function ImageViewer({ files, initialIndex, onClose, getFileUrl }: ImageV
                                     </ContextMenuContent>
                                 </ContextMenu>
                             </TransformComponent>
-                            <div className="absolute bottom-4 right-4 flex flex-col items-end space-y-2">
-                                <div className="flex items-center space-x-2 bg-background/80 rounded-full p-1">
-                                    <Button variant="ghost" size="icon" onClick={() => zoomOut()}>
-                                        <ZoomOut className="h-4 w-4"/>
-                                    </Button>
-                                    <Button variant="ghost" size="icon" onClick={() => zoomIn()}>
-                                        <ZoomIn className="h-4 w-4"/>
-                                    </Button>
-                                </div>
-                                <Button variant="secondary" size="sm" onClick={() => resetTransform()}>
-                                    <RotateCcw className="h-4 w-4 mr-2"/>
-                                    Reset
+                            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-2 bg-background/80 rounded-full p-1">
+                                <Button variant="ghost" size="icon" onClick={() => zoomOut()}>
+                                    <ZoomOut className="h-4 w-4"/>
                                 </Button>
-                                {fileUrl && (
-                                    <div
-                                        className="bg-background/80 text-foreground px-2 py-1 rounded-md text-xs max-w-xs truncate">
-                                        {fileUrl}
-                                    </div>
-                                )}
+                                <Button variant="ghost" size="icon" onClick={() => zoomIn()}>
+                                    <ZoomIn className="h-4 w-4"/>
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setTransform(0, 0, 1, 200)}
+                                    className={isPanning ? 'bg-primary text-primary-foreground' : ''}
+                                >
+                                    <Move className="h-4 w-4"/>
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => resetTransform()}>
+                                    <RotateCcw className="h-4 w-4"/>
+                                </Button>
                             </div>
-                            <div
-                                className="absolute top-4 left-4 bg-background/80 text-foreground px-2 py-1 rounded-full text-sm font-medium">
+                            <div className="absolute top-4 left-4 bg-background/80 text-foreground px-2 py-1 rounded-full text-sm font-medium">
                                 {Math.round(scale * 100)}%
-                            </div>
-                            <div
-                                className="absolute bottom-4 left-4 bg-background/80 text-foreground px-2 py-1 rounded-md text-sm">
                             </div>
                         </>
                     )}
@@ -163,6 +164,11 @@ export function ImageViewer({ files, initialIndex, onClose, getFileUrl }: ImageV
                     <ChevronRight className="h-5 w-5"/>
                 </Button>
             </div>
+            {fileUrl && (
+                <div className="absolute bottom-16 left-4 bg-background/80 text-foreground px-2 py-1 rounded-md text-xs max-w-xs truncate">
+                    {fileUrl}
+                </div>
+            )}
         </div>
     );
 }
