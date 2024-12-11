@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const fsPromises = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
 const formidable = require('formidable');
 const NodeCache = require('node-cache');
@@ -159,27 +160,29 @@ async function getDirStats(dirPath) {
     return {size: totalSize, count: fileCount};
 }
 
-let exitRequested = false;
+// let exitRequested = false;
 
 process.stdin.on('data', async (data) => {
     const input = data.toString().trim();
     logger.info(`Received input: ${input}`);
     if (input === 'exit') {
         logger.info('Exit signal received. Shutting down...');
+        // exitRequested = true;
+        logger.info('Process exiting...');
+        logger.info('Application is shutting down');
         await logger.archiveLog();
-        exitRequested = true;
-        killProcess();
+        process.exit(); // Exit the Node.js process
     }
 });
-function sleep(seconds) {
-    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
-}
-
-async function killProcess() {
-    logger.info('Process exiting...');
-    await sleep(1);
-    process.exit(0); // Exit the Node.js process
-}
+process.on('exit', () => {
+    console.log('Process exiting...');
+});
+process.on('SIGINT', async () => {
+    console.log('Caught interrupt signal');
+    logger.info('Application is shutting down');
+    await logger.archiveLog();
+    process.exit();
+});
 
 logger.info('Sidecar process started');
 
@@ -389,6 +392,7 @@ app.post('/create-category', async (req, res) => {
         res.status(500).json({error: 'Failed to create category'});
     }
 });
+
 
 app.post('/move-file', async (req, res) => {
     const form = new formidable.IncomingForm();
