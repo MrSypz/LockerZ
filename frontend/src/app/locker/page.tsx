@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from "@/hooks/use-toast"
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
 import { open } from '@tauri-apps/plugin-dialog'
 import { MoveDialog } from '@/components/widget/Move-dialog'
 import {
@@ -25,9 +25,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const ALLOWED_FILE_TYPES = ['.png', '.jpg', '.jpeg', '.jfif', '.webp'];
 
+const PAGE_STORAGE_KEY = 'lockerz-current-page'
+const IMAGES_PER_PAGE_STORAGE_KEY = 'lockerz-images-per-page'
 
 export default function Locker() {
     const [files, setFiles] = useState<File[]>([])
+    const [allFiles, setAllFiles] = useState<File[]>([])
     const [categories, setCategories] = useState<string[]>([])
     const [selectedCategory, setSelectedCategory] = useState<string>('all')
     const [isLoading, setIsLoading] = useState(true)
@@ -43,6 +46,36 @@ export default function Locker() {
     const categoryRef = useRef(selectedCategory);
     const { t } = useTranslation();
 
+    useEffect(() => {
+        const savedPage = localStorage.getItem(PAGE_STORAGE_KEY)
+        const savedImagesPerPage = localStorage.getItem(IMAGES_PER_PAGE_STORAGE_KEY)
+
+        if (savedPage) {
+            setCurrentPage(parseInt(savedPage, 10))
+        }
+        if (savedImagesPerPage) {
+            setImagesPerPage(parseInt(savedImagesPerPage, 10))
+        }
+
+        isRememberCategory()
+        fetchCategories()
+    }, [])
+
+    useEffect(() => {
+        console.log("selectedCategory changed:", selectedCategory);
+        categoryRef.current = selectedCategory;
+        if (rememberCategory) {
+            localStorage.setItem('lastSelectedCategory', selectedCategory)
+        }
+    }, [selectedCategory, rememberCategory])
+
+    useEffect(() => {
+        fetchAllFiles();
+    }, [selectedCategory]);
+
+    useEffect(() => {
+        fetchPaginatedFiles();
+    }, [currentPage, imagesPerPage, selectedCategory]);
 
     const isRememberCategory = async () => {
         try {
@@ -66,44 +99,46 @@ export default function Locker() {
         }
     }
 
-    useEffect(() => {
-        isRememberCategory()
-        fetchFiles()
-        fetchCategories()
-    }, [])
-
-    useEffect(() => {
-        console.log("selectedCategory changed:", selectedCategory);
-        categoryRef.current = selectedCategory;
-        if (rememberCategory) {
-            localStorage.setItem('lastSelectedCategory', selectedCategory)
-        }
-    }, [selectedCategory, rememberCategory])
-
-    useEffect(() => {
-        fetchFiles()
-    }, [selectedCategory, currentPage, imagesPerPage])
-
-    const fetchFiles = async () => {
-        setIsLoading(true)
+    const fetchAllFiles = async () => {
         try {
-            const response = await fetch(`${API_URL}/files?page=${currentPage}&limit=${imagesPerPage}&category=${selectedCategory}`)
+            const response = await fetch(`${API_URL}/files?category=${selectedCategory}&limit=no-limit`);
             if (!response.ok) {
-                new Error('Failed to fetch files')
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-            const data = await response.json()
-            setFiles(data.files)
-            setTotalPages(data.totalPages)
+            const data = await response.json();
+            setAllFiles(data.files);
         } catch (error) {
+            console.error('Error fetching all files:', error);
+            toast({
+                title: t('toast.titleType.error'),
+                description: "Failed to fetch all files",
+                variant: "destructive",
+            });
+        }
+    };
+
+
+    const fetchPaginatedFiles = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`${API_URL}/files?page=${currentPage}&limit=${imagesPerPage}&category=${selectedCategory}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            setFiles(data.files);
+            setTotalPages(data.totalPages);
+        } catch (error) {
+            console.error('Error fetching paginated files:', error);
             toast({
                 title: t('toast.titleType.error'),
                 description: "Failed to fetch files",
                 variant: "destructive",
-            })
+            });
         } finally {
-            setIsLoading(false)
+            setIsLoading(false);
         }
-    }
+    };
 
     const fetchCategories = async () => {
         setIsCategoriesLoading(true)
@@ -247,8 +282,6 @@ export default function Locker() {
                 });
             }
         }
-        // Remove this line to prevent resetting the category
-        // setCurrentPage(1);
 
         if (validFiles.length < filesToProcess.length) {
             toast({
@@ -260,7 +293,6 @@ export default function Locker() {
     }, [selectedCategory, files, API_URL]);
 
     const onCategoryChange = useCallback((value: string) => {
-        // console.log("Category changed to:", value);
         setSelectedCategory(value);
         setCurrentPage(1);
         if (rememberCategory) {
@@ -296,6 +328,7 @@ export default function Locker() {
             })
         }
         setDeleteDialogOpen(false)
+        fetchAllFiles()
     }
 
     const handleMove = async (newCategory: string) => {
@@ -329,8 +362,20 @@ export default function Locker() {
             })
         }
         setMoveDialogOpen(false)
-        fetchFiles()
+        fetchAllFiles()
     }
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        localStorage.setItem(PAGE_STORAGE_KEY, page.toString());
+    };
+
+    const handleImagesPerPageChange = (value: number) => {
+        setImagesPerPage(value);
+        setCurrentPage(1);
+        localStorage.setItem(IMAGES_PER_PAGE_STORAGE_KEY, value.toString());
+        localStorage.setItem(PAGE_STORAGE_KEY, '1');
+    };
 
     return (
         <div className="flex h-screen bg-background">
@@ -358,30 +403,28 @@ export default function Locker() {
                         ) : (
                             <FileGrid
                                 files={files}
+                                allFiles={allFiles}
                                 onDeleteFileAction={(file) => {
-                                    setSelectedFile(file)
-                                    setDeleteDialogOpen(true)
+                                    setSelectedFile(file);
+                                    setDeleteDialogOpen(true);
                                 }}
                                 onMoveFileAction={(file) => {
-                                    setSelectedFile(file)
-                                    setMoveDialogOpen(true)
+                                    setSelectedFile(file);
+                                    setMoveDialogOpen(true);
                                 }}
                                 apiUrl={API_URL}
+                                currentPage={currentPage}
+                                imagesPerPage={imagesPerPage}
+                                onPageChange={handlePageChange}
+                                onTotalPagesChange={setTotalPages}
                             />
                         )}
                         <PaginationControls
                             currentPage={currentPage}
                             totalPages={totalPages}
                             imagesPerPage={imagesPerPage}
-                            onPageChange={(page) => {
-                                setCurrentPage(page)
-                                fetchFiles()
-                            }}
-                            onImagesPerPageChange={(value) => {
-                                setImagesPerPage(value)
-                                setCurrentPage(1)
-                                fetchFiles()
-                            }}
+                            onPageChange={handlePageChange}
+                            onImagesPerPageChange={handleImagesPerPageChange}
                         />
                     </div>
                 </main>
