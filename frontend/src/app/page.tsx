@@ -1,4 +1,3 @@
-import {Sidebar} from "@/components/widget/Sidebar"
 import {Dashboard} from "@/components/widget/Dashboard"
 import {Changelog} from "@/components/widget/Changelog"
 
@@ -7,7 +6,56 @@ const changelogItems = [
         version: "0.2.0",
         date: "10-12-2024",
         sections: [
-
+            {
+                title: "Rewrite",
+                content: "**Framework Migration**: Moved the main application from Electron.js to Tauri 2.0 for improved performance and smaller bundle size.\n" +
+                    "\n" +
+                    "- Note: Node.js is still used for the server; future plans include moving to native Tauri for further performance improvements.\n" +
+                    "\n\n   "+
+                    "**Complete Rewrite**: The application has been entirely rewritten, which may result in some features not being immediately available in this version."
+            },
+            {
+                title: "Optimize",
+                content: "Significant performance enhancements have been made, resulting in faster load times and smoother user experience.",
+                type: "concept"
+            },
+            {
+                title: "Config",
+                type: "preview",
+                content: "New Config path are now moving to \n\n" + `\`%appdata%\\lockerz\\config\\config.json\``,
+            },
+            {
+                title: "Dashboard",
+                type: "preview",
+                content: "Re-write and design on dashboard",
+                images: {
+                    before: "/img/Screenshot 2024-12-11 204117.png",
+                    after: "/img/Screenshot 2024-12-11 204029.png"
+                }
+            },
+            {
+                title: "Settings",
+                type: "preview",
+                content: "Make more configable than before and I'll add more config in the future",
+                images: {
+                    before: "/img/Screenshot 2024-12-11 205513.png",
+                    after: "/img/Screenshot 2024-12-11 205502.png"
+                }
+            },
+            {
+                title: "Localize",
+                type: "concept",
+                content: "It now can change to the langauage you like :)",
+                images: {
+                    before: "/img/Screenshot 2024-12-11 205513.png",
+                    after: "/img/Screenshot 2024-12-11 205523.png"
+                }
+            },
+            {
+                title: "Features",
+                content: "- Improved navigation with new sidebar\n- Enhanced image handling with drag-and-drop and click-to-select\n- Added category search functionality",
+                type: "feature"
+            }
         ]
     },
     {
@@ -42,6 +90,7 @@ Now if you want to define your image in the category like posture you can add a 
             },
             {
                 title: "Quality of Life",
+                type: "Qol",
                 content: `
 - Move the file instead of copy image to avoid redundancy.
 - Add Modal when adding image to category
@@ -126,13 +175,13 @@ Now if you want to define your image in the category like posture you can add a 
 
 export default function Home() {
     return (
-        <div className="flex h-screen bg-background">
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <main className="flex-1 overflow-y-auto">
-                    <Dashboard/>
-                    <Changelog items={changelogItems}/>
-                </main>
-            </div>
+        <div className="flex flex-col h-screen bg-background">
+            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+                <div className="max-w-7xl mx-auto space-y-8">
+                    <Dashboard />
+                    <Changelog items={changelogItems} />
+                </div>
+            </main>
         </div>
     )
 }

@@ -22,10 +22,22 @@
     "header": "Dashboard"
   },
   "category": {
+    "image" : {
+      "sort": {
+        "button": "Sort",
+        "title": "Sort Images",
+        "by-name": "Name",
+        "by-date": "Date",
+        "by-size": "Size",
+        "ascending": "Ascending",
+        "descending": "Descending"
+      }
+    },
     "dragdrop": {
       "idle": "Drop files here!",
       "hover": "Drag & drop files or click to select"
     },
+    "search": "Search category...",
     "tags-empty": "No tags",
     "page": {
       "head":"My Categories",
@@ -51,6 +63,10 @@
         "move": "Move to...",
         "delete": "Delete"
       }
+    },
+    "search":{
+      "results": "Found {{count}} image(s)",
+      "placeholder": "Type the Image name"
     },
     "toast": {
       "errorfetching" : "Error fetching current settings"
