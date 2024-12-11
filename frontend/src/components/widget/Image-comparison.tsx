@@ -35,6 +35,12 @@ export function ImageComparison({ beforeSrc, afterSrc, beforeAlt = "Before", aft
                     className="object-cover"
                 />
             </div>
+            <div className="absolute top-4 left-4 bg-white/80 dark:bg-black/80 px-2 py-1 rounded text-sm">
+                {beforeAlt}
+            </div>
+            <div className="absolute top-4 right-4 bg-white/80 dark:bg-black/80 px-2 py-1 rounded text-sm">
+                {afterAlt}
+            </div>
             <div className="absolute inset-x-0 bottom-4 px-4">
                 <Slider
                     min={0}
