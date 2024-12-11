@@ -11,7 +11,7 @@ import {FileContextMenu} from '@/components/widget/Context-menu'
 import {File} from '@/types/file'
 import {motion, AnimatePresence} from "framer-motion"
 import {useTranslation} from 'react-i18next'
-import {ArrowDown, ArrowUp, ArrowUpDown, Clock, FileIcon, Search, Text} from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, Clock, FileIcon, Search, Text } from 'lucide-react'
 import { ImageViewer } from './Image-viewer';
 
 function useColumnCount() {
@@ -44,12 +44,17 @@ function useColumnCount() {
 
 interface FileGridProps {
     files: File[]
+    allFiles: File[]
     onDeleteFileAction: (file: File) => void
     onMoveFileAction: (file: File) => void
     apiUrl: string
+    currentPage: number
+    imagesPerPage: number
+    onPageChange: (page: number) => void
+    onTotalPagesChange: (pages: number) => void
 }
 
-export function FileGrid({ files, onDeleteFileAction, onMoveFileAction, apiUrl }: FileGridProps) {
+export function FileGrid({ files, allFiles, onDeleteFileAction, onMoveFileAction, apiUrl , currentPage, imagesPerPage, onPageChange, onTotalPagesChange}: FileGridProps) {
     const totalColumns = useColumnCount()
     const [sortedFiles, setSortedFiles] = useState(files)
     const [sortCriteria, setSortCriteria] = useState<'name' | 'date' | 'size'>('name')
@@ -61,35 +66,46 @@ export function FileGrid({ files, onDeleteFileAction, onMoveFileAction, apiUrl }
 
 
     useEffect(() => {
-        const filtered = files.filter(file =>
-            file.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+        const filtered = searchTerm
+            ? allFiles.filter(file => file.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            : allFiles;
+
         const sorted = [...filtered].sort((a, b) => {
-            let comparison = 0
+            let comparison = 0;
             switch (sortCriteria) {
                 case 'name':
-                    comparison = a.name.localeCompare(b.name)
-                    break
+                    comparison = a.name.localeCompare(b.name);
+                    break;
                 case 'date':
-                    comparison = new Date(a.lastModified).getTime() - new Date(b.lastModified).getTime()
-                    break
+                    comparison = new Date(a.lastModified).getTime() - new Date(b.lastModified).getTime();
+                    break;
                 case 'size':
-                    comparison = a.size - b.size
-                    break
+                    comparison = a.size - b.size;
+                    break;
             }
-            return sortOrder === 'asc' ? comparison : -comparison
-        })
-        setSortedFiles(sorted)
-    }, [files, sortCriteria, sortOrder, searchTerm])
+            return sortOrder === 'asc' ? comparison : -comparison;
+        });
+
+        const totalFilteredPages = Math.ceil(sorted.length / imagesPerPage);
+        onTotalPagesChange(totalFilteredPages);
+
+        if (currentPage > totalFilteredPages) {
+            onPageChange(1);
+        }
+
+        const start = (currentPage - 1) * imagesPerPage;
+        const end = start + imagesPerPage;
+        setSortedFiles(sorted.slice(start, end));
+    }, [allFiles, sortCriteria, sortOrder, searchTerm, currentPage, imagesPerPage]);
 
     const handleSort = (criteria: 'name' | 'date' | 'size', order: 'asc' | 'desc') => {
-        setSortCriteria(criteria)
-        setSortOrder(order)
-        setIsOpen(false)
+        setSortCriteria(criteria);
+        setSortOrder(order);
+        setIsOpen(false);
     }
 
     const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(event.target.value)
+        setSearchTerm(event.target.value);
     }
     const handleSelectImage = (index: number) => {
         setSelectedImageIndex(index);
@@ -209,10 +225,13 @@ export function FileGrid({ files, onDeleteFileAction, onMoveFileAction, apiUrl }
             {
                 searchTerm && (
                     <div className="text-sm text-gray-500">
-                        {t('locker.search.results', {count: sortedFiles.length})}
+                        {t('locker.search.results', {count: allFiles.filter(file =>
+                                file.name.toLowerCase().includes(searchTerm.toLowerCase())
+                            ).length})}
                     </div>
                 )
             }
+
             <motion.div
                 className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 p-4 bg-background/50 backdrop-blur-sm rounded-lg border border-border"
                 layout
@@ -278,28 +297,33 @@ function FileCard({file, onDelete, onMove, onSelect, apiUrl, index, column, tota
         >
             <motion.div
                 layout
-                initial={{ opacity: 0, scale: 0.5, y: 20 }}
-                exit={{ opacity: 0, scale: 0.5, y: -20 }}
+                initial={{ opacity: 0, scale: 0.8, y: 50 }}
                 animate={{
                     opacity: 1,
                     scale: 1,
                     y: getOffset(),
-                }}
-                transition={{
-                    opacity: { duration: 0.3 },
-                    scale: { duration: 0.4 },
-                    layout: {
+                    transition: {
                         type: "spring",
-                        bounce: 0.3,
-                        duration: 0.6
-                    },
-                    delay: index * 0.05
+                        stiffness: 300,
+                        damping: 24,
+                        mass: 0.8,
+                    }
+                }}
+                exit={{ opacity: 0, scale: 0.8, y: 50 }}
+                transition={{
+                    opacity: { duration: 0.2 },
+                    layout: { type: "spring", stiffness: 300, damping: 24 }
+                }}
+                whileHover={{
+                    scale: 1.05,
+                    zIndex: 10,
+                    transition: { duration: 0.2 }
                 }}
                 className="relative"
                 style={{ zIndex: 1000 - index }}
             >
                 <Card
-                    className={`overflow-hidden transition-all duration-300 ease-in-out hover:ring-2 hover:ring-primary/50 cursor-pointer transform hover:scale-105 hover:z-10 ${
+                    className={`overflow-hidden transition-all duration-300 ease-in-out hover:ring-2 hover:ring-primary/50 cursor-pointer ${
                         isDarkSquare
                             ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                             : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
@@ -339,9 +363,9 @@ function FileCard({file, onDelete, onMove, onSelect, apiUrl, index, column, tota
                                     ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                                     : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
                             }`}
-                            initial={{opacity: 0}}
-                            animate={{opacity: 1}}
-                            transition={{delay: 0.2}}
+                            initial={{opacity: 0, y: 20}}
+                            animate={{opacity: 1, y: 0}}
+                            transition={{delay: 0.1, duration: 0.3}}
                         >
                             <p className="text-sm font-medium truncate">{file.name}</p>
                             <p className="text-xs opacity-80">{file.category}</p>
