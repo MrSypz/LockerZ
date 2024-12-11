@@ -1,7 +1,5 @@
-'use client'
-
 import React, { useState, useCallback, useEffect } from 'react'
-import { Loader2, Upload, Check } from 'lucide-react'
+import {Loader2, Upload, Check, Search} from 'lucide-react'
 import { getCurrentWindow } from "@tauri-apps/api/window"
 import { useTranslation } from 'react-i18next'
 import { Button } from "@/components/ui/button"
@@ -91,15 +89,18 @@ export function CategorySelector({
                         {isCategoriesLoading ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
-                            selectedCategory || "Select category"
+                            <>
+                                <Search className="mr-2 h-4 w-4" />
+                                {selectedCategory || t('category.select')}
+                            </>
                         )}
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[200px] p-0">
                     <Command>
                         <CommandInput placeholder={t('category.search')} className="h-9" />
-                        <CommandEmpty>No category found.</CommandEmpty>
-                        <CommandGroup className="max-h-[300px] overflow-auto">
+                        <CommandEmpty>{t('category.notFound')}</CommandEmpty>
+                            <CommandGroup className="max-h-[300px] overflow-auto">
                             <CommandItem
                                 onSelect={() => {
                                     onCategoryChange("all")
@@ -112,7 +113,7 @@ export function CategorySelector({
                                         selectedCategory === "all" ? "opacity-100" : "opacity-0"
                                     )}
                                 />
-                                All Categories
+                                {t('category.allCategories')}
                             </CommandItem>
                             {categories.map((category) => (
                                 <CommandItem
