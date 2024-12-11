@@ -29,8 +29,8 @@ const changelogItems = [
                 type: "preview",
                 content: "Re-write and design on dashboard",
                 images: {
-                    before: "/img/Screenshot 2024-12-11 204117.png",
-                    after: "/img/Screenshot 2024-12-11 204029.png"
+                    after: "/img/Screenshot 2024-12-11 204117.png",
+                    before: "/img/Screenshot 2024-12-11 204029.png"
                 }
             },
             {
@@ -38,8 +38,8 @@ const changelogItems = [
                 type: "preview",
                 content: "Make more configable than before and I'll add more config in the future",
                 images: {
-                    before: "/img/Screenshot 2024-12-11 205513.png",
-                    after: "/img/Screenshot 2024-12-11 205502.png"
+                    after: "/img/Screenshot 2024-12-11 205513.png",
+                    before: "/img/Screenshot 2024-12-11 205502.png"
                 }
             },
             {
@@ -47,8 +47,8 @@ const changelogItems = [
                 type: "concept",
                 content: "It now can change to the langauage you like :)",
                 images: {
-                    before: "/img/Screenshot 2024-12-11 205513.png",
-                    after: "/img/Screenshot 2024-12-11 205523.png"
+                    after: "/img/Screenshot 2024-12-11 205513.png",
+                    before: "/img/Screenshot 2024-12-11 205523.png"
                 }
             },
             {
