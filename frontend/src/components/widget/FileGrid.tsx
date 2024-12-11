@@ -14,7 +14,6 @@ import {useTranslation} from 'react-i18next'
 import {ArrowDown, ArrowUp, ArrowUpDown, Clock, FileIcon, Search, Text} from 'lucide-react'
 import { ImageViewer } from './Image-viewer';
 
-
 function useColumnCount() {
     const [columnCount, setColumnCount] = useState(5)
 
@@ -108,7 +107,7 @@ export function FileGrid({ files, onDeleteFileAction, onMoveFileAction, apiUrl }
                 <div className="relative flex-grow">
                     <Input
                         type="text"
-                        placeholder={t('search.placeholder')}
+                        placeholder={t('locker.search.placeholder')}
                         value={searchTerm}
                         onChange={handleSearch}
                         className="pl-10"
@@ -118,13 +117,13 @@ export function FileGrid({ files, onDeleteFileAction, onMoveFileAction, apiUrl }
                 <Drawer open={isOpen} onOpenChange={setIsOpen}>
                     <DrawerTrigger asChild>
                         <Button variant="outline" size="lg">
-                            {t('sort.button')}
+                            {t('category.image.sort.button')}
                             <ArrowUpDown className="ml-2 h-5 w-5"/>
                         </Button>
                     </DrawerTrigger>
                     <DrawerContent className="h-[40vh] max-h-[400px]">
                         <DrawerHeader>
-                            <DrawerTitle>{t('sort.title')}</DrawerTitle>
+                            <DrawerTitle>{t('category.image.sort.title')}</DrawerTitle>
                         </DrawerHeader>
                         <Tabs value={sortCriteria}
                               onValueChange={(value) => setSortCriteria(value as 'name' | 'date' | 'size')}
@@ -132,15 +131,15 @@ export function FileGrid({ files, onDeleteFileAction, onMoveFileAction, apiUrl }
                             <TabsList className="grid w-full grid-cols-3 mb-2">
                                 <TabsTrigger value="name" className="flex items-center justify-center">
                                     <Text className="w-4 h-4 mr-2"/>
-                                    {t('sort.by-name')}
+                                    {t('category.image.sort.by-name')}
                                 </TabsTrigger>
                                 <TabsTrigger value="date" className="flex items-center justify-center">
                                     <Clock className="w-4 h-4 mr-2"/>
-                                    {t('sort.by-date')}
+                                    {t('category.image.sort.by-date')}
                                 </TabsTrigger>
                                 <TabsTrigger value="size" className="flex items-center justify-center">
                                     <FileIcon className="w-4 h-4 mr-2"/>
-                                    {t('sort.by-size')}
+                                    {t('category.image.sort.by-size')}
                                 </TabsTrigger>
                             </TabsList>
                             <TabsContent value="name" className="mt-2">
@@ -150,7 +149,7 @@ export function FileGrid({ files, onDeleteFileAction, onMoveFileAction, apiUrl }
                                         variant={sortCriteria === 'name' && sortOrder === 'asc' ? 'default' : 'outline'}
                                         className="w-full justify-between py-1 px-2 text-sm"
                                     >
-                                        {t('sort.ascending')}
+                                        {t('category.image.sort.ascending')}
                                         <ArrowUp className="h-3 w-3"/>
                                     </Button>
                                     <Button
@@ -158,7 +157,7 @@ export function FileGrid({ files, onDeleteFileAction, onMoveFileAction, apiUrl }
                                         variant={sortCriteria === 'name' && sortOrder === 'desc' ? 'default' : 'outline'}
                                         className="w-full justify-between py-1 px-2 text-sm"
                                     >
-                                        {t('sort.descending')}
+                                        {t('category.image.sort.descending')}
                                         <ArrowDown className="h-3 w-3"/>
                                     </Button>
                                 </div>
@@ -170,7 +169,7 @@ export function FileGrid({ files, onDeleteFileAction, onMoveFileAction, apiUrl }
                                         variant={sortCriteria === 'date' && sortOrder === 'asc' ? 'default' : 'outline'}
                                         className="w-full justify-between py-1 px-2 text-sm"
                                     >
-                                        {t('sort.ascending')}
+                                        {t('category.image.sort.ascending')}
                                         <ArrowUp className="h-3 w-3"/>
                                     </Button>
                                     <Button
@@ -178,7 +177,7 @@ export function FileGrid({ files, onDeleteFileAction, onMoveFileAction, apiUrl }
                                         variant={sortCriteria === 'date' && sortOrder === 'desc' ? 'default' : 'outline'}
                                         className="w-full justify-between py-1 px-2 text-sm"
                                     >
-                                        {t('sort.descending')}
+                                        {t('category.image.sort.descending')}
                                         <ArrowDown className="h-3 w-3"/>
                                     </Button>
                                 </div>
@@ -190,7 +189,7 @@ export function FileGrid({ files, onDeleteFileAction, onMoveFileAction, apiUrl }
                                         variant={sortCriteria === 'size' && sortOrder === 'asc' ? 'default' : 'outline'}
                                         className="w-full justify-between py-1 px-2 text-sm"
                                     >
-                                        {t('sort.ascending')}
+                                        {t('category.image.sort.ascending')}
                                         <ArrowUp className="h-3 w-3"/>
                                     </Button>
                                     <Button
@@ -198,7 +197,7 @@ export function FileGrid({ files, onDeleteFileAction, onMoveFileAction, apiUrl }
                                         variant={sortCriteria === 'size' && sortOrder === 'desc' ? 'default' : 'outline'}
                                         className="w-full justify-between py-1 px-2 text-sm"
                                     >
-                                        {t('sort.descending')}
+                                        {t('category.image.sort.descending')}
                                         <ArrowDown className="h-3 w-3"/>
                                     </Button>
                                 </div>
@@ -207,9 +206,13 @@ export function FileGrid({ files, onDeleteFileAction, onMoveFileAction, apiUrl }
                     </DrawerContent>
                 </Drawer>
             </div>
-            <div className="text-sm text-gray-500">
-                {t('search.results', {count: sortedFiles.length})}
-            </div>
+            {
+                searchTerm && (
+                    <div className="text-sm text-gray-500">
+                        {t('locker.search.results', {count: sortedFiles.length})}
+                    </div>
+                )
+            }
             <motion.div
                 className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 p-4 bg-background/50 backdrop-blur-sm rounded-lg border border-border"
                 layout

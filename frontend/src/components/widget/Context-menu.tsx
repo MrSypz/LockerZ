@@ -44,14 +44,14 @@ export function FileContextMenu({ children, file, onDeleteAction, onMoveAction }
                             className="flex cursor-pointer items-center rounded-sm px-2 py-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-accent/50"
                         >
                             <FolderInput className="mr-2 h-4 w-4" />
-                            {t('dialog.menu.move')}
+                            {t('locker.dialog.menu.move')}
                         </ContextMenuItem>
                         <ContextMenuItem
                             onClick={() => onDeleteAction(file)}
                             className="flex cursor-pointer items-center rounded-sm px-2 py-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-accent/50 text-red-500 hover:text-red-600"
                         >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            {t('dialog.menu.delete')}
+                            {t('locker.dialog.menu.delete')}
                         </ContextMenuItem>
                     </motion.div>
                 </ContextMenuContent>
