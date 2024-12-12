@@ -3,7 +3,43 @@ import { Changelog } from "@/components/widget/Changelog"
 
 const changelogItems = [
     {
-        version: "0.2.0",
+      version: "0.2.1 - beta",
+      data: "12-12-2024",
+      sections: [
+          {
+              title: "Performance",
+              type: "preview",
+              content: `
+              <h1 class="text-lg font-semibold mb-2">Image Render</h1>
+              <p class="mb-4">I'm testing with my own pc and it comeout perty good the one thing is image loading and image rendering it now almost instant show up
+              and when change page it update smootly nolonger have spike lag.</p>
+              `,
+          },
+          {
+              title: "Quality of Life",
+              type: "preview",
+              content: `
+              <h1 class="text-lg font-semibold mb-2">Remember Cagetory/Page</h1>
+              <p class="mb-4">when change to dashboard or setting and go back or close the program and open again.</p>
+              <h1 class="text-lg font-semibold mb-2">Pag Navigation</h1>
+              <p class="mb-4">Users can type the page wherever they want to go.</p>
+              `
+          },
+          {
+              title: "Fix",
+              type:"feature",
+              content: `
+              <h3 class="text-lg font-semibold mb-2">Searching</h3>
+              it now took the whole path/category not just in that page that you're currently on
+              <h3 class="text-lg font-semibold mb-2">Image Viewer</h3>
+              <p class="mb-4">it now use the full screen viewport.</p>
+
+              `
+          }
+      ]
+    },
+    {
+        version: "0.2.0 - beta",
         date: "10-12-2024",
         sections: [
             {
@@ -22,7 +58,7 @@ const changelogItems = [
                 title: "Config",
                 type: "preview",
                 content: `
-                    <p>New Config path is now located at:</p>
+                    <p>The new LockerZ Config path is now located at:</p>
                     <code class="block bg-gray-100 dark:bg-gray-800 p-2 rounded-md my-2">%appdata%\\lockerz\\config\\config.json</code>
                 `
             },
@@ -41,9 +77,9 @@ const changelogItems = [
                 content: `
                     <p>Enhanced configurability with more options:</p>
                     <ul class="list-disc pl-5 mt-2">
-                        <li>Expanded user preferences</li>
-                        <li>Advanced system settings</li>
-                        <li>Customizable UI options</li>
+                        <li>The root directory path</li>
+                        <li>Category Remember</li>
+                        <li>Language options</li>
                     </ul>
                     <p class="mt-2">More configurations will be added in future updates.</p>
                 `,
@@ -77,7 +113,7 @@ const changelogItems = [
                     <ul class="list-disc pl-5 mt-2">
                         <li>New intuitive design for easier navigation</li>
                         <li>Improved editing capabilities</li>
-                        <li>Enhanced categorization algorithms</li>
+                        <li>Adding Detail of each category</li>
                     </ul>
                 `,
                 images: {
@@ -95,6 +131,20 @@ const changelogItems = [
                 }
             },
             {
+                title: "Context Menu",
+                type: "preview",
+                content: `
+                    <p>Visualize</p>
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>Make it more easy to see</li>
+                    </ul>
+                `,
+                images: {
+                    before: "/img/Screenshot 2024-12-12 031524.png",
+                    after: "/img/Screenshot 2024-12-12 031515.png"
+                }
+            },
+            {
                 title: "Image Viewer",
                 type: "preview",
                 content: `
@@ -106,8 +156,8 @@ const changelogItems = [
                     </ul>
                 `,
                 images: {
-                    before: "/img/Screenshot 2024-12-12 031524.png",
-                    after: "/img/Screenshot 2024-12-12 031515.png"
+                    before: "/img/oldimageview.png",
+                    after: "/img/newimageview.png"
                 }
             },
             {
