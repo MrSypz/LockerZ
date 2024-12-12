@@ -224,6 +224,17 @@ const changelogItems = [
                     </ul>
                 `,
                 type: "feature"
+            },
+            {
+                title: "Porting",
+                content: `
+                    <h1 class="font-semibold mb-2">Porting Some Features from ElectronJs:</h1>
+                    <ul class="list-disc pl-5">
+                        <li>Drag and drop Feature</li>
+                        <li>Category Editing</li>
+                        <li>Image Context Menu</li>
+                    </ul>
+                `
             }
         ]
     },
