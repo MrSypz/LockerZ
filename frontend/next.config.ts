@@ -1,7 +1,7 @@
 
 const isProd = process.env.NODE_ENV === 'production';
 
-const internalHost = process.env.TAURI_DEV_HOST || 'localhost';
+const internalHost = 'localhost';
 /** @type {import('next').NextConfig} */
 const nextConfig: import('next').NextConfig = {
     images: {
@@ -12,6 +12,7 @@ const nextConfig: import('next').NextConfig = {
                 port: '3001',
             },
         ],
+        unoptimized: true
     },
     typescript: {
         // !! WARN !!
@@ -21,7 +22,7 @@ const nextConfig: import('next').NextConfig = {
         // Nah it work is work!!!!!!!!!!!!!!!!!!!!!!!!
         ignoreBuildErrors: true,
     },
-    // output: "export",
+    output: "export",
     assetPrefix: isProd ? undefined : `http://${internalHost}:3000`,
 }
 
