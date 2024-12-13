@@ -16,9 +16,19 @@ const cache = new NodeCache({stdTTL: 600}); // Cache for 10 minutes
 // Middleware
 app.use(cors());
 app.use(express.json());
+
 // Config paths
 const configDir = path.join(process.env.APPDATA || process.env.HOME, 'lockerz', 'config');
 const configPath = path.join(configDir, 'config.json');
+
+const defaultConfig = {
+    folderPath: path.join(process.env.USERPROFILE || process.env.HOME, 'Documents', 'LockerZ'),
+    rememberCategory: true,
+    lang: "en",
+    imageQuality: 75,
+    imageWidth: 1920,
+    imageHeight: 1080
+};
 
 class Logger {
     constructor(logDir) {
@@ -129,11 +139,7 @@ async function readConfig() {
         return JSON.parse(configData);
     } catch (error) {
         if (error.code === 'ENOENT') {
-            return {
-                folderPath: path.join(process.env.USERPROFILE || process.env.HOME, 'Documents', 'LockerZ'),
-                rememberCategory: true,
-                lang: "en"
-            };
+            return defaultConfig;
         }
         throw error;
     }
@@ -403,43 +409,20 @@ app.get('/get-settings', async (req, res) => {
 
 app.post('/update-settings', async (req, res) => {
     try {
-        const oldConfig = await readConfig();
-        const updatedConfig = { ...oldConfig, ...req.body };
-        await writeConfig(updatedConfig);
-
+        const newSettings = req.body;
+        const currentSettings = await readConfig();
+        const updatedSettings = { ...currentSettings, ...newSettings };
+        await writeConfig(updatedSettings);
         if (req.body.folderPath && req.body.folderPath !== rootFolderPath) {
             rootFolderPath = req.body.folderPath;
             app.use('/images', express.static(rootFolderPath));
             clearRelevantCaches();
             logger.info(`Root folder path updated to: ${rootFolderPath}`);
         }
-
         res.json({ success: true });
     } catch (error) {
-        logger.error('Error updating settings: ' + error);
-        res.status(500).json({ error: 'Failed to update settings' });
-    }
-});
-
-app.post('/update-root-path', async (req, res) => {
-    const { newRootPath } = req.body;
-    logger.info(`Received request to update root path to: ${newRootPath}`);
-
-    try {
-        await fsPromises.access(newRootPath);
-        rootFolderPath = newRootPath;
-        config.folderPath = newRootPath;
-        await writeConfig(config);
-
-        app.use('/images', express.static(rootFolderPath));
-
-        clearRelevantCaches();
-
-        logger.info('Root folder path updated successfully');
-        res.json({ success: true });
-    } catch (error) {
-        logger.error('Error updating root folder path: ' + error);
-        res.status(400).json({ success: false, message: 'Invalid folder path or permission denied' });
+        console.error('Error updating settings:', error);
+        res.status(500).json({ success: false, error: 'Failed to update settings' });
     }
 });
 
