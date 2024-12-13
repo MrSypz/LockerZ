@@ -11,6 +11,7 @@ import {useTranslation} from 'react-i18next'
 import { ArrowDown, ArrowUp, ArrowUpDown, Clock, FileIcon, Search, Text } from 'lucide-react'
 import { ImageViewer } from './Image-viewer';
 import { OptimizedImage } from '@/components/widget/OptimizedImage';
+import {useSharedSettings} from "@/utils/SettingsContext";
 
 function useColumnCount() {
     const [columnCount, setColumnCount] = useState(5)
@@ -286,6 +287,7 @@ interface FileCardProps {
 
 function FileCard({file, onDelete, onMove, onSelect, index, column, totalColumns}: FileCardProps) {
     const {t} = useTranslation();
+    const { settings } = useSharedSettings();
 
     const row = Math.floor(index / totalColumns)
     const isDarkSquare = (row + column) % 2 === 0
@@ -345,9 +347,9 @@ function FileCard({file, onDelete, onMove, onSelect, index, column, totalColumns
                             <OptimizedImage
                                 src={imageSrc}
                                 alt={file.name}
-                                width={350}
-                                height={400}
-                                quality={100}
+                                width={settings.imageWidth}
+                                height={settings.imageHeight}
+                                quality={settings.imageQuality}
                             />
                         </div>
                         <motion.div
