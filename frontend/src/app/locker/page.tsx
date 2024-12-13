@@ -29,77 +29,44 @@ const PAGE_STORAGE_KEY = 'lockerz-current-page'
 const IMAGES_PER_PAGE_STORAGE_KEY = 'lockerz-images-per-page'
 
 export default function Locker() {
+    const { t } = useTranslation();
+    const { settings } = useSharedSettings();
+
     const [files, setFiles] = useState<File[]>([])
     const [allFiles, setAllFiles] = useState<File[]>([])
     const [categories, setCategories] = useState<string[]>([])
-    const [selectedCategory, setSelectedCategory] = useState<string>('all')
+    const [selectedCategory, setSelectedCategory] = useState<string>(() => {
+        if (typeof window !== 'undefined' && settings.rememberCategory) {
+            return localStorage.getItem('lastSelectedCategory') || 'all';
+        }
+        return 'all';
+    });
     const [isLoading, setIsLoading] = useState(true)
     const [isCategoriesLoading, setIsCategoriesLoading] = useState(true)
-    const [currentPage, setCurrentPage] = useState(1)
+    const [currentPage, setCurrentPage] = useState(() => {
+        const savedPage = localStorage.getItem(PAGE_STORAGE_KEY)
+        return savedPage ? parseInt(savedPage, 10) : 1
+    })
     const [totalPages, setTotalPages] = useState(1)
     const [moveDialogOpen, setMoveDialogOpen] = useState(false)
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
-    const [imagesPerPage, setImagesPerPage] = useState(10)
-    const [rememberCategory, setRememberCategory] = useState(false)
+    const [imagesPerPage, setImagesPerPage] = useState(() => {
+        const savedImagesPerPage = localStorage.getItem(IMAGES_PER_PAGE_STORAGE_KEY)
+        return savedImagesPerPage ? parseInt(savedImagesPerPage, 10) : 10
+    })
+    const [rememberCategory, setRememberCategory] = useState(settings.rememberCategory)
 
     const categoryRef = useRef(selectedCategory);
-    const { t } = useTranslation();
 
-    const { settings } = useSharedSettings();
-
-
-    useEffect(() => {
-        const savedPage = localStorage.getItem(PAGE_STORAGE_KEY)
-        const savedImagesPerPage = localStorage.getItem(IMAGES_PER_PAGE_STORAGE_KEY)
-
-        if (savedPage) {
-            setCurrentPage(parseInt(savedPage, 10))
+    const isRememberCategory = useCallback(() => {
+        setRememberCategory(settings.rememberCategory);
+        if (!settings.rememberCategory) {
+            localStorage.removeItem('lastSelectedCategory');
         }
-        if (savedImagesPerPage) {
-            setImagesPerPage(parseInt(savedImagesPerPage, 10))
-        }
+    }, [settings.rememberCategory]);
 
-        isRememberCategory()
-        fetchCategories()
-    }, [])
-
-    useEffect(() => {
-        console.log("selectedCategory changed:", selectedCategory);
-        categoryRef.current = selectedCategory;
-        if (rememberCategory) {
-            localStorage.setItem('lastSelectedCategory', selectedCategory)
-        }
-    }, [selectedCategory, rememberCategory])
-    useEffect(() => {
-        fetchAllFiles();
-
-    }, [selectedCategory]);
-    useEffect(() => {
-        fetchPaginatedFiles();
-    }, [currentPage, imagesPerPage, selectedCategory]);
-
-    const isRememberCategory = async () => {
-        try {
-            setRememberCategory(settings.rememberCategory)
-            if (settings.rememberCategory) {
-                const storedCategory = localStorage.getItem('lastSelectedCategory')
-                if (storedCategory) {
-                    setSelectedCategory(storedCategory)
-                }
-            } else {
-                localStorage.removeItem('lastSelectedCategory')
-            }
-        } catch (error) {
-            toast({
-                title: t('toast.titleType.error'),
-                description: "Error fetching current settings",
-                variant: "destructive",
-            })
-        }
-    }
-
-    const fetchAllFiles = async () => {
+    const fetchAllFiles = useCallback(async () => {
         try {
             const response = await fetch(`${API_URL}/files?category=${selectedCategory}&limit=no-limit`);
             if (!response.ok) {
@@ -115,10 +82,10 @@ export default function Locker() {
                 variant: "destructive",
             });
         }
-    };
+    }, [selectedCategory, t]);
 
 
-    const fetchPaginatedFiles = async () => {
+    const fetchPaginatedFiles = useCallback(async () => {
         setIsLoading(true);
         try {
             const response = await fetch(`${API_URL}/files?page=${currentPage}&limit=${imagesPerPage}&category=${selectedCategory}`);
@@ -138,14 +105,14 @@ export default function Locker() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [currentPage, imagesPerPage, selectedCategory, t]);
 
-    const fetchCategories = async () => {
+    const fetchCategories = useCallback(async () => {
         setIsCategoriesLoading(true)
         try {
             const response = await fetch(`${API_URL}/categories`)
             if (!response.ok) {
-                new Error('Failed to fetch categories')
+                throw new Error('Failed to fetch categories')
             }
             const data = await response.json()
             setCategories(data.map((category: { name: string }) => category.name))
@@ -158,7 +125,39 @@ export default function Locker() {
         } finally {
             setIsCategoriesLoading(false)
         }
-    }
+    }, [t]);
+
+    useEffect(() => {
+        const savedPage = localStorage.getItem(PAGE_STORAGE_KEY)
+        const savedImagesPerPage = localStorage.getItem(IMAGES_PER_PAGE_STORAGE_KEY)
+
+        if (savedPage) {
+            setCurrentPage(parseInt(savedPage, 10))
+        }
+        if (savedImagesPerPage) {
+            setImagesPerPage(parseInt(savedImagesPerPage, 10))
+        }
+
+        isRememberCategory()
+        fetchCategories();
+        fetchAllFiles().then(() => fetchPaginatedFiles());
+    }, [isRememberCategory, fetchAllFiles, fetchPaginatedFiles, fetchCategories])
+
+
+    useEffect(() => {
+        categoryRef.current = selectedCategory;
+        if (rememberCategory) {
+            localStorage.setItem('lastSelectedCategory', selectedCategory)
+        }
+    }, [selectedCategory, rememberCategory]);
+
+
+    useEffect(() => {
+        if (selectedCategory) {
+            fetchAllFiles().then(() => fetchPaginatedFiles());
+        }
+    }, [selectedCategory, currentPage, imagesPerPage, fetchAllFiles, fetchPaginatedFiles]);
+
 
     const handleFileDrop = useCallback(async (droppedFiles?: string[]) => {
         let filesToProcess: (globalThis.File | string)[] = [];
@@ -266,7 +265,7 @@ export default function Locker() {
                     body: formData,
                 });
                 if (!response.ok) {
-                    new Error('File move failed');
+                    throw new Error('File move failed');
                 }
                 const data = await response.json();
                 setFiles(prevFiles => [data.file, ...prevFiles]);
@@ -291,7 +290,7 @@ export default function Locker() {
                 variant: "destructive",
             });
         }
-    }, [selectedCategory, files, API_URL]);
+    }, [selectedCategory, files, API_URL, fetchAllFiles, t]);
 
     const onCategoryChange = useCallback((value: string) => {
         setSelectedCategory(value);
@@ -299,7 +298,8 @@ export default function Locker() {
         if (rememberCategory) {
             localStorage.setItem('lastSelectedCategory', value);
         }
-    }, [rememberCategory]);
+        fetchAllFiles().then(() => fetchPaginatedFiles());
+    }, [rememberCategory, fetchAllFiles, fetchPaginatedFiles]);
 
     const handleDelete = async (file: File) => {
         try {
@@ -314,7 +314,7 @@ export default function Locker() {
                 }),
             })
             if (!response.ok) {
-                new Error('Failed to delete file')
+                throw new Error('Failed to delete file')
             }
             setFiles(prevFiles => prevFiles.filter(f => f.name !== file.name || f.category !== file.category))
             toast({
@@ -348,7 +348,7 @@ export default function Locker() {
                 }),
             })
             if (!response.ok) {
-                new Error('Failed to move file')
+                throw new Error('Failed to move file')
             }
             setFiles(prevFiles => prevFiles.filter(f => f.name !== selectedFile.name || f.category !== selectedFile.category))
             toast({
