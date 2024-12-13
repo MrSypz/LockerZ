@@ -3,6 +3,38 @@ import { Changelog } from "@/components/widget/Changelog"
 
 const changelogItems = [
     {
+        version: "0.2.2 - beta",
+        date: "14-12-2024",
+        sections: [
+            {
+                title: "Performance",
+                type: "preview",
+                content: `
+              <h1 class="text-lg font-semibold mb-2">Image Render</h1>
+              <p class="mb-4">More Optimize to make it more configable Seeing in Locker Setting</p>
+              `,
+            },
+            {
+                title: "Quality of Life",
+                type: "preview",
+                content: `
+              <h1 class="text-lg font-semibold mb-2">Locker Setting</h1>
+              <ul class="list-disc pl-5 mt-2">
+                <li>Image Quality : downgrade the image quality aka resolution</li>
+                <li>Heigh Pixel : down/up grade the image resolution </li>
+                <li>Width Pixel : down/up grade the image resolution</li>
+              </ul>
+              <div class="bg-blue-100 dark:bg-blue-900 p-4 rounded-md mb-4">
+                <p class="text-blue-800 dark:text-blue-200">
+                <em>Note: Heigh and Width Pixel are the highest performance impact depend on your image size if you got image ~8k resolution or your image size are really big like around > 5 mb when loadign it'll take a time to loading image.</em>
+                PS: this one will affect when first load only after that will nolonger affect due to cache image but cache are clear every year.
+                </p>
+              </div>
+              `
+            }
+        ]
+    },
+    {
       version: "0.2.1 - beta",
       date: "12-12-2024",
       sections: [

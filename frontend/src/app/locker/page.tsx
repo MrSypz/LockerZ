@@ -21,6 +21,7 @@ import { PaginationControls } from '@/components/widget/PaginationControls'
 import { File } from '@/types/file'
 import {useTranslation} from "react-i18next";
 import {API_URL} from "@/lib/zaphire";
+import {useSharedSettings} from "@/utils/SettingsContext";
 
 const ALLOWED_FILE_TYPES = ['.png', '.jpg', '.jpeg', '.jfif', '.webp'];
 
@@ -44,6 +45,9 @@ export default function Locker() {
 
     const categoryRef = useRef(selectedCategory);
     const { t } = useTranslation();
+
+    const { settings } = useSharedSettings();
+
 
     useEffect(() => {
         const savedPage = localStorage.getItem(PAGE_STORAGE_KEY)
@@ -69,19 +73,17 @@ export default function Locker() {
     }, [selectedCategory, rememberCategory])
 
     useEffect(() => {
-        fetchAllFiles();
-    }, [selectedCategory]);
-
-    useEffect(() => {
+        if (selectedCategory) {
+            fetchAllFiles();
+        }
         fetchPaginatedFiles();
     }, [currentPage, imagesPerPage, selectedCategory]);
 
+
     const isRememberCategory = async () => {
         try {
-            const response = await fetch(`${API_URL}/get-settings`)
-            const data = await response.json()
-            setRememberCategory(data.rememberCategory)
-            if (data.rememberCategory) {
+            setRememberCategory(settings.rememberCategory)
+            if (settings.rememberCategory) {
                 const storedCategory = localStorage.getItem('lastSelectedCategory')
                 if (storedCategory) {
                     setSelectedCategory(storedCategory)
