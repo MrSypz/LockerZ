@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { API_URL } from "@/lib/zaphire";
-import {useTranslation} from "react-i18next";
 import {t} from "i18next";
 
 interface Settings {
@@ -13,13 +12,6 @@ interface Settings {
     imageHeight: number;
 }
 export function useSettings() {
-    //     folderPath: "",
-    //     rememberCategory: false,
-    //     lang: "en",
-    //     imageQuality: 100,
-    //     imageWidth: 300,
-    //     imageHeight: 450
-    // });
     const [settings, setSettings] = useState<Settings | null>(null);
 
     const [isLoading, setIsLoading] = useState(true);
