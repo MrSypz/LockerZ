@@ -62,6 +62,19 @@ export function FileGrid({ files, allFiles, onDeleteFileAction, onMoveFileAction
     const [isOpen, setIsOpen] = useState(false)
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.code === 'Space') {
+                event.preventDefault();
+                setIsOpen(prevState => !prevState); // Toggle the isOpen state
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
 
     useEffect(() => {
         const filtered = searchTerm
@@ -99,7 +112,6 @@ export function FileGrid({ files, allFiles, onDeleteFileAction, onMoveFileAction
     const handleSort = (criteria: 'name' | 'date' | 'size', order: 'asc' | 'desc') => {
         setSortCriteria(criteria);
         setSortOrder(order);
-        setIsOpen(false);
     }
 
     const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
