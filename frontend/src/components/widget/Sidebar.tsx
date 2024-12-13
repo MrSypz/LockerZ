@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, FolderOpen, Image, Settings, Menu } from 'lucide-react'
+import {Home, FolderOpen, Image, Settings, Menu, Info} from 'lucide-react'
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { ModeToggle } from "@/components/widget/Mode-toggle"
@@ -20,6 +20,7 @@ export function Sidebar() {
     { icon: Image, label: t('sidebar.image'), href: "/locker" },
     { icon: FolderOpen, label: t('sidebar.folder'), href: "/category" },
     { icon: Settings, label: t('sidebar.settings'), href: "/settings" },
+    { icon: Info , label: t('sidebar.about'), href: "/about" },
   ]
 
   useEffect(() => {

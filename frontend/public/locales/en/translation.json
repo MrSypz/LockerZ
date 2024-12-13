@@ -10,7 +10,8 @@
     "home": "Dashboard",
     "image": "My Locker",
     "folder": "My Category",
-    "settings": "Settings"
+    "settings": "Settings",
+    "about": "About"
   },
   "dashboard": {
     "content": {
@@ -130,6 +131,26 @@
     "toast": {
       "error": "Failed to update settings",
       "success": "Success to update settings"
+    }
+  },
+  "about": {
+    "title": "About LockerZ",
+    "description": {
+      "title": "What is LockerZ?",
+      "subtitle": "Your Personal Image Organization Solution",
+      "content1": "LockerZ is a simple image organization tool designed to help artists their visual references efficiently.",
+      "content2": "With LockerZ, you can easily categorize, search, and access your image collection, better way to finding a ref if you got a image in your own pc.",
+      "content3": "Whether you're working on concept art, gather idea ,finding a ref, etc.. or just need a better way to organize your inspiration, LockerZ has got you covered."
+    },
+    "reportIssue": "Report an Issue",
+    "appDetails": {
+      "title": "App Details",
+      "description": "Technical information about LockerZ",
+      "version": "Version",
+      "developer": "Developer",
+      "website": "Website",
+      "license": "License",
+      "copyright": "© {2024} MrSypz. All rights reserved."
     }
   }
 }

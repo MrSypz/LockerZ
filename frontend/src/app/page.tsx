@@ -1,5 +1,5 @@
-import { Dashboard } from "@/components/widget/Dashboard"
-import { Changelog } from "@/components/widget/Changelog"
+import {Dashboard} from "@/components/widget/Dashboard"
+import {Changelog} from "@/components/widget/Changelog"
 
 const changelogItems = [
     {
@@ -31,44 +31,52 @@ const changelogItems = [
                 </p>
               </div>
               `
+            },
+            {
+                title: "Fix",
+                type: "feature",
+                content: `
+              <h3 class="text-lg font-semibold mb-2">Calling Dupe</h3>
+              When refresh the page it like refresh 3 time and now it fix it only call once slighly performance improve
+              `
             }
         ]
     },
     {
-      version: "0.2.1 - beta",
-      date: "12-12-2024",
-      sections: [
-          {
-              title: "Performance",
-              type: "preview",
-              content: `
+        version: "0.2.1 - beta",
+        date: "12-12-2024",
+        sections: [
+            {
+                title: "Performance",
+                type: "preview",
+                content: `
               <h1 class="text-lg font-semibold mb-2">Image Render</h1>
               <p class="mb-4">I'm testing with my own pc and it comeout perty good the one thing is image loading and image rendering it now almost instant show up
               and when change page it update smootly nolonger have spike lag.</p>
               `,
-          },
-          {
-              title: "Quality of Life",
-              type: "preview",
-              content: `
+            },
+            {
+                title: "Quality of Life",
+                type: "preview",
+                content: `
               <h1 class="text-lg font-semibold mb-2">Remember Cagetory/Page</h1>
               <p class="mb-4">when change to dashboard or setting and go back or close the program and open again.</p>
               <h1 class="text-lg font-semibold mb-2">Pag Navigation</h1>
               <p class="mb-4">Users can type the page wherever they want to go.</p>
               `
-          },
-          {
-              title: "Fix",
-              type:"feature",
-              content: `
+            },
+            {
+                title: "Fix",
+                type: "feature",
+                content: `
               <h3 class="text-lg font-semibold mb-2">Searching</h3>
               it now took the whole path/category not just in that page that you're currently on
               <h3 class="text-lg font-semibold mb-2">Image Viewer</h3>
               <p class="mb-4">it now use the full screen viewport.</p>
 
               `
-          }
-      ]
+            }
+        ]
     },
     {
         version: "0.2.0 - beta",
@@ -450,8 +458,8 @@ export default function Home() {
         <div className="flex flex-col h-screen bg-background">
             <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                 <div className="max-w-7xl mx-auto space-y-8">
-                    <Dashboard />
-                    <Changelog items={changelogItems} />
+                    <Dashboard/>
+                    <Changelog items={changelogItems}/>
                 </div>
             </main>
         </div>
