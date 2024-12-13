@@ -9,6 +9,8 @@ import { notoSansMono, notoSansThai } from '@/lib/fonts'
 import React, { useEffect, useState, useCallback } from "react"
 import { usePathname } from 'next/navigation'
 import {Sidebar} from "@/components/widget/Sidebar";
+import { SettingsProvider } from "@/utils/SettingsContext";
+
 
 export default function RootLayout({
                                        children,
@@ -51,6 +53,7 @@ export default function RootLayout({
     return (
         <html lang={currentLang} suppressHydrationWarning>
         <body className={`${fontClass} custom-scrollbar`}>
+        <SettingsProvider>
         <I18nProvider initialLang={currentLang} onLanguageChangeAction={setCurrentLang}>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
                 <div className="flex h-screen bg-background text-foreground">
@@ -64,6 +67,7 @@ export default function RootLayout({
                 </div>
             </ThemeProvider>
         </I18nProvider>
+        </SettingsProvider>
         </body>
         </html>
     )

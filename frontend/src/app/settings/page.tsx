@@ -1,146 +1,78 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { toast } from "@/hooks/use-toast"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { Slider } from "@/components/ui/slider"
 import { open } from '@tauri-apps/plugin-dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTranslation } from 'react-i18next'
-import {API_URL} from "@/lib/zaphire";
+import { useSettings } from '@/hooks/useSettings'
+import { Loader2 } from 'lucide-react'
+import { PerformanceImpact } from '@/components/ui/performance-impact'
+
 export default function Settings() {
     const { t, i18n } = useTranslation()
-    const [folderPath, setFolderPath] = useState('')
+    const { settings, updateSettings, isLoading } = useSettings()
     const [newFolderPath, setNewFolderPath] = useState('')
-    const [rememberCategory, setRememberCategory] = useState(false)
-
-    useEffect(() => {
-        fetchCurrentSettings()
-    }, [])
-
-    const fetchCurrentSettings = async () => {
-        try {
-            const response = await fetch(`${API_URL}/get-settings`)
-            const data = await response.json()
-            setFolderPath(data.folderPath)
-            setRememberCategory(data.rememberCategory)
-            await i18n.changeLanguage(data.lang)
-        } catch (error) {
-            toast({
-                title: t('toast.titleType.error'),
-                description: t('settings.toast.errorFetchingSettings'),
-                variant: "destructive",
-            })
-        }
-    }
 
     const handleSelectFolder = async () => {
         try {
             const selected = await open({
                 directory: true,
                 multiple: false,
-                defaultPath: folderPath,
+                defaultPath: settings?.folderPath,
             })
             if (selected) {
                 setNewFolderPath(selected as string)
             }
         } catch (error) {
-            toast({
-                title: t('toast.titleType.error'),
-                description: t('settings.toast.errorSelectingFolder'),
-                variant: "destructive",
-            })
+            console.error('Error selecting folder:', error)
         }
     }
 
     const handleApplyNewPath = async () => {
-        if (!newFolderPath) return
-
-        try {
-            const response = await fetch(`${API_URL}/update-settings`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({folderPath: newFolderPath}),
-            })
-            const data = await response.json()
-            if (data.success) {
-                setFolderPath(newFolderPath)
-                setNewFolderPath('')
-                toast({
-                    title: t('toast.titleType.success'),
-                    description: t('settings.toast.folderPathUpdated'),
-                })
-            } else {
-                new Error('Failed to update folder path')
-            }
-        } catch (error) {
-            toast({
-                title: t('toast.titleType.error'),
-                description: t('settings.toast.errorUpdatingFolderPath'),
-                variant: "destructive",
-            })
-        }
-    }
+        if (!newFolderPath) return;
+        await updateSettings({ folderPath: newFolderPath });
+        setNewFolderPath('');
+    };
 
     const handleRememberCategoryToggle = async (checked: boolean) => {
-        try {
-            const response = await fetch(`${API_URL}/update-settings`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({rememberCategory: checked}),
-            })
-            const data = await response.json()
-            if (data.success) {
-                setRememberCategory(checked)
-                toast({
-                    title: t('toast.titleType.success'),
-                    description: checked ? t('settings.toast.rememberCategoryEnabled') : t('settings.toast.rememberCategoryDisabled'),
-                })
-            } else {
-                new Error('Failed to update remember category setting')
-            }
-        } catch {
-            toast({
-                title: t('toast.titleType.error'),
-                description: t('settings.toast.errorUpdatingRememberCategory'),
-                variant: "destructive",
-            })
-        }
+        await updateSettings({ rememberCategory: checked });
     }
 
     const handleLanguageChange = async (lang: string) => {
-        try {
-            const response = await fetch(`${API_URL}/update-settings`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({lang}),
-            })
-            const data = await response.json()
-            if (data.success) {
-                await i18n.changeLanguage(lang)
-                toast({
-                    title: t('toast.titleType.success'),
-                    description: t('settings.toast.languageChanged', { lang }),
-                })
-            } else {
-                new Error('Failed to update language setting')
-            }
-        } catch (error) {
-            toast({
-                title: t('toast.titleType.error'),
-                description: t('settings.toast.errorUpdatingLanguage'),
-                variant: "destructive",
-            })
+        await updateSettings({ lang });
+        await i18n.changeLanguage(lang);
+    }
+
+    const handleImageQualityChange = async (value: number[]) => {
+        await updateSettings({ imageQuality: value[0] });
+    }
+
+    const handleImageWidthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const width = parseInt(event.target.value);
+        if (!isNaN(width)) {
+            updateSettings({ imageWidth: width });
         }
+    }
+
+    const handleImageHeightChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const height = parseInt(event.target.value);
+        if (!isNaN(height)) {
+            updateSettings({ imageHeight: height });
+        }
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        )
     }
 
     return (
@@ -160,7 +92,7 @@ export default function Settings() {
                                 </label>
                                 <Input
                                     id="currentPath"
-                                    value={folderPath}
+                                    value={settings?.folderPath}
                                     readOnly
                                     disabled
                                     className="mt-1 bg-muted cursor-not-allowed"
@@ -188,6 +120,26 @@ export default function Settings() {
                     </Card>
                     <Card className="w-full max-w-2xl mx-auto mt-6">
                         <CardHeader>
+                            <CardTitle>{t('settings.languageSettings.title')}</CardTitle>
+                            <CardDescription>{t('settings.languageSettings.description')}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="language-select">{t('settings.languageSettings.language')}</Label>
+                                <Select value={settings.lang} onValueChange={handleLanguageChange}>
+                                    <SelectTrigger id="language-select" className="w-[200px]">
+                                        <SelectValue placeholder={t('settings.languageSettings.language')}/>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="en">English</SelectItem>
+                                        <SelectItem value="th">ไทย</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card className="w-full max-w-2xl mx-auto mt-6">
+                        <CardHeader>
                             <CardTitle>{t('settings.lockerSettings.title')}</CardTitle>
                             <CardDescription>{t('settings.lockerSettings.description')}</CardDescription>
                         </CardHeader>
@@ -195,22 +147,54 @@ export default function Settings() {
                             <div className="flex items-center space-x-2">
                                 <Switch
                                     id="remember-category"
-                                    checked={rememberCategory}
+                                    checked={settings.rememberCategory}
                                     onCheckedChange={handleRememberCategoryToggle}
                                 />
                                 <Label htmlFor="remember-category">{t('settings.lockerSettings.rememberCategory')}</Label>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="language-select">{t('settings.lockerSettings.language')}</Label>
-                                <Select value={i18n.language} onValueChange={handleLanguageChange}>
-                                    <SelectTrigger id="language-select" className="w-[200px]">
-                                        <SelectValue placeholder={t('settings.lockerSettings.language')} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="en">English</SelectItem>
-                                        <SelectItem value="th">ไทย</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <div className="flex justify-between items-center">
+                                    <Label htmlFor="image-quality">{t('settings.lockerSettings.imageQuality')}</Label>
+                                    <PerformanceImpact impact="high" />
+                                </div>
+                                <CardDescription>{t('settings.lockerSettings.imageQuality.description')}</CardDescription>
+                                <Slider
+                                    id="image-quality"
+                                    min={1}
+                                    max={100}
+                                    step={1}
+                                    value={[settings?.imageQuality || 75]}
+                                    onValueChange={handleImageQualityChange}
+                                />
+                                <div className="text-sm text-muted-foreground">{settings?.imageQuality}%</div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <Label htmlFor="image-width">{t('settings.lockerSettings.imageWidth')}</Label>
+                                    <PerformanceImpact impact="veryhigh" />
+                                </div>
+                                <CardDescription>{t('settings.lockerSettings.imageWidth.description')}</CardDescription>
+                                <Input
+                                    id="image-width"
+                                    type="number"
+                                    value={settings?.imageWidth}
+                                    onChange={handleImageWidthChange}
+                                    min={100}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <Label htmlFor="image-height">{t('settings.lockerSettings.imageHeight')}</Label>
+                                    <PerformanceImpact impact="veryhigh" />
+                                </div>
+                                <CardDescription>{t('settings.lockerSettings.imageHeight.description')}</CardDescription>
+                                <Input
+                                    id="image-height"
+                                    type="number"
+                                    value={settings?.imageHeight}
+                                    onChange={handleImageHeightChange}
+                                    min={250}
+                                />
                             </div>
                         </CardContent>
                     </Card>
