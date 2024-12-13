@@ -4,7 +4,7 @@ import { Changelog } from "@/components/widget/Changelog"
 const changelogItems = [
     {
       version: "0.2.1 - beta",
-      data: "12-12-2024",
+      date: "12-12-2024",
       sections: [
           {
               title: "Performance",
@@ -239,7 +239,7 @@ const changelogItems = [
         ]
     },
     {
-        version: "0.1.3",
+        version: "0.1.3 - beta",
         date: "10-11-2024",
         sections: [
             {
@@ -263,7 +263,7 @@ const changelogItems = [
         ]
     },
     {
-        version: "0.1.2",
+        version: "0.1.2 - beta",
         date: "08-11-2024",
         sections: [
             {
@@ -304,7 +304,7 @@ const changelogItems = [
         ]
     },
     {
-        version: "0.1.1",
+        version: "0.1.1 - beta",
         date: "06-11-2024",
         sections: [
             {
@@ -335,7 +335,7 @@ const changelogItems = [
         ]
     },
     {
-        version: "0.1.0",
+        version: "0.1.0 - beta",
         date: "05-11-2024",
         sections: [
             {
