@@ -39,17 +39,39 @@
     },
     "search": "Search category...",
     "allCategories": "All Categories",
-    "tags-empty": "No tags",
+    "tags-empty": "No tags"
+  },
+  "categories": {
+    "imageSelection": {
+      "title": "Select Category Image",
+      "noImages": "No images found in this category."
+    },
+    "edit": {
+      "title": "Edit Category",
+      "description": "Modify category details or select a new placeholder image.",
+      "rename": "Rename",
+      "changePlaceholder": "Change Placeholder Image",
+      "delete": "Delete Category"
+    },
+    "delete": {
+      "title": "Delete Category",
+      "description": "Are you sure you want to delete this category? This action cannot be undone."
+    },
     "page": {
-      "head": "My Categories",
+      "head": "Categories",
       "createcat": "Create Category",
       "dialog": {
         "title": "Create New Category",
-        "desc": "Enter a name for the new category.",
+        "desc": "Enter a name for the new category",
         "input": "Category name",
         "action": "Create"
       }
     }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete"
   },
   "locker": {
     "dialog": {
