@@ -345,8 +345,8 @@ function FileCard({file, onDelete, onMove, onSelect, index, column, totalColumns
                             <OptimizedImage
                                 src={imageSrc}
                                 alt={file.name}
-                                width={300}
-                                height={450}
+                                width={350}
+                                height={400}
                                 quality={100}
                             />
                         </div>
