@@ -10,19 +10,19 @@
     "home": "Dashboard",
     "image": "My Locker",
     "folder": "My Category",
-    "settings" : "Settings"
+    "settings": "Settings"
   },
   "dashboard": {
     "content": {
       "totalimg": "Total Images",
-      "category":"Categories",
-      "storageused":"Storage Used",
-      "categories":"Categories"
+      "category": "Categories",
+      "storageused": "Storage Used",
+      "categories": "Categories"
     },
     "header": "Dashboard"
   },
   "category": {
-    "image" : {
+    "image": {
       "sort": {
         "button": "Sort",
         "title": "Sort Images",
@@ -41,7 +41,7 @@
     "allCategories": "All Categories",
     "tags-empty": "No tags",
     "page": {
-      "head":"My Categories",
+      "head": "My Categories",
       "createcat": "Create Category",
       "dialog": {
         "title": "Create New Category",
@@ -65,12 +65,12 @@
         "delete": "Delete"
       }
     },
-    "search":{
+    "search": {
       "results": "Found {{count}} image(s)",
       "placeholder": "Type the Image name"
     },
     "toast": {
-      "errorfetching" : "Error fetching current settings"
+      "errorfetching": "Error fetching current settings"
     }
   },
   "settings": {
@@ -83,22 +83,31 @@
       "selectFolder": "Select Folder",
       "applyNewPath": "Apply New Path"
     },
-    "lockerSettings": {
-      "title": "Locker Settings",
-      "description": "Configure additional settings for the Locker page",
-      "rememberCategory": "Remember selected category in Locker",
+    "languageSettings": {
+      "title": "Language Settings",
+      "description": "Choose your preferred language",
       "language": "Language"
     },
+    "lockerSettings": {
+      "title": "Locker Settings",
+      "description": "Configure your locker preferences",
+      "rememberCategory": "Remember last selected category",
+      "imageQuality": "Image Quality",
+      "imageQuality.description": "Set the quality of displayed images. Higher quality means larger file sizes.",
+      "imageWidth": "Image Width",
+      "imageWidth.description": "Set the maximum width for displayed images in pixels.",
+      "imageHeight": "Image Height",
+      "imageHeight.description": "Set the maximum height for displayed images in pixels."
+    },
+    "performanceImpact": {
+      "veryhigh": "Very High impact",
+      "high": "High impact",
+      "medium": "Medium impact",
+      "low": "Low impact"
+    },
     "toast": {
-      "errorFetchingSettings": "Error fetching current settings",
-      "errorSelectingFolder": "An error occurred while selecting the folder",
-      "folderPathUpdated": "Folder path updated successfully!",
-      "errorUpdatingFolderPath": "An error occurred while updating the folder path",
-      "rememberCategoryEnabled": "Remember category enabled",
-      "rememberCategoryDisabled": "Remember category disabled",
-      "errorUpdatingRememberCategory": "An error occurred while updating the remember category setting",
-      "languageChanged": "Changed the language to {{lang}}",
-      "errorUpdatingLanguage": "An error occurred while updating the language setting"
+      "error": "Failed to update settings",
+      "success": "Success to update settings"
     }
   }
 }
