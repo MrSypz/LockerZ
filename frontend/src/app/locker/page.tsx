@@ -71,14 +71,13 @@ export default function Locker() {
             localStorage.setItem('lastSelectedCategory', selectedCategory)
         }
     }, [selectedCategory, rememberCategory])
-
     useEffect(() => {
-        if (selectedCategory) {
-            fetchAllFiles();
-        }
+        fetchAllFiles();
+
+    }, [selectedCategory]);
+    useEffect(() => {
         fetchPaginatedFiles();
     }, [currentPage, imagesPerPage, selectedCategory]);
-
 
     const isRememberCategory = async () => {
         try {
