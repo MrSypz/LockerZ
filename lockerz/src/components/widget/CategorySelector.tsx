@@ -100,7 +100,7 @@ export function CategorySelector({
                     <Command>
                         <CommandInput placeholder={t('category.search')} className="h-9" />
                         <CommandEmpty>{t('category.notFound')}</CommandEmpty>
-                            <CommandGroup className="max-h-[300px] overflow-auto">
+                        <CommandGroup className="max-h-[300px] overflow-auto">
                             <CommandItem
                                 onSelect={() => {
                                     onCategoryChange("all")

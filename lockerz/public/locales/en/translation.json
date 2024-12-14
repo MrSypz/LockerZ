@@ -10,7 +10,8 @@
     "home": "Dashboard",
     "image": "My Locker",
     "folder": "My Category",
-    "settings": "Settings"
+    "settings": "Settings",
+    "about": "About"
   },
   "dashboard": {
     "content": {
@@ -39,17 +40,39 @@
     },
     "search": "Search category...",
     "allCategories": "All Categories",
-    "tags-empty": "No tags",
+    "tags-empty": "No tags"
+  },
+  "categories": {
+    "imageSelection": {
+      "title": "Select Category Image",
+      "noImages": "No images found in this category."
+    },
+    "edit": {
+      "title": "Edit Category",
+      "description": "Modify category details or select a new placeholder image.",
+      "rename": "Rename",
+      "changePlaceholder": "Change Placeholder Image",
+      "delete": "Delete Category"
+    },
+    "delete": {
+      "title": "Delete Category",
+      "description": "Are you sure you want to delete this category? This action cannot be undone."
+    },
     "page": {
-      "head": "My Categories",
+      "head": "Categories",
       "createcat": "Create Category",
       "dialog": {
         "title": "Create New Category",
-        "desc": "Enter a name for the new category.",
+        "desc": "Enter a name for the new category",
         "input": "Category name",
         "action": "Create"
       }
     }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete"
   },
   "locker": {
     "dialog": {
@@ -108,6 +131,26 @@
     "toast": {
       "error": "Failed to update settings",
       "success": "Success to update settings"
+    }
+  },
+  "about": {
+    "title": "About LockerZ",
+    "description": {
+      "title": "What is LockerZ?",
+      "subtitle": "Your Personal Image Organization Solution",
+      "content1": "LockerZ is a simple image organization tool designed to help artists their visual references efficiently.",
+      "content2": "With LockerZ, you can easily categorize, search, and access your image collection, better way to finding a ref if you got a image in your own pc.",
+      "content3": "Whether you're working on concept art, gather idea ,finding a ref, etc.. or just need a better way to organize your inspiration, LockerZ has got you covered."
+    },
+    "reportIssue": "Report an Issue",
+    "appDetails": {
+      "title": "App Details",
+      "description": "Technical information about LockerZ",
+      "version": "Version",
+      "developer": "Developer",
+      "website": "Website",
+      "license": "License",
+      "copyright": "© {2024} MrSypz. All rights reserved."
     }
   }
 }
