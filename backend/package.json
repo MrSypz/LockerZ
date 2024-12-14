@@ -26,8 +26,5 @@
     "formidable": "^3.5.2",
     "node-cache": "^5.1.2",
     "sharp": "^0.33.5"
-  },
-  "devDependencies": {
-    "pkg": "^5.8.1"
   }
 }

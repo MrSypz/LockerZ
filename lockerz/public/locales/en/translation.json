@@ -1,0 +1,114 @@
+{
+  "toast": {
+    "titleType": {
+      "error": "Error",
+      "success": "Success",
+      "warning": "Warning"
+    }
+  },
+  "sidebar": {
+    "home": "Dashboard",
+    "image": "My Locker",
+    "folder": "My Category",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "content": {
+      "totalimg": "Total Images",
+      "category": "Categories",
+      "storageused": "Storage Used",
+      "categories": "Categories"
+    },
+    "header": "Dashboard"
+  },
+  "category": {
+    "image": {
+      "sort": {
+        "button": "Sort",
+        "title": "Sort Images",
+        "by-name": "Name",
+        "by-date": "Date",
+        "by-size": "Size",
+        "ascending": "Ascending",
+        "descending": "Descending"
+      }
+    },
+    "dragdrop": {
+      "idle": "Drop files here!",
+      "hover": "Drag & drop files or click to select"
+    },
+    "search": "Search category...",
+    "allCategories": "All Categories",
+    "tags-empty": "No tags",
+    "page": {
+      "head": "My Categories",
+      "createcat": "Create Category",
+      "dialog": {
+        "title": "Create New Category",
+        "desc": "Enter a name for the new category.",
+        "input": "Category name",
+        "action": "Create"
+      }
+    }
+  },
+  "locker": {
+    "dialog": {
+      "move": {
+        "title": "Move to Category",
+        "desc": "Select a category to move this file to",
+        "selector": "Select category",
+        "cancel": "Cancel",
+        "click": "Move"
+      },
+      "menu": {
+        "move": "Move to...",
+        "delete": "Delete"
+      }
+    },
+    "search": {
+      "results": "Found {{count}} image(s)",
+      "placeholder": "Type the Image name"
+    },
+    "toast": {
+      "errorfetching": "Error fetching current settings"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "rootFolder": {
+      "title": "Root Folder Configuration",
+      "description": "Set the root folder for LockerZ to manage your files and categories",
+      "currentPath": "Current folder path:",
+      "newPath": "New folder path:",
+      "selectFolder": "Select Folder",
+      "applyNewPath": "Apply New Path"
+    },
+    "languageSettings": {
+      "title": "Language Settings",
+      "description": "Choose your preferred language",
+      "language": "Language"
+    },
+    "lockerSettings": {
+      "title": "Locker Settings",
+      "description": "Configure your locker preferences",
+      "rememberCategory": "Remember last selected category",
+      "imageQuality": "Image Quality",
+      "imageQuality.description": "Set the quality of displayed images. Higher quality means larger file sizes.",
+      "imageWidth": "Image Width",
+      "imageWidth.description": "Set the maximum width for displayed images in pixels.",
+      "imageHeight": "Image Height",
+      "imageHeight.description": "Set the maximum height for displayed images in pixels."
+    },
+    "performanceImpact": {
+      "veryhigh": "Very High impact",
+      "high": "High impact",
+      "medium": "Medium impact",
+      "low": "Low impact"
+    },
+    "toast": {
+      "error": "Failed to update settings",
+      "success": "Success to update settings"
+    }
+  }
+}
+

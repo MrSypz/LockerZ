@@ -278,40 +278,6 @@ app.get('/files', async (req, res) => {
     }
 });
 
-app.get('/category-images', async (req, res) => {
-    const { name } = req.query;
-
-    if (!name) {
-        return res.status(400).json({ error: 'Category name is required' });
-    }
-
-    try {
-        const categoryPath = path.join(rootFolderPath, name);
-
-        try {
-            await fsPromises.access(categoryPath);
-        } catch (error) {
-            logger.error(`Category directory not found: ${categoryPath}`);
-            return res.status(404).json({ error: 'Category not found' });
-        }
-
-        const files = await fsPromises.readdir(categoryPath);
-
-        const imageFiles = files.filter(file => {
-            const ext = path.extname(file).toLowerCase();
-            return ['.jpg', '.jpeg', '.png', '.webp'].includes(ext);
-        });
-
-        const imageUrls = imageFiles.map(file => `/images/${name}/${file}`);
-
-        logger.info(`Fetched ${imageUrls.length} images for category: ${name}`);
-        res.json({ images: imageUrls });
-    } catch (error) {
-        logger.error(`Error fetching category images: ${error}`);
-        res.status(500).json({ error: 'Failed to fetch category images' });
-    }
-});
-
 app.get('/api/optimizeImage', async (req, res) => {
     const { src, width, quality } = req.query;
 
@@ -372,7 +338,6 @@ app.get('/api/optimizeImage', async (req, res) => {
         res.status(500).sendFile(path.join(__dirname, 'public', 'placeholder.png'));
     }
 });
-
 
 app.get('/categories', async (req, res) => {
     try {
