@@ -3,6 +3,27 @@ import {Changelog} from "@/components/widget/Changelog"
 
 const changelogItems = [
     {
+        version: "0.2.3 - beta",
+        date: "15-12-2024",
+        sections: [
+            {
+                title: "Fix",
+                type: "feature",
+                content: `
+              <h3 class="text-lg font-semibold mb-2">Combobox Issue</h3>
+              can't click on the combobox`
+            },
+            {
+                title: "Performance",
+                type: "preview",
+                content: `
+              <h1 class="text-lg font-semibold mb-2">Image Upload</h1>
+              <p class="mb-4">Slightly improve the performance on uploadfile to locker</p>
+              `,
+            },
+        ]
+    },
+    {
         version: "0.2.2 - beta",
         date: "14-12-2024",
         sections: [
