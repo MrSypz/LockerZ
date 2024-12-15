@@ -43,10 +43,7 @@ export default function Locker() {
     });
     const [isLoading, setIsLoading] = useState(true)
     const [isCategoriesLoading, setIsCategoriesLoading] = useState(true)
-    const [currentPage, setCurrentPage] = useState(() => {
-        const savedPage = localStorage.getItem(PAGE_STORAGE_KEY)
-        return savedPage ? parseInt(savedPage, 10) : 1
-    })
+    const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1)
     const [moveDialogOpen, setMoveDialogOpen] = useState(false)
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -112,7 +109,7 @@ export default function Locker() {
         try {
             const response = await fetch(`${API_URL}/categories`)
             if (!response.ok) {
-                throw new Error('Failed to fetch categories')
+                new Error('Failed to fetch categories')
             }
             const data = await response.json()
             setCategories(data.map((category: { name: string }) => category.name))
@@ -158,6 +155,12 @@ export default function Locker() {
         }
     }, [selectedCategory, currentPage, imagesPerPage, fetchAllFiles, fetchPaginatedFiles]);
 
+    useEffect(() => {
+        const savedPage = localStorage.getItem(PAGE_STORAGE_KEY);
+        if (savedPage) {
+            setCurrentPage(parseInt(savedPage, 10));
+        }
+    }, []);
 
     const handleFileDrop = useCallback(async (droppedFiles?: string[]) => {
         let filesToProcess: (globalThis.File | string)[] = [];
@@ -293,8 +296,10 @@ export default function Locker() {
     }, [selectedCategory, files, API_URL, fetchAllFiles, t]);
 
     const onCategoryChange = useCallback((value: string) => {
+        console.log("Category changed to:", value);
         setSelectedCategory(value);
         setCurrentPage(1);
+        localStorage.setItem(PAGE_STORAGE_KEY, '1'); // Reset page in localStorage
         if (rememberCategory) {
             localStorage.setItem('lastSelectedCategory', value);
         }
@@ -369,6 +374,7 @@ export default function Locker() {
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
         localStorage.setItem(PAGE_STORAGE_KEY, page.toString());
+        fetchPaginatedFiles();
     };
 
     const handleImagesPerPageChange = (value: number) => {
