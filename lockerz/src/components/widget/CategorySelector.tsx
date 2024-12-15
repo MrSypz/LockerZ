@@ -1,10 +1,24 @@
-import React, { useState, useCallback, useEffect } from 'react'
-import { Upload, Loader2, Search } from 'lucide-react'
+"use client"
+
+import * as React from "react"
+import { Check, ChevronsUpDown, Upload } from 'lucide-react'
 import { getCurrentWindow } from "@tauri-apps/api/window"
 import { useTranslation } from 'react-i18next'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+} from "@/components/ui/command"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface CategorySelectorProps {
     selectedCategory: string;
@@ -21,15 +35,11 @@ export function CategorySelector({
                                      onCategoryChange,
                                      uploadImgFiles
                                  }: CategorySelectorProps) {
-    const [isDragActive, setIsDragActive] = useState(false)
-    const [searchTerm, setSearchTerm] = useState('')
+    const [open, setOpen] = React.useState(false)
+    const [isDragActive, setIsDragActive] = React.useState(false)
     const { t } = useTranslation()
 
-    const filteredCategories = categories.filter(category =>
-        category.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-
-    useEffect(() => {
+    React.useEffect(() => {
         let isMounted = true
         let unlistenFunction: (() => void) | undefined
 
@@ -74,69 +84,103 @@ export function CategorySelector({
         setIsDragActive(false)
     }
 
-    const handleClick = useCallback(() => {
+    const handleClick = React.useCallback(() => {
         uploadImgFiles()
     }, [uploadImgFiles])
 
     return (
-        <div className="flex justify-between items-start mb-8">
-            <div className="w-[300px] space-y-2">
-                <div className="relative">
-                    <Input
-                        type="text"
-                        placeholder={t('category.search')}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                    />
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
-                </div>
-                {isCategoriesLoading ? (
-                    <Button variant="outline" className="w-full justify-start" disabled>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {t('category.loading')}
-                    </Button>
-                ) : (
-                    <select
-                        value={selectedCategory}
-                        onChange={(e) => onCategoryChange(e.target.value)}
+        <div className="flex justify-between items-center mb-8">
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
                         className={cn(
-                            "w-full px-3 py-2 text-sm",
-                            "bg-background border border-input",
-                            "rounded-md shadow-sm",
-                            "focus:outline-none focus:ring-2 focus:ring-ring focus:border-input"
+                            "w-[200px] justify-between",
+                            "bg-white dark:bg-gray-800",
+                            "hover:bg-gray-100 dark:hover:bg-gray-700",
+                            "focus:ring-2 focus:ring-blue-500 focus:outline-none",
+                            "transition-colors duration-200"
                         )}
+                        disabled={isCategoriesLoading}
                     >
-                        <option value="all">{t('category.allCategories')}</option>
-                        {filteredCategories.map((category) => (
-                            <option key={category} value={category}>
-                                {category}
-                            </option>
-                        ))}
-                    </select>
-                )}
-                {searchTerm && filteredCategories.length === 0 && (
-                    <p className="text-sm text-muted-foreground">{t('category.noResults')}</p>
-                )}
-            </div>
+                        <span className="truncate">
+                            {selectedCategory
+                                ? categories.find((category) => category === selectedCategory) || t('category.allCategories')
+                                : t('category.allCategories')}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0">
+                    <Command className="rounded-lg border shadow-md">
+                        <CommandInput placeholder={t('category.search')} className="h-9" />
+                        <CommandEmpty className="py-2 text-center text-sm text-gray-500">
+                            {t('category.notFound')}
+                        </CommandEmpty>
+                        <CommandGroup className="max-h-[200px] overflow-y-auto">
+                            <CommandItem
+                                onSelect={() => {
+                                    onCategoryChange("all")
+                                    setOpen(false)
+                                }}
+                                className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                            >
+                                <Check
+                                    className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedCategory === "all" ? "opacity-100" : "opacity-0"
+                                    )}
+                                />
+                                <span>{t('category.allCategories')}</span>
+                            </CommandItem>
+                            {categories.map((category) => (
+                                <CommandItem
+                                    key={category}
+                                    onSelect={() => {
+                                        onCategoryChange(category)
+                                        setOpen(false)
+                                    }}
+                                    className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                                >
+                                    <Check
+                                        className={cn(
+                                            "mr-2 h-4 w-4",
+                                            selectedCategory === category ? "opacity-100" : "opacity-0"
+                                        )}
+                                    />
+                                    <span>{category}</span>
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </Command>
+                </PopoverContent>
+            </Popover>
             <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={handleClick}
-                className={`p-6 border-2 border-dashed rounded-lg transition-all duration-300 ease-in-out
-                    ${isDragActive ? 'border-primary bg-primary/50' : 'border-border hover:border-primary/50'}
-                    cursor-pointer bg-card text-card-foreground hover:scale-95`}
+                className={cn(
+                    "p-6 border-2 border-dashed rounded-lg",
+                    "transition-all duration-300 ease-in-out",
+                    "cursor-pointer",
+                    "flex flex-col items-center justify-center space-y-2",
+                    "bg-white dark:bg-gray-800",
+                    "hover:bg-gray-100 dark:hover:bg-gray-700",
+                    isDragActive
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500"
+                )}
             >
-                <div className="flex flex-col items-center space-y-2">
-                    <Upload className="h-10 w-10" />
-                    <p
-                        className="text-center text-sm font-medium leading-5 max-w-[150px] truncate"
-                        title={isDragActive ? t('category.dragdrop.idle') : t('category.dragdrop.hover')}
-                    >
-                        {isDragActive ? t('category.dragdrop.idle') : t('category.dragdrop.hover')}
-                    </p>
-                </div>
+                <Upload className="h-10 w-10 text-gray-400" />
+                <p
+                    className="text-center text-sm font-medium leading-5 max-w-[150px] truncate text-gray-600 dark:text-gray-300"
+                    title={isDragActive ? t('category.dragdrop.idle') : t('category.dragdrop.hover')}
+                >
+                    {isDragActive ? t('category.dragdrop.idle') : t('category.dragdrop.hover')}
+                </p>
             </div>
         </div>
     )
