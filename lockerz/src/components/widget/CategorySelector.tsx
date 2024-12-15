@@ -1,10 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react'
-import {Loader2, Upload, Check, Search} from 'lucide-react'
+import { Upload, Loader2 } from 'lucide-react'
 import { getCurrentWindow } from "@tauri-apps/api/window"
 import { useTranslation } from 'react-i18next'
 import { Button } from "@/components/ui/button"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
 interface CategorySelectorProps {
@@ -22,7 +20,6 @@ export function CategorySelector({
                                      onCategoryChange,
                                      uploadImgFiles
                                  }: CategorySelectorProps) {
-    const [open, setOpen] = useState(false)
     const [isDragActive, setIsDragActive] = useState(false)
     const { t } = useTranslation()
 
@@ -77,65 +74,32 @@ export function CategorySelector({
 
     return (
         <div className="flex justify-between items-center mb-8">
-            <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                    <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={open}
-                        className="w-[200px] justify-between"
-                        disabled={isCategoriesLoading}
-                    >
-                        {isCategoriesLoading ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <>
-                                <Search className="mr-2 h-4 w-4" />
-                                {selectedCategory || t('category.select')}
-                            </>
-                        )}
+            <div className="w-[200px]">
+                {isCategoriesLoading ? (
+                    <Button variant="outline" className="w-full justify-start" disabled>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {t('category.loading')}
                     </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-0">
-                    <Command>
-                        <CommandInput placeholder={t('category.search')} className="h-9" />
-                        <CommandEmpty>{t('category.notFound')}</CommandEmpty>
-                        <CommandGroup className="max-h-[300px] overflow-auto">
-                            <CommandItem
-                                onSelect={() => {
-                                    onCategoryChange("all")
-                                    setOpen(false)
-                                }}
-                            >
-                                <Check
-                                    className={cn(
-                                        "mr-2 h-4 w-4",
-                                        selectedCategory === "all" ? "opacity-100" : "opacity-0"
-                                    )}
-                                />
-                                {t('category.allCategories')}
-                            </CommandItem>
-                            {categories.map((category) => (
-                                <CommandItem
-                                    key={category}
-                                    onSelect={() => {
-                                        onCategoryChange(category)
-                                        setOpen(false)
-                                    }}
-                                >
-                                    <Check
-                                        className={cn(
-                                            "mr-2 h-4 w-4",
-                                            selectedCategory === category ? "opacity-100" : "opacity-0"
-                                        )}
-                                    />
-                                    {category}
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    </Command>
-                </PopoverContent>
-            </Popover>
+                ) : (
+                    <select
+                        value={selectedCategory}
+                        onChange={(e) => onCategoryChange(e.target.value)}
+                        className={cn(
+                            "w-full px-3 py-2 text-sm",
+                            "bg-background border border-input",
+                            "rounded-md shadow-sm",
+                            "focus:outline-none focus:ring-2 focus:ring-ring focus:border-input"
+                        )}
+                    >
+                        <option value="all">{t('category.allCategories')}</option>
+                        {categories.map((category) => (
+                            <option key={category} value={category}>
+                                {category}
+                            </option>
+                        ))}
+                    </select>
+                )}
+            </div>
             <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
