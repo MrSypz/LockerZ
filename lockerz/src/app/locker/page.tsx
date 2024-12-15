@@ -254,6 +254,9 @@ export default function Locker() {
             return;
         }
 
+        let successCount = 0;
+        let failCount = 0;
+
         for (const file of newFiles) {
             const formData = new FormData();
             if (file instanceof globalThis.File) {
@@ -268,23 +271,36 @@ export default function Locker() {
                     body: formData,
                 });
                 if (!response.ok) {
-                    throw new Error('File move failed');
+                    new Error('File move failed');
                 }
                 const data = await response.json();
                 setFiles(prevFiles => [data.file, ...prevFiles]);
-                toast({
-                    title: t('toast.titleType.success'),
-                    description: `File ${getFileName(file)} moved successfully`,
-                });
-                fetchAllFiles();
+                successCount++;
             } catch (error) {
-                toast({
-                    title: t('toast.titleType.error'),
-                    description: `Failed to move file ${getFileName(file)}`,
-                    variant: "destructive",
-                });
+                failCount++;
             }
         }
+
+        if (successCount > 0) {
+            toast({
+                title: t('toast.titleType.success'),
+                description: successCount === 1
+                    ? `1 file moved successfully`
+                    : `${successCount} files moved successfully`,
+            });
+        }
+
+        if (failCount > 0) {
+            toast({
+                title: t('toast.titleType.error'),
+                description: failCount === 1
+                    ? `Failed to move 1 file`
+                    : `Failed to move ${failCount} files`,
+                variant: "destructive",
+            });
+        }
+
+        fetchAllFiles();
 
         if (validFiles.length < filesToProcess.length) {
             toast({
@@ -296,7 +312,6 @@ export default function Locker() {
     }, [selectedCategory, files, API_URL, fetchAllFiles, t]);
 
     const onCategoryChange = useCallback((value: string) => {
-        console.log("Category changed to:", value);
         setSelectedCategory(value);
         setCurrentPage(1);
         localStorage.setItem(PAGE_STORAGE_KEY, '1'); // Reset page in localStorage
@@ -319,7 +334,7 @@ export default function Locker() {
                 }),
             })
             if (!response.ok) {
-                throw new Error('Failed to delete file')
+                new Error('Failed to delete file')
             }
             setFiles(prevFiles => prevFiles.filter(f => f.name !== file.name || f.category !== file.category))
             toast({
