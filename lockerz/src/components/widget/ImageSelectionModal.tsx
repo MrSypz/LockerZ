@@ -5,7 +5,7 @@ import { API_URL } from "@/lib/zaphire"
 import { useTranslation } from "react-i18next"
 import { Loader2 } from 'lucide-react'
 import { toast } from "@/hooks/use-toast"
-import {OptimizedImage} from "@/components/widget/OptimizedImage";
+import Image from "next/image";
 
 interface ImageSelectionModalProps {
     isOpen: boolean
@@ -82,7 +82,7 @@ export function ImageSelectionModal({ isOpen, onClose, onSelect, categoryName }:
                                 }`}
                                 onClick={() => handleImageSelect(imageUrl)}
                             >
-                                <OptimizedImage
+                                <Image
                                     src={`${imageUrl}`}
                                     alt={`Category image ${index + 1}`}
                                     width={350}
