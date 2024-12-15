@@ -10,8 +10,9 @@ import {motion, AnimatePresence} from "framer-motion"
 import {useTranslation} from 'react-i18next'
 import { ArrowDown, ArrowUp, ArrowUpDown, Clock, FileIcon, Search, Text } from 'lucide-react'
 import { ImageViewer } from './Image-viewer';
-import { OptimizedImage } from '@/components/widget/OptimizedImage';
 import {useSharedSettings} from "@/utils/SettingsContext";
+import Image from "next/image";
+import {API_URL} from "@/lib/zaphire";
 
 function useColumnCount() {
     const [columnCount, setColumnCount] = useState(5)
@@ -344,8 +345,8 @@ function FileCard({file, onDelete, onMove, onSelect, index, column, totalColumns
                 >
                     <CardContent className="p-0">
                         <div className="relative aspect-[2/3] rounded-t-lg overflow-hidden">
-                            <OptimizedImage
-                                src={imageSrc}
+                            <Image
+                                src={API_URL + imageSrc}
                                 alt={file.name}
                                 width={settings.imageWidth}
                                 height={settings.imageHeight}
