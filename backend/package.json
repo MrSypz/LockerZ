@@ -9,9 +9,7 @@
   "bin": "index.js",
   "pkg": {
     "targets": [
-      "node18-win-x64",
-      "node18-macos-x64",
-      "node18-linux-x64"
+      "node18-win-x64"
     ],
     "outputPath": "dist"
   },
@@ -25,6 +23,9 @@
     "express": "^4.21.1",
     "formidable": "^3.5.2",
     "node-cache": "^5.1.2",
-    "sharp": "^0.33.5"
+    "sharp": "^0.32.6"
+  },
+  "devDependencies": {
+    "@yao-pkg/pkg": "^6.1.1"
   }
 }
