@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react'
-import { Upload, Loader2 } from 'lucide-react'
+import { Upload, Loader2, Search } from 'lucide-react'
 import { getCurrentWindow } from "@tauri-apps/api/window"
 import { useTranslation } from 'react-i18next'
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
 interface CategorySelectorProps {
@@ -21,7 +22,12 @@ export function CategorySelector({
                                      uploadImgFiles
                                  }: CategorySelectorProps) {
     const [isDragActive, setIsDragActive] = useState(false)
+    const [searchTerm, setSearchTerm] = useState('')
     const { t } = useTranslation()
+
+    const filteredCategories = categories.filter(category =>
+        category.toLowerCase().includes(searchTerm.toLowerCase())
+    )
 
     useEffect(() => {
         let isMounted = true
@@ -73,8 +79,18 @@ export function CategorySelector({
     }, [uploadImgFiles])
 
     return (
-        <div className="flex justify-between items-center mb-8">
-            <div className="w-[200px]">
+        <div className="flex justify-between items-start mb-8">
+            <div className="w-[300px] space-y-2">
+                <div className="relative">
+                    <Input
+                        type="text"
+                        placeholder={t('category.search')}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                    />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
+                </div>
                 {isCategoriesLoading ? (
                     <Button variant="outline" className="w-full justify-start" disabled>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -92,12 +108,15 @@ export function CategorySelector({
                         )}
                     >
                         <option value="all">{t('category.allCategories')}</option>
-                        {categories.map((category) => (
+                        {filteredCategories.map((category) => (
                             <option key={category} value={category}>
                                 {category}
                             </option>
                         ))}
                     </select>
+                )}
+                {searchTerm && filteredCategories.length === 0 && (
+                    <p className="text-sm text-muted-foreground">{t('category.noResults')}</p>
                 )}
             </div>
             <div
