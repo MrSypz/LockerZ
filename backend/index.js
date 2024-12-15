@@ -6,9 +6,6 @@ const path = require('path');
 const formidable = require('formidable');
 const NodeCache = require('node-cache');
 const archiver = require('archiver');
-const sharp = require('sharp');
-
-
 const app = express();
 const port = 3001;
 const cache = new NodeCache({stdTTL: 600}); // Cache for 10 minutes
@@ -275,67 +272,6 @@ app.get('/files', async (req, res) => {
     } catch (err) {
         logger.error('Error reading files:' + err);
         res.status(500).json({ error: 'Error reading files' });
-    }
-});
-
-app.get('/api/optimizeImage', async (req, res) => {
-    const { src, width, quality } = req.query;
-
-    logger.info(`Received optimization request for: ${src}, width: ${width}, quality: ${quality}`);
-
-    if (!src) {
-        logger.error('Missing src parameter');
-        return res.status(400).json({ error: 'Missing src parameter' });
-    }
-
-    const relativeSrc = src.startsWith('/images/') ? src.slice(8) : src;
-    const imagePath = path.join(rootFolderPath, relativeSrc);
-
-    const cacheKey = `optimized_${src}_${width}_${quality}`;
-    const cachedImage = cache.get(cacheKey);
-
-    if (cachedImage) {
-        logger.info(`Serving cached image for: ${src}`);
-        res.setHeader('Content-Type', 'image/webp');
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-        return res.send(cachedImage);
-    }
-
-    try {
-        logger.info(`Checking file existence: ${imagePath}`);
-        if (!fs.existsSync(imagePath)) {
-            logger.error(`File not found: ${imagePath}`);
-            return res.status(404).sendFile(path.join(__dirname, 'public', 'placeholder.png'));
-        }
-
-        logger.info('Reading image file');
-        const imageBuffer = await fsPromises.readFile(imagePath);
-        let processedImage = sharp(imageBuffer);
-
-        logger.info('Getting image metadata');
-        const metadata = await processedImage.metadata();
-        const targetWidth = width ? Math.min(parseInt(width), metadata.width) : metadata.width;
-
-        logger.info(`Resizing image to width: ${targetWidth}`);
-        processedImage = processedImage.resize(targetWidth, null, { withoutEnlargement: true });
-
-        logger.info('Converting image to WebP');
-        const optimizedImageBuffer = await processedImage
-            .webp({ quality: parseInt(quality) || 80 })
-            .toBuffer();
-
-        logger.info('Caching optimized image');
-        cache.set(cacheKey, optimizedImageBuffer);
-
-        logger.info('Sending optimized image');
-        res.setHeader('Content-Type', 'image/webp');
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-        res.send(optimizedImageBuffer);
-
-        logger.info(`Image optimized successfully: ${src}`);
-    } catch (error) {
-        logger.error(`Error optimizing image: ${error}`);
-        res.status(500).sendFile(path.join(__dirname, 'public', 'placeholder.png'));
     }
 });
 
