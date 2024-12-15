@@ -10,5 +10,5 @@ if (!targetTriple) {
 }
 fs.renameSync(
     `dist/app${ext}`,
-    `../frontend/src-tauri/binaries/zaphire-${targetTriple}${ext}`
+    `../lockerz/src-tauri/binaries/zaphire-${targetTriple}${ext}`
 );
