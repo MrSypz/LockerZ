@@ -1,20 +1,18 @@
-use std::collections::HashMap;
-use std::sync::Mutex;
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::path::Path;
+use base64::{engine::general_purpose, Engine as _};
 use opencv::{
     core::{Mat, Size, Vector},
-    imgcodecs,
-    imgproc,
+    imgcodecs, imgproc,
     prelude::*,
 };
-use base64::{Engine as _, engine::general_purpose};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::path::Path;
+use std::sync::Mutex;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::Manager;
 use tauri_plugin_shell::ShellExt;
 
 use std::sync::Arc;
-
 
 #[tauri::command]
 fn show_in_folder(path: String) {
@@ -35,8 +33,8 @@ struct Cache {
 // Cacheable struct without `Mat`
 #[derive(Clone, Serialize, Deserialize)]
 struct CachedImage {
-    data: String,    // Base64-encoded image data
-    timestamp: u64,  // Time when the image was cached
+    data: String,   // Base64-encoded image data
+    timestamp: u64, // Time when the image was cached
 }
 
 // Cache implementation
@@ -52,11 +50,17 @@ impl Cache {
     }
 
     fn set(&mut self, key: String, base64_data: String) {
-        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
-        self.images.insert(key, CachedImage {
-            data: base64_data,
-            timestamp,
-        });
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        self.images.insert(
+            key,
+            CachedImage {
+                data: base64_data,
+                timestamp,
+            },
+        );
     }
 }
 
@@ -69,7 +73,7 @@ fn optimize_image(
     src: &str,
     width: Option<i32>,
     height: Option<i32>,
-    quality: i32
+    quality: i32,
 ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     // Validate file existence
     let src_path = Path::new(src);
@@ -94,24 +98,31 @@ fn optimize_image(
                 let new_width = (h as f32 * src_aspect).round() as i32;
                 (new_width.min(w), h)
             }
-        },
+        }
         (Some(w), None) => {
             let aspect_ratio = src_height as f32 / src_width as f32;
             let new_height = (w as f32 * aspect_ratio).round() as i32;
             (w, new_height)
-        },
+        }
         (None, Some(h)) => {
             let aspect_ratio = src_width as f32 / src_height as f32;
             let new_width = (h as f32 * aspect_ratio).round() as i32;
             (new_width, h)
-        },
+        }
         (None, None) => (src_width, src_height),
     };
 
     // Resize the image
     let mut resized = Mat::default();
     let dsize = Size::new(target_width, target_height);
-    imgproc::resize(&src_img, &mut resized, dsize, 0.0, 0.0, imgproc::INTER_LINEAR)?;
+    imgproc::resize(
+        &src_img,
+        &mut resized,
+        dsize,
+        0.0,
+        0.0,
+        imgproc::INTER_LINEAR,
+    )?;
 
     // Encode to WebP
     let params = Vector::from(vec![imgcodecs::IMWRITE_WEBP_QUALITY, quality]);
@@ -121,14 +132,13 @@ fn optimize_image(
     Ok(buf.to_vec())
 }
 
-
 // Handle Tauri command for image optimization
 #[tauri::command]
 fn handle_optimize_image_request(
     src: String,
     width: Option<i32>,
     height: Option<i32>,
-    quality: Option<i32>
+    quality: Option<i32>,
 ) -> Result<String, String> {
     let width = width.unwrap_or(0);
     let height = height.unwrap_or(0);
@@ -140,7 +150,10 @@ fn handle_optimize_image_request(
     // Check the cache
     let mut cache = CACHE.lock().unwrap();
     if let Some(cached_image) = cache.get(&cache_key) {
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
         if now - cached_image.timestamp < 3600 {
             return Ok(cached_image.data.clone());
         }
@@ -152,7 +165,7 @@ fn handle_optimize_image_request(
             let base64_image = general_purpose::STANDARD.encode(&optimized_image);
             cache.set(cache_key, base64_image.clone());
             Ok(base64_image)
-        },
+        }
         Err(e) => Err(e.to_string()),
     }
 }
@@ -175,22 +188,21 @@ pub fn run() {
             let window = _app.get_webview_window("main").unwrap();
 
             window.on_window_event(move |event| {
-                if let tauri::WindowEvent::CloseRequested { .. } = event {
+                if let tauri::WindowEvent::Destroyed { .. } = event {
                     let mut child_lock = child_clone.lock().unwrap();
                     if let Some(mut child_process) = child_lock.take() {
                         if let Err(e) = child_process.write("exit\n".as_bytes()) {
-                            println!("Fail to send to stdin of Python: {}", e);
-                        }
-
-                        if let Err(e) = child_process.kill() {
-                            eprintln!("Failed to kill child process: {}", e);
+                            eprintln!("Failed to write to stdin: {}", e);
                         }
                     }
                 }
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![show_in_folder, handle_optimize_image_request])
+        .invoke_handler(tauri::generate_handler![
+            show_in_folder,
+            handle_optimize_image_request
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

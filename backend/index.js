@@ -89,7 +89,7 @@ class Logger {
 
         archive.pipe(output);
         archive.file(this.latestLogFile, {name: `log_${this.sessionStartTime}.log`});
-        await archive.finalize();
+        await archive.finalize()// Exit the Node.js process
     }
 
     cleanupOldLogs() {
@@ -165,20 +165,18 @@ async function getDirStats(dirPath) {
     return {size: totalSize, count: fileCount};
 }
 
-// let exitRequested = false;
-
 process.stdin.on('data', async (data) => {
     const input = data.toString().trim();
     logger.info(`Received input: ${input}`);
     if (input === 'exit') {
         logger.info('Exit signal received. Shutting down...');
-        // exitRequested = true;
         logger.info('Process exiting...');
         logger.info('Application is shutting down');
         await logger.archiveLog();
-        process.exit(); // Exit the Node.js process
+        process.exit()
     }
 });
+process.stdin.resume();
 process.on('exit', () => {
     console.log('Process exiting...');
 });
