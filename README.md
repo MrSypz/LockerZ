@@ -21,6 +21,9 @@ LockerZ is a simple yet powerful tool designed to help you manage and organize i
 - **Responsive Design**: 📱💻 Enjoy a seamless experience across various screen sizes.
 - **Dark Mode Support**: 🌙☀️ Toggle between light and dark modes for comfortable viewing in any environment.
 - **Setting**: ⚙️ Some Customize Feature like image quality/remember category/language etc..
+
+![](/lockerz/public/img/Screenshot%202024-12-11%20204117.png)
+
 ## Planned Features 🔮
 
 - **Tag Key 🏷️ Feature**: tag system to help you organize and find your files more efficiently. (Work in Progress)
