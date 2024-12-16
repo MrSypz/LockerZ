@@ -70,9 +70,6 @@ fn optimize_image(
     height: Option<i32>,
     quality: i32
 ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-    // Start the timer
-    let start_time = Instant::now();
-
     // Validate file existence
     let src_path = Path::new(src);
     if !src_path.exists() {
@@ -119,10 +116,6 @@ fn optimize_image(
     let params = Vector::from(vec![imgcodecs::IMWRITE_WEBP_QUALITY, quality]);
     let mut buf = Vector::new();
     imgcodecs::imencode(".webp", &resized, &mut buf, &params)?;
-
-    // Stop the timer
-    let duration = start_time.elapsed();
-    println!("Image optimization completed in: {:?}", duration);
 
     Ok(buf.to_vec())
 }
