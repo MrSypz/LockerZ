@@ -87,7 +87,7 @@ LockerZ is licensed under an open-source license. 📜🔓 Feel free to use, mod
 - Source Code: 🖥️ [GitHub Repository](https://github.com/MrSypz/LockerZ/)
 
 
-Built with ❤️ by [Your Name/Organization]
+Built with ❤️ by [MrSypz]
 
 
 
