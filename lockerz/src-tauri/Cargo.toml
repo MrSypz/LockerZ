@@ -26,3 +26,5 @@ tauri-plugin-log = "2.0.0-rc"
 tauri-plugin-dialog = "2"
 tauri-plugin-shell = "2"
 tauri-plugin-fs = "2"
+opencv = { version = "0.93.5"}
+
