@@ -1,6 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2.0.0-rc",
-  "productName": "lockerz",
+  "productName": "LockerZ",
+  "mainBinaryName": "LockerZ App",
   "version": "0.2.4",
   "identifier": "lockerz",
   "build": {
@@ -16,9 +17,12 @@
         "title": "LockerZ",
         "width": 1280,
         "height": 720,
+        "minHeight": 700,
+        "minWidth": 1100,
         "resizable": true,
         "fullscreen": false,
-        "center": true
+        "center": true,
+        "zoomHotkeysEnabled": false
       }
     ],
     "security": {
