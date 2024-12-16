@@ -11,8 +11,7 @@ import {useTranslation} from 'react-i18next'
 import { ArrowDown, ArrowUp, ArrowUpDown, Clock, FileIcon, Search, Text } from 'lucide-react'
 import { ImageViewer } from './Image-viewer';
 import {useSharedSettings} from "@/utils/SettingsContext";
-import Image from "next/image";
-import {API_URL} from "@/lib/zaphire";
+import {OptimizedImage} from "@/components/widget/ImageProcessor";
 
 function useColumnCount() {
     const [columnCount, setColumnCount] = useState(5)
@@ -293,6 +292,7 @@ function FileCard({file, onDelete, onMove,onView, onSelect, index, column, total
     const {t} = useTranslation();
     const { settings } = useSharedSettings();
 
+
     const row = Math.floor(index / totalColumns)
     const isDarkSquare = (row + column) % 2 === 0
 
@@ -301,9 +301,6 @@ function FileCard({file, onDelete, onMove,onView, onSelect, index, column, total
         const offsetAmount = 12;
         return columnDirection * offsetAmount;
     };
-
-    // Use the full path for the image source
-    const imageSrc = `${file.url}`;
 
     return (
         <FileContextMenu
@@ -349,8 +346,8 @@ function FileCard({file, onDelete, onMove,onView, onSelect, index, column, total
                 >
                     <CardContent className="p-0">
                         <div className="relative aspect-[2/3] rounded-t-lg overflow-hidden">
-                            <Image
-                                src={API_URL + imageSrc}
+                            <OptimizedImage
+                                src={file.filepath}
                                 alt={file.name}
                                 width={settings.imageWidth}
                                 height={settings.imageHeight}
