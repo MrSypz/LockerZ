@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::path::Path;
-use tauri::Manager;
 use opencv::{
     core::{Mat, Size, Vector},
     imgcodecs,
@@ -11,6 +10,11 @@ use opencv::{
 };
 use base64::{Engine as _, engine::general_purpose};
 use serde::{Deserialize, Serialize};
+use tauri::Manager;
+use tauri_plugin_shell::ShellExt;
+
+use std::sync::Arc;
+
 
 #[tauri::command]
 fn show_in_folder(path: String) {
@@ -60,9 +64,6 @@ impl Cache {
 lazy_static::lazy_static! {
     static ref CACHE: Mutex<Cache> = Mutex::new(Cache::new());
 }
-
-// Image optimization function
-use std::time::Instant;
 
 fn optimize_image(
     src: &str,
@@ -164,29 +165,29 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|_app| {
-            // let sidecar_command = app.shell().sidecar("zaphire").unwrap();
-            // let (_rx, sidecar_child) = sidecar_command.spawn().expect("Failed to spawn sidecar");
-            //
-            // let child = Arc::new(Mutex::new(Some(sidecar_child)));
-            //
-            // let child_clone = Arc::clone(&child);
-            //
-            // let window = app.get_webview_window("main").unwrap();
-            //
-            // window.on_window_event(move |event| {
-            //     if let tauri::WindowEvent::CloseRequested { .. } = event {
-            //         let mut child_lock = child_clone.lock().unwrap();
-            //         if let Some(mut child_process) = child_lock.take() {
-            //             if let Err(e) = child_process.write("exit\n".as_bytes()) {
-            //                 println!("Fail to send to stdin of Python: {}", e);
-            //             }
-            //
-            //             if let Err(e) = child_process.kill() {
-            //                 eprintln!("Failed to kill child process: {}", e);
-            //             }
-            //         }
-            //     }
-            // });
+            let sidecar_command = _app.shell().sidecar("zaphire").unwrap();
+            let (_rx, sidecar_child) = sidecar_command.spawn().expect("Failed to spawn sidecar");
+
+            let child = Arc::new(Mutex::new(Some(sidecar_child)));
+
+            let child_clone = Arc::clone(&child);
+
+            let window = _app.get_webview_window("main").unwrap();
+
+            window.on_window_event(move |event| {
+                if let tauri::WindowEvent::CloseRequested { .. } = event {
+                    let mut child_lock = child_clone.lock().unwrap();
+                    if let Some(mut child_process) = child_lock.take() {
+                        if let Err(e) = child_process.write("exit\n".as_bytes()) {
+                            println!("Fail to send to stdin of Python: {}", e);
+                        }
+
+                        if let Err(e) = child_process.kill() {
+                            eprintln!("Failed to kill child process: {}", e);
+                        }
+                    }
+                }
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![show_in_folder, handle_optimize_image_request])
