@@ -1,5 +1,5 @@
 <div style="display: flex; justify-content: center; width: 100%">
-    <image src="./lockerz/src-tauri/icons/icon.svg" width="200px" height="200px"/>
+    <image src="./lockerz/src-tauri/icons/icon.png" width="200px" height="200px"/>
 </div>
 
 # LockerZ 🔒🖼️
