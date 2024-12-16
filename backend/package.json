@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "build": "pkg index.js --targets node18-win-x64 --output dist/app"
+    "build": "pkg --compress GZip index.js --targets node18-win-x64 --output dist/app"
   },
   "bin": "index.js",
   "pkg": {
