@@ -20,6 +20,14 @@ const changelogItems = [
               </div>
               `,
             },
+            {
+                title: "Quality of Life",
+                type: "preview",
+                content: `
+              <h1 class="text-lg font-semibold mb-2">ContextMenu - Update</h1>
+              <p class="mb-4">Now it can open the image folder directory!</p>
+              `
+            },
         ]
     },
     {
