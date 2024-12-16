@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from "@/hooks/use-toast"
 import { Loader2, AlertCircle } from 'lucide-react'
 import { open } from '@tauri-apps/plugin-dialog'
+import {invoke} from "@tauri-apps/api/core";
 import { MoveDialog } from '@/components/widget/Move-dialog'
 import {
     AlertDialog,
@@ -81,6 +82,9 @@ export default function Locker() {
         }
     }, [selectedCategory, t]);
 
+    async function show_in_folder(path: string) {
+        await invoke('show_in_folder', {path});
+    }
 
     const fetchPaginatedFiles = useCallback(async () => {
         setIsLoading(true);
@@ -426,6 +430,9 @@ export default function Locker() {
                             <FileGrid
                                 files={files}
                                 allFiles={allFiles}
+                                onViewFileAction={async (file) => {
+                                    await show_in_folder(file.filepath);
+                                }}
                                 onDeleteFileAction={(file) => {
                                     setSelectedFile(file);
                                     setDeleteDialogOpen(true);

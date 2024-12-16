@@ -244,6 +244,7 @@ app.get('/files', async (req, res) => {
                             name: file,
                             category: cat.name,
                             url: `/images/${cat.name}/${file}`,
+                            filepath: filePath,
                             size: stats.size,
                             lastModified: stats.mtime.toISOString()
                         };

@@ -45,6 +45,7 @@ function useColumnCount() {
 interface FileGridProps {
     files: File[]
     allFiles: File[]
+    onViewFileAction: (file: File) => void
     onDeleteFileAction: (file: File) => void
     onMoveFileAction: (file: File) => void
     apiUrl: string
@@ -54,7 +55,7 @@ interface FileGridProps {
     onTotalPagesChange: (pages: number) => void
 }
 
-export function FileGrid({ files, allFiles, onDeleteFileAction, onMoveFileAction, apiUrl , currentPage, imagesPerPage, onPageChange, onTotalPagesChange}: FileGridProps) {
+export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction, onMoveFileAction, apiUrl , currentPage, imagesPerPage, onPageChange, onTotalPagesChange}: FileGridProps) {
     const totalColumns = useColumnCount()
     const [sortedFiles, setSortedFiles] = useState(files)
     const [sortCriteria, setSortCriteria] = useState<'name' | 'date' | 'size'>('name')
@@ -254,6 +255,7 @@ export function FileGrid({ files, allFiles, onDeleteFileAction, onMoveFileAction
                         <FileCard
                             key={`${file.category}-${file.name}`}
                             file={file}
+                            onView={() => onViewFileAction(file)}
                             onDelete={() => onDeleteFileAction(file)}
                             onMove={() => onMoveFileAction(file)}
                             onSelect={() => handleSelectImage(index)}
@@ -280,13 +282,14 @@ interface FileCardProps {
     file: File
     onDelete: () => void
     onMove: () => void
+    onView: () => void
     onSelect: () => void
     index: number
     column: number
     totalColumns: number
 }
 
-function FileCard({file, onDelete, onMove, onSelect, index, column, totalColumns}: FileCardProps) {
+function FileCard({file, onDelete, onMove,onView, onSelect, index, column, totalColumns}: FileCardProps) {
     const {t} = useTranslation();
     const { settings } = useSharedSettings();
 
@@ -305,6 +308,7 @@ function FileCard({file, onDelete, onMove, onSelect, index, column, totalColumns
     return (
         <FileContextMenu
             file={file}
+            onViewAction={onView}
             onDeleteAction={onDelete}
             onMoveAction={onMove}
         >

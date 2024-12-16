@@ -8,7 +8,7 @@ import {
     ContextMenuItem,
     ContextMenuTrigger,
 } from "@/components/ui/context-menu"
-import { Trash2, FolderInput } from 'lucide-react'
+import {Trash2, FolderInput, FolderOpen} from 'lucide-react'
 import {useTranslation} from "react-i18next";
 
 interface FileContextMenuProps {
@@ -19,9 +19,10 @@ interface FileContextMenuProps {
     }
     onDeleteAction: (file: { name: string; category: string }) => void
     onMoveAction: (file: { name: string; category: string }) => void
+    onViewAction: (file: { name: string; category: string }) => void
 }
 
-export function FileContextMenu({ children, file, onDeleteAction, onMoveAction }: FileContextMenuProps) {
+export function FileContextMenu({ children, file, onDeleteAction, onMoveAction,onViewAction }: FileContextMenuProps) {
     const { t } = useTranslation();
     return (
         <ContextMenu>
@@ -39,6 +40,13 @@ export function FileContextMenu({ children, file, onDeleteAction, onMoveAction }
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
                     >
+                        <ContextMenuItem
+                            onClick={() => onViewAction(file)}
+                            className="flex cursor-pointer items-center rounded-sm px-2 py-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-accent/50"
+                        >
+                            <FolderOpen  className="mr-2 h-4 w-4" />
+                            {t('locker.dialog.menu.viewpath')}
+                        </ContextMenuItem>
                         <ContextMenuItem
                             onClick={() => onMoveAction(file)}
                             className="flex cursor-pointer items-center rounded-sm px-2 py-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-accent/50"

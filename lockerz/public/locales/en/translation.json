@@ -84,6 +84,7 @@
         "click": "Move"
       },
       "menu": {
+        "viewpath": "Open in Explorer",
         "move": "Move to...",
         "delete": "Delete"
       }
