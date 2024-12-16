@@ -1,6 +1,18 @@
+use std::process::Command;
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
 use tauri_plugin_shell::ShellExt;
+
+#[tauri::command]
+fn show_in_folder(path: String) {
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("explorer")
+            .args(["/select,", &path]) // The comma after select is not a typo
+            .spawn()
+            .unwrap();
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -41,6 +53,7 @@ pub fn run() {
             // });
             Ok(())
         })
+        .invoke_handler(tauri::generate_handler![show_in_folder])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
