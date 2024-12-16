@@ -3,6 +3,26 @@ import {Changelog} from "@/components/widget/Changelog"
 
 const changelogItems = [
     {
+        version: "0.2.4 - beta",
+        date: "16-12-2024",
+        sections: [
+            {
+                title: "Performance",
+                type: "preview",
+                content: `
+              <h1 class="text-lg font-semibold mb-2">Image Optimize</h1>
+              <p class="mb-4">Change the Sharp image optimize now using openCV</p>
+              Hardcode rewrite image optimize are now native in tauri not on the node.js 
+              <div class="bg-blue-100 dark:bg-blue-900 p-4 rounded-md mb-4">
+                <p class="text-blue-800 dark:text-blue-200">
+                <em>Note: Due to sharp it have native dependency that make I can't compile into a binary file, so I decide to make it standalone in rust instead by using opencv the good is it can use hardware accurate
+                </p>
+              </div>
+              `,
+            },
+        ]
+    },
+    {
         version: "0.2.3 - beta",
         date: "15-12-2024",
         sections: [

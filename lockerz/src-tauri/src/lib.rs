@@ -170,7 +170,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
-        .setup(|app| {
+        .setup(|_app| {
             // let sidecar_command = app.shell().sidecar("zaphire").unwrap();
             // let (_rx, sidecar_child) = sidecar_command.spawn().expect("Failed to spawn sidecar");
             //
