@@ -121,7 +121,7 @@ fn optimize_image(
         dsize,
         0.0,
         0.0,
-        imgproc::INTER_LINEAR,
+        imgproc::INTER_LANCZOS4,
     )?;
 
     // Encode to WebP
@@ -140,8 +140,8 @@ fn handle_optimize_image_request(
     height: Option<i32>,
     quality: Option<i32>,
 ) -> Result<String, String> {
-    let width = width.unwrap_or(0);
-    let height = height.unwrap_or(0);
+    let width = width.unwrap_or(1280);
+    let height = height.unwrap_or(720);
     let quality = quality.unwrap_or(90);
 
     // Create a cache key
