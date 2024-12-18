@@ -5,7 +5,6 @@ const fs = require('fs');
 const path = require('path');
 const formidable = require('formidable');
 const NodeCache = require('node-cache');
-const archiver = require('archiver');
 const app = express();
 const port = 3001;
 const cache = new NodeCache({stdTTL: 600}); // Cache for 10 minutes
@@ -35,7 +34,7 @@ class Logger {
         this.maxLogFiles = 10;
 
         if (!fs.existsSync(this.logDir)) {
-            fs.mkdirSync(this.logDir, {recursive: true});
+            fs.mkdirSync(this.logDir, { recursive: true });
         }
 
         fs.writeFileSync(this.latestLogFile, '');
@@ -47,7 +46,6 @@ class Logger {
         const timestamp = new Date().toISOString();
         const logMessage = `[${logType.toUpperCase()}] ${timestamp}: ${message}\n`;
         fs.appendFileSync(this.latestLogFile, logMessage);
-        console.log(logMessage.trim()); // Also log to console
     }
 
     info(message) {
@@ -71,30 +69,27 @@ class Logger {
     }
 
     async archiveLog() {
-        const archiveName = `log_${this.sessionStartTime}.zip`;
-        const output = fs.createWriteStream(path.join(this.logDir, archiveName));
-        const archive = archiver('zip', {
-            zlib: {level: 9} // Sets the compression level
-        });
+        const newFileName = `log_${this.sessionStartTime}.log`;
+        const newFilePath = path.join(this.logDir, newFileName);
 
-        output.on('close', () => {
-            this.log(`Log archived: ${archiveName}`);
+        try {
+            // Rename the latest.log file
+            fs.renameSync(this.latestLogFile, newFilePath);
+            this.log(`Log renamed: ${newFileName}`);
+
+            // Create a new latest.log file
             fs.writeFileSync(this.latestLogFile, '');
+
+            // Clean up old logs
             this.cleanupOldLogs();
-        });
-
-        archive.on('error', (err) => {
-            this.error(err);
-        });
-
-        archive.pipe(output);
-        archive.file(this.latestLogFile, {name: `log_${this.sessionStartTime}.log`});
-        await archive.finalize()// Exit the Node.js process
+        } catch (err) {
+            this.error(`Error archiving log: ${err}`);
+        }
     }
 
     cleanupOldLogs() {
         const files = fs.readdirSync(this.logDir)
-            .filter(file => file.startsWith('log_') && file.endsWith('.zip'))
+            .filter(file => file.startsWith('log_') && file.endsWith('.log'))
             .map(file => ({ name: file, time: fs.statSync(path.join(this.logDir, file)).mtime.getTime() }))
             .sort((a, b) => b.time - a.time);
 
