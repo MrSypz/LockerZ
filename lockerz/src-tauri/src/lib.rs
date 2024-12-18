@@ -112,26 +112,25 @@ fn optimize_image(
         (None, None) => (src_width, src_height),
     };
 
-    // Resize the image
     let mut resized = Mat::default();
     let dsize = Size::new(target_width, target_height);
-    imgproc::resize(
-        &src_img,
-        &mut resized,
-        dsize,
-        0.0,
-        0.0,
-        imgproc::INTER_LANCZOS4,
-    )?;
+    let interpolation = if target_width * target_height <= src_width * src_height {
+        imgproc::INTER_AREA
+    } else {
+        imgproc::INTER_CUBIC
+    };
+    imgproc::resize(&src_img, &mut resized, dsize, 0.0, 0.0, interpolation)?;
 
-    // Encode to WebP
-    let params = Vector::from(vec![imgcodecs::IMWRITE_WEBP_QUALITY, quality]);
+    let mut params = Vector::new();
+    params.push(imgcodecs::IMWRITE_WEBP_QUALITY);
+    params.push(quality);
+    params.push(imgcodecs::IMWRITE_TIFF_COMPRESSION_WEBP);
+    params.push(0);
     let mut buf = Vector::new();
     imgcodecs::imencode(".webp", &resized, &mut buf, &params)?;
 
     Ok(buf.to_vec())
 }
-
 // Handle Tauri command for image optimization
 #[tauri::command]
 fn handle_optimize_image_request(
