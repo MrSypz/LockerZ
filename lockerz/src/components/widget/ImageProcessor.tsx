@@ -66,4 +66,3 @@ export function OptimizedImage({ src, alt, width, height, quality = 80 }: Optimi
         </motion.div>
     );
 }
-
