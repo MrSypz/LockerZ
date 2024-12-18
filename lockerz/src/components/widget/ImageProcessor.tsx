@@ -17,27 +17,23 @@ export function OptimizedImage({ src, alt, width, height, quality = 80 }: Optimi
     const imgRef = useRef<HTMLImageElement>(null);
 
     useEffect(() => {
-        const optimizeImage = async () => {
-            try {
-                const base64Image: string = await invoke('handle_optimize_image_request', {
-                    src,
-                    width,
-                    height,
-                    quality
-                });
+        invoke('handle_optimize_image_request', {
+            src,
+            width,
+            height,
+            quality
+        })
+            .then((base64Image: string) => {
                 setOptimizedSrc(`data:image/webp;base64,${base64Image}`);
                 setIsLoaded(true);
                 setError(null);
-            } catch (err) {
+            })
+            .catch((err) => {
                 console.error('Failed to optimize image:', err);
                 setIsLoaded(true);
                 setError('Failed to load image');
                 setOptimizedSrc(src); // Fallback to original image
-            }
-        };
-
-        optimizeImage();
-
+            });
     }, [src, width, height, quality]);
 
     useEffect(() => {
