@@ -60,6 +60,7 @@ export function OptimizedImage({ src, alt, width, height, quality = 80 }: Optimi
                 height={height}
                 className="object-cover w-full h-full transition-filter duration-300 ease-out"
                 style={{ filter: isLoaded ? 'none' : 'blur(10px)' }}
+                loading={"lazy"}
             />
             {error && (
                 <div className="absolute inset-0 flex items-center justify-center bg-red-100">
