@@ -4,6 +4,19 @@ import {Changelog} from "@/components/widget/Changelog"
 const changelogItems = [
     {
         version: "0.2.5 - beta",
+        date: "16-12-2024",
+        sections: [
+            {
+                title: "Fix",
+                type: "feature",
+                content: `
+              <h3 class="text-lg font-semibold mb-2">Node.js</h3> Now remove archive it size smaller around 4kb
+              <h3 class="text-lg font-semibold mb-2">Backend</h3> Fix Image Process Before linear to Area`
+            },
+        ]
+    },
+    {
+        version: "0.2.4 - beta",
         date: "18-12-2024",
         sections: [
             {
@@ -27,19 +40,6 @@ const changelogItems = [
               <h1 class="text-lg font-semibold mb-2">ContextMenu - Update</h1>
               <p class="mb-4">Now it can open the image folder directory!</p>
               `
-            },
-        ]
-    },
-    {
-        version: "0.2.4 - beta",
-        date: "16-12-2024",
-        sections: [
-            {
-                title: "Fix",
-                type: "feature",
-                content: `
-              <h3 class="text-lg font-semibold mb-2">Node.js</h3> Now remove archive it size smaller around 4kb
-              <h3 class="text-lg font-semibold mb-2">Backend</h3> Fix Image Process Before linear to Area`
             },
         ]
     },
