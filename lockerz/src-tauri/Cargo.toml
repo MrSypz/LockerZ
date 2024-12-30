@@ -29,4 +29,3 @@ tauri-plugin-fs = "2"
 opencv = { version = "0.93.5"}
 base64 = "0.22.1"
 lazy_static = "1.5.0"
-

@@ -3,6 +3,18 @@ import {Changelog} from "@/components/widget/Changelog"
 
 const changelogItems = [
     {
+        version: "0.2.6 - beta",
+        date: "31-12-2024",
+        sections: [
+            {
+                title: "Fix",
+                type: "feature",
+                content: `
+              <h3 class="text-lg font-semibold mb-2">Missing opencv4100.dll</h3> it now include into the file`
+            },
+        ]
+    },
+    {
         version: "0.2.5 - beta",
         date: "16-12-2024",
         sections: [
