@@ -4,8 +4,11 @@ mod modules {
     pub mod category;
 }
 
-use modules::{category::get_categories,category::rename_category,
-              config::setup_folders, logger::LOGGER
+use modules::{category::get_categories,
+              category::rename_category,
+              category::create_category,
+              config::setup_folders,
+              logger::LOGGER
 };
 
 use base64::{engine::general_purpose, Engine as _};
@@ -218,7 +221,8 @@ pub fn run() {
             show_in_folder,
             handle_optimize_image_request,
             get_categories,
-            rename_category
+            rename_category,
+            create_category
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -258,7 +258,6 @@ export default function Category() {
             });
         }
     }
-
     const handleCreateCategory = async () => {
         if (!newCategory.trim()) {
             toast({
@@ -270,24 +269,16 @@ export default function Category() {
         }
 
         try {
-            const response = await fetch(`${API_URL}/create-category`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({name: newCategory}),
+            await invoke("create_category", {
+                name: newCategory
             })
-            if (response.ok) {
-                setNewCategory('')
-                setIsCreateDialogOpen(false)
-                fetchCategories()
-                toast({
-                    title: "Success",
-                    description: "Category created successfully",
-                })
-            } else {
-                throw new Error('Failed to create category')
-            }
+            setNewCategory('')
+            setIsCreateDialogOpen(false)
+            fetchCategories()
+            toast({
+                title: "Success",
+                description: "Category created successfully",
+            })
         } catch (error) {
             console.error('Error creating category:', error)
             toast({
@@ -297,6 +288,7 @@ export default function Category() {
             })
         }
     }
+
 
     return (
         <div className="flex h-screen bg-background">

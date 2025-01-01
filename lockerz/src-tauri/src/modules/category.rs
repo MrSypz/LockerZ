@@ -94,28 +94,63 @@ pub async fn get_categories() -> Result<Vec<Category>, String> {
 
 #[tauri::command]
 pub async fn rename_category(old_name: &str, new_name: &str) -> Result<(), String> {
-    // Ensure the root folder path is a PathBuf (from your config)
     let root_folder_path = config::CONFIG.folderPath.clone();
 
-    // Join the root path with the old and new names to form full paths
     let old_path = Path::new(&root_folder_path).join(&old_name);
     let new_path = Path::new(&root_folder_path).join(&new_name);
 
-    // Ensure the old path exists before renaming
     if !old_path.exists() {
         return Err(format!("Old directory '{}' does not exist", old_name));
     }
 
-    // Perform the rename operation
     match fs::rename(&old_path, &new_path).await {
         Ok(_) => {
             println!("Successfully renamed {} to {}", old_name, new_name);
             Ok(())
         }
         Err(e) => {
-            // Log error if the renaming fails
             eprintln!("Error renaming category: {}", e);
             Err("Failed to rename category".to_string())
+        }
+    }
+}
+#[tauri::command]
+pub async fn create_category(name: &str) -> Result<(), String> {
+    let root_folder_path = config::CONFIG.folderPath.clone();
+
+    let new_path = Path::new(&root_folder_path).join(name);
+
+    if new_path.exists() {
+        return Err(format!("Category '{}' already exists", name));
+    }
+
+    match tokio::fs::create_dir(&new_path).await {
+        Ok(_) => {
+            println!("Successfully created category {}", name);
+            Ok(())
+        }
+        Err(e) => {
+            eprintln!("Error creating category {}: {}", name, e);
+            Err(format!("Failed to create category {}: {}", name, e))
+        }
+    }
+}
+#[tauri::command]
+pub async fn delete_category(name: &str) -> Result<(), String> {
+    let root_folder_path = config::CONFIG.folderPath.clone();
+    let new_path = Path::new(&root_folder_path).join(name);
+
+    if !new_path.exists() {
+        return Err(format!("Category '{}' does not exist", name));
+    }
+    match tokio::fs::remove_dir(&new_path).await {
+        Ok(_) => {
+            println!("Successfully deleted category {}", name);
+            Ok(())
+        }
+        Err(e) => {
+            eprintln!("Error deleting category {}: {}", name, e);
+            Err(format!("Failed to delete category {}: {}", name, e))
         }
     }
 }
