@@ -29,13 +29,22 @@ const ALLOWED_FILE_TYPES = ['.png', '.jpg', '.jpeg', '.jfif', '.webp'];
 const PAGE_STORAGE_KEY = 'lockerz-current-page'
 const IMAGES_PER_PAGE_STORAGE_KEY = 'lockerz-images-per-page'
 
+interface Category {
+    [x: string]: any
+    name: string
+    file_count: number
+    size: number
+    imageUrl?: string
+  }
+
+
 export default function Locker() {
     const { t } = useTranslation();
     const { settings } = useSharedSettings();
 
     const [files, setFiles] = useState<File[]>([])
     const [allFiles, setAllFiles] = useState<File[]>([])
-    const [categories, setCategories] = useState<string[]>([])
+    const [categories, setCategories] = useState<Category[]>([])
     const [selectedCategory, setSelectedCategory] = useState<string>(() => {
         if (typeof window !== 'undefined' && settings.rememberCategory) {
             return localStorage.getItem('lastSelectedCategory') || 'all';
@@ -111,11 +120,10 @@ export default function Locker() {
     const fetchCategories = useCallback(async () => {
         setIsCategoriesLoading(true)
         try {
-            const response = await fetch(`${API_URL}/categories`)
-            if (!response.ok) {
+            const data:Category = await invoke("get_categories");
+            if (!data.ok) {
                 new Error('Failed to fetch categories')
             }
-            const data = await response.json()
             setCategories(data.map((category: { name: string }) => category.name))
         } catch (error) {
             toast({
