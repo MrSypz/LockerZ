@@ -268,27 +268,27 @@ app.get('/files', async (req, res) => {
         res.status(500).json({ error: 'Error reading files' });
     }
 });
-
-app.get('/categories', async (req, res) => {
-    try {
-        const entries = await fsPromises.readdir(rootFolderPath, {withFileTypes: true});
-        const categories = await Promise.all(entries
-            .filter(entry => entry.isDirectory() && entry.name !== 'temp')
-            .map(async (dir) => {
-                const dirPath = path.join(rootFolderPath, dir.name);
-                const {size, count} = await getDirStats(dirPath);
-                return {
-                    name: dir.name,
-                    fileCount: count,
-                    size: size
-                };
-            }));
-        res.json(categories);
-    } catch (err) {
-        logger.error('Error reading categories:' + err);
-        res.status(500).json({error: 'Error reading categories'});
-    }
-});
+//Done port
+// app.get('/categories', async (req, res) => {
+//     try {
+//         const entries = await fsPromises.readdir(rootFolderPath, {withFileTypes: true});
+//         const categories = await Promise.all(entries
+//             .filter(entry => entry.isDirectory() && entry.name !== 'temp')
+//             .map(async (dir) => {
+//                 const dirPath = path.join(rootFolderPath, dir.name);
+//                 const {size, count} = await getDirStats(dirPath);
+//                 return {
+//                     name: dir.name,
+//                     fileCount: count,
+//                     size: size
+//                 };
+//             }));
+//         res.json(categories);
+//     } catch (err) {
+//         logger.error('Error reading categories:' + err);
+//         res.status(500).json({error: 'Error reading categories'});
+//     }
+// });
 
 app.get('/stats', async (req, res) => {
     try {
@@ -355,21 +355,21 @@ app.post('/update-settings', async (req, res) => {
         res.status(500).json({ success: false, error: 'Failed to update settings' });
     }
 });
-
-app.post('/rename-category', async (req, res) => {
-    const {oldName, newName} = req.body;
-    const oldPath = path.join(rootFolderPath, oldName);
-    const newPath = path.join(rootFolderPath, newName);
-
-    try {
-        await fsPromises.rename(oldPath, newPath);
-        clearRelevantCaches([oldName, newName]);
-        res.json({success: true});
-    } catch (error) {
-        logger.error('Error renaming category:' + error);
-        res.status(500).json({error: 'Failed to rename category'});
-    }
-});
+//Done Port
+// app.post('/rename-category', async (req, res) => {
+//     const {oldName, newName} = req.body;
+//     const oldPath = path.join(rootFolderPath, oldName);
+//     const newPath = path.join(rootFolderPath, newName);
+//
+//     try {
+//         await fsPromises.rename(oldPath, newPath);
+//         clearRelevantCaches([oldName, newName]);
+//         res.json({success: true});
+//     } catch (error) {
+//         logger.error('Error renaming category:' + error);
+//         res.status(500).json({error: 'Failed to rename category'});
+//     }
+// });
 
 app.post('/delete-category', async (req, res) => {
     const {name} = req.body;

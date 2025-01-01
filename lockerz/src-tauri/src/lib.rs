@@ -1,3 +1,13 @@
+mod modules {
+    pub mod config;
+    pub mod logger;
+    pub mod category;
+}
+
+use modules::{category::get_categories,category::rename_category,
+              config::setup_folders, logger::LOGGER
+};
+
 use base64::{engine::general_purpose, Engine as _};
 use opencv::{
     core::{Mat, Size, Vector},
@@ -5,10 +15,10 @@ use opencv::{
     prelude::*,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::collections::HashMap;
 use tauri::Manager;
 use tauri_plugin_shell::ShellExt;
 
@@ -22,6 +32,44 @@ fn show_in_folder(path: String) {
             .args(["/select,", &path])
             .spawn()
             .unwrap();
+    }
+}
+
+// Handle Tauri command for image optimization
+#[tauri::command]
+fn handle_optimize_image_request(
+    src: String,
+    width: Option<i32>,
+    height: Option<i32>,
+    quality: Option<i32>,
+) -> Result<String, String> {
+    let width = width.unwrap_or(1280);
+    let height = height.unwrap_or(720);
+    let quality = quality.unwrap_or(90);
+
+    // Create a cache key
+    let cache_key = format!("{}:{}:{}:{}", src, width, height, quality);
+
+    // Check the cache
+    let mut cache = CACHE.lock().unwrap();
+    if let Some(cached_image) = cache.get(&cache_key) {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        if now - cached_image.timestamp < 3600 {
+            return Ok(cached_image.data.clone());
+        }
+    }
+
+    // Optimize and cache the image
+    match optimize_image(&src, Some(width), Some(height), quality) {
+        Ok(optimized_image) => {
+            let base64_image = general_purpose::STANDARD.encode(&optimized_image);
+            cache.set(cache_key, base64_image.clone());
+            Ok(base64_image)
+        }
+        Err(e) => Err(e.to_string()),
     }
 }
 
@@ -131,47 +179,14 @@ fn optimize_image(
 
     Ok(buf.to_vec())
 }
-// Handle Tauri command for image optimization
-#[tauri::command]
-fn handle_optimize_image_request(
-    src: String,
-    width: Option<i32>,
-    height: Option<i32>,
-    quality: Option<i32>,
-) -> Result<String, String> {
-    let width = width.unwrap_or(1280);
-    let height = height.unwrap_or(720);
-    let quality = quality.unwrap_or(90);
 
-    // Create a cache key
-    let cache_key = format!("{}:{}:{}:{}", src, width, height, quality);
-
-    // Check the cache
-    let mut cache = CACHE.lock().unwrap();
-    if let Some(cached_image) = cache.get(&cache_key) {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-        if now - cached_image.timestamp < 3600 {
-            return Ok(cached_image.data.clone());
-        }
-    }
-
-    // Optimize and cache the image
-    match optimize_image(&src, Some(width), Some(height), quality) {
-        Ok(optimized_image) => {
-            let base64_image = general_purpose::STANDARD.encode(&optimized_image);
-            cache.set(cache_key, base64_image.clone());
-            Ok(base64_image)
-        }
-        Err(e) => Err(e.to_string()),
-    }
-}
 
 // Run the Tauri app
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let _ = setup_folders();
+    LOGGER.info("Application started").expect("Failed to log");
+
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
@@ -190,6 +205,7 @@ pub fn run() {
                 if let tauri::WindowEvent::Destroyed { .. } = event {
                     let mut child_lock = child_clone.lock().unwrap();
                     if let Some(mut child_process) = child_lock.take() {
+                        LOGGER.archive_log();
                         if let Err(e) = child_process.write("exit\n".as_bytes()) {
                             eprintln!("Failed to write to stdin: {}", e);
                         }
@@ -200,7 +216,9 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             show_in_folder,
-            handle_optimize_image_request
+            handle_optimize_image_request,
+            get_categories,
+            rename_category
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
