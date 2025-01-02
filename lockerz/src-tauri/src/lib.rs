@@ -89,7 +89,6 @@ pub fn run() {
             get_files,
             get_stats,
             expand_scope,
-            handle_optimize_image_request,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
