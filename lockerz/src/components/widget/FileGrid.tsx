@@ -99,7 +99,7 @@ export function FileGrid({
                     comparison = a.name.localeCompare(b.name);
                     break;
                 case 'date':
-                    comparison = new Date(a.lastModified).getTime() - new Date(b.lastModified).getTime();
+                    comparison = new Date(a.last_modified).getTime() - new Date(b.last_modified).getTime();
                     break;
                 case 'size':
                     comparison = a.size - b.size;
