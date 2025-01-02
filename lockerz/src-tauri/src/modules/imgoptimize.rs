@@ -1,15 +1,19 @@
-use std::collections::HashMap;
-use std::path::Path;
-use std::time::{SystemTime, UNIX_EPOCH};
 use base64::{engine::general_purpose, Engine as _};
+use opencv::core::AccessFlag::ACCESS_READ;
+use opencv::core::UMatUsageFlags::USAGE_ALLOCATE_DEVICE_MEMORY;
+use opencv::core::{have_opencl, set_use_opencl, UMat};
 use opencv::{
     core::{Mat, Size, Vector},
     imgcodecs, imgproc,
     prelude::*,
 };
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::path::Path;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex as AsyncMutex;
 use tokio::task;
+
 
 #[tauri::command]
 pub async fn handle_optimize_image_request(
@@ -34,7 +38,6 @@ pub async fn handle_optimize_image_request(
             return Ok(cached_image.data.clone());
         }
     }
-
     match optimize_image(src.clone(), Some(width), Some(height), quality).await {
         Ok(optimized_image) => {
             let base64_image = general_purpose::STANDARD.encode(&optimized_image);
@@ -49,7 +52,6 @@ struct Cache {
     images: HashMap<String, CachedImage>,
 }
 
-// Cacheable struct without `Mat`
 #[derive(Clone, Serialize, Deserialize)]
 struct CachedImage {
     data: String,
@@ -85,6 +87,13 @@ impl Cache {
 lazy_static::lazy_static! {
     static ref CACHE: AsyncMutex<Cache> = AsyncMutex::new(Cache::new());
 }
+lazy_static::lazy_static! {
+    static ref OPENCV_INIT: () = {
+        if have_opencl().expect("REASON") {
+            set_use_opencl(true).expect("REASON");
+        }
+    };
+}
 
 pub async fn optimize_image(
     src: String,
@@ -92,13 +101,18 @@ pub async fn optimize_image(
     height: Option<i32>,
     quality: i32,
 ) -> Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync>> {
+    lazy_static::initialize(&OPENCV_INIT);
+
     task::spawn_blocking(move || {
         let src_path = Path::new(&src);
         if !src_path.exists() {
             return Err(format!("File does not exist: {}", src).into());
         }
 
-        let src_img = imgcodecs::imread(&src, imgcodecs::IMREAD_COLOR)?;
+        let src_img = imgcodecs::imread(&src, imgcodecs::IMREAD_COLOR)?.get_umat(
+            ACCESS_READ,
+            USAGE_ALLOCATE_DEVICE_MEMORY,
+        )?;
         let src_width = src_img.cols();
         let src_height = src_img.rows();
 
@@ -127,22 +141,39 @@ pub async fn optimize_image(
             (None, None) => (src_width, src_height),
         };
 
-        let mut resized = Mat::default();
+        if target_width <= 0 || target_height <= 0 {
+            return Err("Invalid dimensions after resizing calculation.".into());
+        }
+
+        let use_gpu = target_width < src_width || target_height < src_height;
+
         let dsize = Size::new(target_width, target_height);
         let interpolation = if target_width * target_height <= src_width * src_height {
             imgproc::INTER_AREA
         } else {
             imgproc::INTER_CUBIC
         };
-        imgproc::resize(&src_img, &mut resized, dsize, 0.0, 0.0, interpolation)?;
 
-        let mut params = Vector::new();
-        params.push(imgcodecs::IMWRITE_WEBP_QUALITY);
-        params.push(quality);
-        params.push(imgcodecs::IMWRITE_TIFF_COMPRESSION_WEBP);
-        params.push(0);
         let mut buf = Vector::new();
-        imgcodecs::imencode(".webp", &resized, &mut buf, &params)?;
+        if use_gpu {
+            let mut resized = UMat::new_def();
+            imgproc::resize(&src_img, &mut resized, dsize, 0.0, 0.0, interpolation)?;
+
+            let mut params = Vector::new();
+            params.push(imgcodecs::IMWRITE_WEBP_QUALITY);
+            params.push(quality);
+
+            imgcodecs::imencode(".webp", &resized, &mut buf, &params)?;
+        } else {
+            let mut resized = Mat::default();
+            imgproc::resize(&src_img, &mut resized, dsize, 0.0, 0.0, interpolation)?;
+
+            let mut params = Vector::new();
+            params.push(imgcodecs::IMWRITE_WEBP_QUALITY);
+            params.push(quality);
+
+            imgcodecs::imencode(".webp", &resized, &mut buf, &params)?;
+        }
 
         Ok(buf.to_vec())
     })

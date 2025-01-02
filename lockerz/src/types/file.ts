@@ -4,7 +4,7 @@ export interface File {
     filepath: string;
     size: number;
     tags?: string[];
-    lastModified: string;
+    last_modified: string;
 }
 
 export interface FileResponse {
