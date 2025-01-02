@@ -1,11 +1,11 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { toast } from "@/hooks/use-toast"
-import { Loader2, AlertCircle } from 'lucide-react'
-import { open } from '@tauri-apps/plugin-dialog'
+import React, {useState, useEffect, useCallback, useRef} from 'react'
+import {toast} from "@/hooks/use-toast"
+import {Loader2, AlertCircle} from 'lucide-react'
+import {open} from '@tauri-apps/plugin-dialog'
 import {invoke} from "@tauri-apps/api/core";
-import { MoveDialog } from '@/components/widget/Move-dialog'
+import {MoveDialog} from '@/components/widget/Move-dialog'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -16,10 +16,10 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { FileGrid } from '@/components/widget/FileGrid'
-import { CategorySelector } from '@/components/widget/CategorySelector'
-import { PaginationControls } from '@/components/widget/PaginationControls'
-import { File } from '@/types/file'
+import {FileGrid} from '@/components/widget/FileGrid'
+import {CategorySelector} from '@/components/widget/CategorySelector'
+import {PaginationControls} from '@/components/widget/PaginationControls'
+import {File,FileResponse} from '@/types/file'
 import {useTranslation} from "react-i18next";
 import {API_URL} from "@/lib/zaphire";
 import {useSharedSettings} from "@/utils/SettingsContext";
@@ -31,16 +31,16 @@ const IMAGES_PER_PAGE_STORAGE_KEY = 'lockerz-images-per-page'
 
 interface Category {
     [x: string]: any
+
     name: string
     file_count: number
     size: number
     imageUrl?: string
-  }
-
+}
 
 export default function Locker() {
-    const { t } = useTranslation();
-    const { settings } = useSharedSettings();
+    const {t} = useTranslation();
+    const {settings} = useSharedSettings();
 
     const [files, setFiles] = useState<File[]>([])
     const [allFiles, setAllFiles] = useState<File[]>([])
@@ -73,14 +73,19 @@ export default function Locker() {
         }
     }, [settings.rememberCategory]);
 
+    async function show_in_folder(path: string) {
+        await invoke('show_in_folder', {path});
+    }
+
     const fetchAllFiles = useCallback(async () => {
         try {
-            const response = await fetch(`${API_URL}/files?category=${selectedCategory}&limit=no-limit`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            setAllFiles(data.files);
+            const data:FileResponse = await invoke('get_files', {
+                page: 1, // Page number for all files
+                limit: -1, // No pagination limit
+                category: selectedCategory, // Category filter
+            });
+            console.log(data.files)
+            setAllFiles(data.files);  // Store all files in state
         } catch (error) {
             console.error('Error fetching all files:', error);
             toast({
@@ -91,20 +96,16 @@ export default function Locker() {
         }
     }, [selectedCategory, t]);
 
-    async function show_in_folder(path: string) {
-        await invoke('show_in_folder', {path});
-    }
-
     const fetchPaginatedFiles = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_URL}/files?page=${currentPage}&limit=${imagesPerPage}&category=${selectedCategory}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
+            const data:FileResponse = await invoke('get_files', {
+                page: currentPage,
+                limit: imagesPerPage,  // This can be null for no pagination
+                category: selectedCategory,
+            });
             setFiles(data.files);
-            setTotalPages(data.totalPages);
+            setTotalPages(data.total_pages);  // Use total_pages from response
         } catch (error) {
             console.error('Error fetching paginated files:', error);
             toast({
@@ -117,10 +118,11 @@ export default function Locker() {
         }
     }, [currentPage, imagesPerPage, selectedCategory, t]);
 
+
     const fetchCategories = useCallback(async () => {
         setIsCategoriesLoading(true)
         try {
-            const data:Category = await invoke("get_categories");
+            const data: Category = await invoke("get_categories");
             if (!data.ok) {
                 new Error('Failed to fetch categories')
             }
@@ -426,12 +428,12 @@ export default function Locker() {
                         />
                         {isLoading ? (
                             <div className="flex justify-center items-center h-24 mt-8">
-                                <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary" />
+                                <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary"/>
                                 <p className="text-foreground font-medium">Loading images...</p>
                             </div>
                         ) : files.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-64 mt-8">
-                                <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+                                <AlertCircle className="w-12 h-12 text-muted-foreground mb-4"/>
                                 <p className="text-muted-foreground font-medium">No images found in this category</p>
                             </div>
                         ) : (
@@ -449,7 +451,6 @@ export default function Locker() {
                                     setSelectedFile(file);
                                     setMoveDialogOpen(true);
                                 }}
-                                apiUrl={API_URL}
                                 currentPage={currentPage}
                                 imagesPerPage={imagesPerPage}
                                 onPageChange={handlePageChange}

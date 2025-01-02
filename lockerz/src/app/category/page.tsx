@@ -42,13 +42,11 @@ interface EditCategoryPopoverProps {
     category: Category
     onRename: (oldName: string, newName: string) => Promise<void>
     onDelete: (name: string) => Promise<void>
-    // onChangePlaceholder: (name: string, imageUrl: string) => Promise<void>
 }
 
 function EditCategoryPopover({category, onRename, onDelete}: EditCategoryPopoverProps) {
     const [newName, setNewName] = useState(category.name)
     const [isOpen, setIsOpen] = useState(false)
-    // const [isImageSelectionOpen, setIsImageSelectionOpen] = useState(false)
     const {t} = useTranslation()
 
     const handleRename = async () => {
@@ -61,40 +59,6 @@ function EditCategoryPopover({category, onRename, onDelete}: EditCategoryPopover
     const handleDelete = async () => {
         await onDelete(category.name)
         setIsOpen(false)
-    }
-
-    const handleChangePlaceholder = async (categoryName: string, imageUrl: string) => {
-        try {
-            const response = await fetch(`${API_URL}/update-category-placeholder`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({name: categoryName, imageUrl}),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to update category placeholder');
-            }
-
-            const data = await response.json();
-            if (data.success) {
-                toast({
-                    title: "Success",
-                    description: "Category placeholder updated successfully",
-                });
-            } else {
-                throw new Error('Failed to update category placeholder');
-            }
-        } catch (error) {
-            console.error('Error updating category placeholder:', error);
-            toast({
-                title: "Error",
-                description: error instanceof Error ? error.message : "Failed to update category placeholder",
-                variant: "destructive",
-            });
-        }
     }
 
     return (
@@ -119,7 +83,6 @@ function EditCategoryPopover({category, onRename, onDelete}: EditCategoryPopover
                             onChange={(e) => setNewName(e.target.value)}
                         />
                         <Button onClick={handleRename}>{t('categories.edit.rename')}</Button>
-                        {/*<Button onClick={() => setIsImageSelectionOpen(true)}>{t('categories.edit.changePlaceholder')}</Button>*/}
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button variant="destructive">{t('categories.edit.delete')}</Button>
@@ -142,12 +105,6 @@ function EditCategoryPopover({category, onRename, onDelete}: EditCategoryPopover
                     </div>
                 </div>
             </PopoverContent>
-            {/*<ImageSelectionModal*/}
-            {/*    isOpen={isImageSelectionOpen}*/}
-            {/*    onClose={() => setIsImageSelectionOpen(false)}*/}
-            {/*    onSelect={handleChangePlaceholder}*/}
-            {/*    categoryName={category.name}*/}
-            {/*/>*/}
         </Popover>
     )
 }
@@ -176,88 +133,56 @@ export default function Category() {
         }
     };
 
-    async function handleRename(oldName: string, newName: string) {
+    const handleRename = async (oldName: string, newName: string) => {
         try {
-            await invoke('rename_category', {
+            const result: string = await invoke('rename_category', {
                 oldName: oldName,
                 newName: newName
             });
             await fetchCategories();
             toast({
                 title: "Success",
-                description: "Category renamed successfully",
+                description: result, // Use the backend's success message
             });
-        } catch (error) {
+        } catch (error: any) {
+            console.error("Error renaming category:", error);
+
+            const errorMessage = error?.message || "Failed to rename category";
             toast({
                 title: "Error",
-                description: "Failed to rename category",
+                description: errorMessage, // Use the backend's error message
                 variant: "destructive",
             });
         }
-    }
+    };
 
     const handleDelete = async (categoryName: string) => {
         try {
-            const response = await fetch(`${API_URL}/delete-category`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({name: categoryName}),
-            })
-            if (response.ok) {
-                fetchCategories()
-                toast({
-                    title: "Success",
-                    description: "Category deleted successfully",
-                })
-            } else {
-                throw new Error('Failed to delete category')
-            }
-        } catch (error) {
-            console.error('Error deleting category:', error)
+            const result: string = await invoke('delete_category', { name: categoryName });
+            await fetchCategories();
             toast({
-                title: "Error",
-                description: "Failed to delete category",
-                variant: "destructive",
-            })
-        }
-    }
-
-    const handleChangePlaceholder = async (categoryName: string, imageUrl: string) => {
-        try {
-            const response = await fetch(`${API_URL}/update-category-placeholder`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({name: categoryName, imageUrl}),
+                title: "Success",
+                description: result, // Use the success message from the backend
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to update category placeholder');
-            }
-
-            const data = await response.json();
-            if (data.success) {
-                fetchCategories();
+        } catch (error: any) {
+            const errorMessage = error?.message || "Failed to delete";
+            if (errorMessage.includes("Failed to delete")) {
                 toast({
-                    title: "Success",
-                    description: "Category placeholder updated successfully",
+                    title: "Warning",
+                    description: `Cannot delete category '${categoryName}' because it is not empty. Please remove files inside first.`,
+                    variant: "destructive",
                 });
             } else {
-                throw new Error('Failed to update category placeholder');
+                toast({
+                    title: "Error",
+                    description: errorMessage,
+                    variant: "destructive",
+                });
             }
-        } catch (error) {
-            console.error('Error updating category placeholder:', error);
-            toast({
-                title: "Error",
-                description: error instanceof Error ? error.message : "Failed to update category placeholder",
-                variant: "destructive",
-            });
         }
-    }
+    };
+
+
     const handleCreateCategory = async () => {
         if (!newCategory.trim()) {
             toast({
@@ -335,21 +260,6 @@ export default function Category() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {categories.map((category) => (
                                 <Card key={category.name} className="overflow-hidden">
-                                    {/*<div className="relative h-48">*/}
-                                    {/*  {category.imageUrl ? (*/}
-                                    {/*      <OptimizedImage*/}
-                                    {/*          src={`${category.imageUrl}`}*/}
-                                    {/*          alt={category.name}*/}
-                                    {/*          width={350}*/}
-                                    {/*          height={400}*/}
-                                    {/*          quality={100}*/}
-                                    {/*      />*/}
-                                    {/*  ) : (*/}
-                                    {/*      <div className="flex items-center justify-center h-full bg-muted">*/}
-                                    {/*        <ImageIcon className="h-12 w-12 text-muted-foreground" />*/}
-                                    {/*      </div>*/}
-                                    {/*  )}*/}
-                                    {/*</div>*/}
                                     <CardContent className="p-4">
                                         <div className="flex items-center justify-between">
                                             <h3 className="text-lg font-semibold">{category.name}</h3>
@@ -358,7 +268,6 @@ export default function Category() {
                                                     category={category}
                                                     onRename={handleRename}
                                                     onDelete={handleDelete}
-                                                    // onChangePlaceholder={handleChangePlaceholder}
                                                 />
                                             )}
                                         </div>
