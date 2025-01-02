@@ -8,11 +8,11 @@ use opencv::{
     prelude::*,
 };
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
+use tokio::sync::Mutex as AsyncMutex;
+use tokio::task;
 
-// Handle Tauri command for image optimization
 #[tauri::command]
-pub fn handle_optimize_image_request(
+pub async fn handle_optimize_image_request(
     src: String,
     width: Option<i32>,
     height: Option<i32>,
@@ -22,11 +22,9 @@ pub fn handle_optimize_image_request(
     let height = height.unwrap_or(720);
     let quality = quality.unwrap_or(90);
 
-    // Create a cache key
     let cache_key = format!("{}:{}:{}:{}", src, width, height, quality);
 
-    // Check the cache
-    let mut cache = CACHE.lock().unwrap();
+    let mut cache = CACHE.lock().await;
     if let Some(cached_image) = cache.get(&cache_key) {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -37,8 +35,7 @@ pub fn handle_optimize_image_request(
         }
     }
 
-    // Optimize and cache the image
-    match optimize_image(&src, Some(width), Some(height), quality) {
+    match optimize_image(src.clone(), Some(width), Some(height), quality).await {
         Ok(optimized_image) => {
             let base64_image = general_purpose::STANDARD.encode(&optimized_image);
             cache.set(cache_key, base64_image.clone());
@@ -48,7 +45,6 @@ pub fn handle_optimize_image_request(
     }
 }
 
-// Cache structure
 struct Cache {
     images: HashMap<String, CachedImage>,
 }
@@ -56,11 +52,10 @@ struct Cache {
 // Cacheable struct without `Mat`
 #[derive(Clone, Serialize, Deserialize)]
 struct CachedImage {
-    data: String,   // Base64-encoded image data
-    timestamp: u64, // Time when the image was cached
+    data: String,
+    timestamp: u64,
 }
 
-// Cache implementation
 impl Cache {
     fn new() -> Self {
         Cache {
@@ -87,70 +82,69 @@ impl Cache {
     }
 }
 
-// Lazy initialization for the cache
 lazy_static::lazy_static! {
-    static ref CACHE: Mutex<Cache> = Mutex::new(Cache::new());
+    static ref CACHE: AsyncMutex<Cache> = AsyncMutex::new(Cache::new());
 }
 
-fn optimize_image(
-    src: &str,
+pub async fn optimize_image(
+    src: String,
     width: Option<i32>,
     height: Option<i32>,
     quality: i32,
-) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-    // Validate file existence
-    let src_path = Path::new(src);
-    if !src_path.exists() {
-        return Err(format!("File does not exist: {}", src).into());
-    }
+) -> Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync>> {
+    task::spawn_blocking(move || {
+        let src_path = Path::new(&src);
+        if !src_path.exists() {
+            return Err(format!("File does not exist: {}", src).into());
+        }
 
-    // Read the image
-    let src_img = imgcodecs::imread(src, imgcodecs::IMREAD_COLOR)?;
-    let src_width = src_img.cols();
-    let src_height = src_img.rows();
+        let src_img = imgcodecs::imread(&src, imgcodecs::IMREAD_COLOR)?;
+        let src_width = src_img.cols();
+        let src_height = src_img.rows();
 
-    // Calculate target dimensions
-    let (target_width, target_height) = match (width, height) {
-        (Some(w), Some(h)) => {
-            let src_aspect = src_width as f32 / src_height as f32;
-            let target_aspect = w as f32 / h as f32;
-            if src_aspect > target_aspect {
-                let new_height = (w as f32 / src_aspect).round() as i32;
-                (w, new_height.min(h))
-            } else {
-                let new_width = (h as f32 * src_aspect).round() as i32;
-                (new_width.min(w), h)
+        let (target_width, target_height) = match (width, height) {
+            (Some(w), Some(h)) => {
+                let src_aspect = src_width as f32 / src_height as f32;
+                let target_aspect = w as f32 / h as f32;
+                if src_aspect > target_aspect {
+                    let new_height = (w as f32 / src_aspect).round() as i32;
+                    (w, new_height.min(h))
+                } else {
+                    let new_width = (h as f32 * src_aspect).round() as i32;
+                    (new_width.min(w), h)
+                }
             }
-        }
-        (Some(w), None) => {
-            let aspect_ratio = src_height as f32 / src_width as f32;
-            let new_height = (w as f32 * aspect_ratio).round() as i32;
-            (w, new_height)
-        }
-        (None, Some(h)) => {
-            let aspect_ratio = src_width as f32 / src_height as f32;
-            let new_width = (h as f32 * aspect_ratio).round() as i32;
-            (new_width, h)
-        }
-        (None, None) => (src_width, src_height),
-    };
+            (Some(w), None) => {
+                let aspect_ratio = src_height as f32 / src_width as f32;
+                let new_height = (w as f32 * aspect_ratio).round() as i32;
+                (w, new_height)
+            }
+            (None, Some(h)) => {
+                let aspect_ratio = src_width as f32 / src_height as f32;
+                let new_width = (h as f32 * aspect_ratio).round() as i32;
+                (new_width, h)
+            }
+            (None, None) => (src_width, src_height),
+        };
 
-    let mut resized = Mat::default();
-    let dsize = Size::new(target_width, target_height);
-    let interpolation = if target_width * target_height <= src_width * src_height {
-        imgproc::INTER_AREA
-    } else {
-        imgproc::INTER_CUBIC
-    };
-    imgproc::resize(&src_img, &mut resized, dsize, 0.0, 0.0, interpolation)?;
+        let mut resized = Mat::default();
+        let dsize = Size::new(target_width, target_height);
+        let interpolation = if target_width * target_height <= src_width * src_height {
+            imgproc::INTER_AREA
+        } else {
+            imgproc::INTER_CUBIC
+        };
+        imgproc::resize(&src_img, &mut resized, dsize, 0.0, 0.0, interpolation)?;
 
-    let mut params = Vector::new();
-    params.push(imgcodecs::IMWRITE_WEBP_QUALITY);
-    params.push(quality);
-    params.push(imgcodecs::IMWRITE_TIFF_COMPRESSION_WEBP);
-    params.push(0);
-    let mut buf = Vector::new();
-    imgcodecs::imencode(".webp", &resized, &mut buf, &params)?;
+        let mut params = Vector::new();
+        params.push(imgcodecs::IMWRITE_WEBP_QUALITY);
+        params.push(quality);
+        params.push(imgcodecs::IMWRITE_TIFF_COMPRESSION_WEBP);
+        params.push(0);
+        let mut buf = Vector::new();
+        imgcodecs::imencode(".webp", &resized, &mut buf, &params)?;
 
-    Ok(buf.to_vec())
+        Ok(buf.to_vec())
+    })
+        .await?
 }
