@@ -80,8 +80,8 @@ export default function Locker() {
     const fetchAllFiles = useCallback(async () => {
         try {
             const data:FileResponse = await invoke('get_files', {
-                page: 1, // Page number for all files
-                limit: -1, // No pagination limit
+                page: 1,
+                limit: -1,
                 category: selectedCategory, // Category filter
             });
             console.log(data.files)
@@ -137,44 +137,47 @@ export default function Locker() {
             setIsCategoriesLoading(false)
         }
     }, [t]);
-
-    useEffect(() => {
-        const savedPage = localStorage.getItem(PAGE_STORAGE_KEY)
-        const savedImagesPerPage = localStorage.getItem(IMAGES_PER_PAGE_STORAGE_KEY)
-
-        if (savedPage) {
-            setCurrentPage(parseInt(savedPage, 10))
-        }
-        if (savedImagesPerPage) {
-            setImagesPerPage(parseInt(savedImagesPerPage, 10))
-        }
-
-        isRememberCategory()
-        fetchCategories();
-        fetchAllFiles().then(() => fetchPaginatedFiles());
-    }, [isRememberCategory, fetchAllFiles, fetchPaginatedFiles, fetchCategories])
-
-
-    useEffect(() => {
-        categoryRef.current = selectedCategory;
-        if (rememberCategory) {
-            localStorage.setItem('lastSelectedCategory', selectedCategory)
-        }
-    }, [selectedCategory, rememberCategory]);
-
-
-    useEffect(() => {
-        if (selectedCategory) {
-            fetchAllFiles().then(() => fetchPaginatedFiles());
-        }
-    }, [selectedCategory, currentPage, imagesPerPage, fetchAllFiles, fetchPaginatedFiles]);
-
     useEffect(() => {
         const savedPage = localStorage.getItem(PAGE_STORAGE_KEY);
+        const savedImagesPerPage = localStorage.getItem(IMAGES_PER_PAGE_STORAGE_KEY);
+
         if (savedPage) {
             setCurrentPage(parseInt(savedPage, 10));
         }
-    }, []);
+        if (savedImagesPerPage) {
+            setImagesPerPage(parseInt(savedImagesPerPage, 10));
+        }
+
+        // Remember the last selected category if applicable
+        if (rememberCategory && selectedCategory) {
+            localStorage.setItem('lastSelectedCategory', selectedCategory);
+        }
+
+        // Fetch categories, files, and pagination data only once
+        const loadData = async () => {
+            await fetchCategories(); // Fetch categories
+            if (isRememberCategory()) {
+                const lastCategory = localStorage.getItem('lastSelectedCategory');
+                if (lastCategory) {
+                    setSelectedCategory(lastCategory); // Set the last selected category
+                }
+            }
+            await fetchAllFiles(); // Fetch files
+            await fetchPaginatedFiles(); // Fetch paginated files
+        };
+
+        loadData(); // Call the async function only once
+
+    }, [
+        selectedCategory,        // Dependency on selected category
+        currentPage,             // Dependency on current page
+        imagesPerPage,           // Dependency on images per page
+        rememberCategory,        // Dependency on remember category
+        isRememberCategory,      // Dependency on category remember setting
+        fetchCategories,         // Function dependencies
+        fetchAllFiles,           // Function dependencies
+        fetchPaginatedFiles,     // Function dependencies
+    ]);
 
     const handleFileDrop = useCallback(async (droppedFiles?: string[]) => {
         let filesToProcess: (globalThis.File | string)[] = [];
