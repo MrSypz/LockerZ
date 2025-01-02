@@ -126,8 +126,6 @@ export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction,
         setSelectedImageIndex(null);
     };
 
-    const getFilePath = (file: File) => `${file.filepath}`;
-
     return (
         <div className="space-y-4">
             <div className="flex items-center space-x-4">
