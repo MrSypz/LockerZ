@@ -8,8 +8,8 @@ import {FileContextMenu} from '@/components/widget/Context-menu'
 import {File} from '@/types/file'
 import {motion, AnimatePresence} from "framer-motion"
 import {useTranslation} from 'react-i18next'
-import { ArrowDown, ArrowUp, ArrowUpDown, Clock, FileIcon, Search, Text } from 'lucide-react'
-import { ImageViewer } from './Image-viewer';
+import {ArrowDown, ArrowUp, ArrowUpDown, Clock, FileIcon, Search, Text} from 'lucide-react'
+import {ImageViewer} from './Image-viewer';
 import {useSharedSettings} from "@/utils/SettingsContext";
 import {OptimizedImage} from "@/components/widget/ImageProcessor";
 
@@ -53,7 +53,17 @@ interface FileGridProps {
     onTotalPagesChange: (pages: number) => void
 }
 
-export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction, onMoveFileAction , currentPage, imagesPerPage, onPageChange, onTotalPagesChange}: FileGridProps) {
+export function FileGrid({
+                             files,
+                             allFiles,
+                             onViewFileAction,
+                             onDeleteFileAction,
+                             onMoveFileAction,
+                             currentPage,
+                             imagesPerPage,
+                             onPageChange,
+                             onTotalPagesChange
+                         }: FileGridProps) {
     const totalColumns = useColumnCount()
     const [sortedFiles, setSortedFiles] = useState(files)
     const [sortCriteria, setSortCriteria] = useState<'name' | 'date' | 'size'>('name')
@@ -234,9 +244,11 @@ export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction,
             {
                 searchTerm && (
                     <div className="text-sm text-gray-500">
-                        {t('locker.search.results', {count: allFiles.filter(file =>
+                        {t('locker.search.results', {
+                            count: allFiles.filter(file =>
                                 file.name.toLowerCase().includes(searchTerm.toLowerCase())
-                            ).length})}
+                            ).length
+                        })}
                     </div>
                 )
             }
@@ -284,14 +296,11 @@ interface FileCardProps {
     totalColumns: number
 }
 
-function FileCard({file, onDelete, onMove,onView, onSelect, index, column, totalColumns}: FileCardProps) {
+function FileCard({file, onDelete, onMove, onView, onSelect, index, column, totalColumns}: FileCardProps) {
     const {t} = useTranslation();
-    const { settings } = useSharedSettings();
-
-
+    const {settings} = useSharedSettings();
     const row = Math.floor(index / totalColumns)
     const isDarkSquare = (row + column) % 2 === 0
-
     const getOffset = () => {
         const columnDirection = column % 2 === 0 ? 1 : -1;
         const offsetAmount = 12;
@@ -307,7 +316,7 @@ function FileCard({file, onDelete, onMove,onView, onSelect, index, column, total
         >
             <motion.div
                 layout
-                initial={{ opacity: 0, scale: 0.8, y: 50 }}
+                initial={{opacity: 0, scale: 0.8, y: 50}}
                 animate={{
                     opacity: 1,
                     scale: 1,
@@ -319,18 +328,18 @@ function FileCard({file, onDelete, onMove,onView, onSelect, index, column, total
                         mass: 0.8,
                     }
                 }}
-                exit={{ opacity: 0, scale: 0.8, y: 50 }}
+                exit={{opacity: 0, scale: 0.8, y: 50}}
                 transition={{
-                    opacity: { duration: 0.2 },
-                    layout: { type: "spring", stiffness: 300, damping: 24 }
+                    opacity: {duration: 0.2},
+                    layout: {type: "spring", stiffness: 300, damping: 24}
                 }}
                 whileHover={{
                     scale: 1.05,
                     zIndex: 10,
-                    transition: { duration: 0.2 }
+                    transition: {duration: 0.2}
                 }}
                 className="relative"
-                style={{ zIndex: 1000 - index }}
+                style={{zIndex: 1000 - index}}
             >
                 <Card
                     className={`overflow-hidden transition-all duration-300 ease-in-out hover:ring-2 hover:ring-primary/50 cursor-pointer ${

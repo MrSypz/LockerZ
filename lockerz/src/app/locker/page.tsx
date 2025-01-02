@@ -84,7 +84,6 @@ export default function Locker() {
                 limit: -1,
                 category: selectedCategory, // Category filter
             });
-            console.log(data.files)
             setAllFiles(data.files);  // Store all files in state
         } catch (error) {
             console.error('Error fetching all files:', error);
