@@ -47,14 +47,13 @@ interface FileGridProps {
     onViewFileAction: (file: File) => void
     onDeleteFileAction: (file: File) => void
     onMoveFileAction: (file: File) => void
-    apiUrl: string
     currentPage: number
     imagesPerPage: number
     onPageChange: (page: number) => void
     onTotalPagesChange: (pages: number) => void
 }
 
-export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction, onMoveFileAction, apiUrl , currentPage, imagesPerPage, onPageChange, onTotalPagesChange}: FileGridProps) {
+export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction, onMoveFileAction , currentPage, imagesPerPage, onPageChange, onTotalPagesChange}: FileGridProps) {
     const totalColumns = useColumnCount()
     const [sortedFiles, setSortedFiles] = useState(files)
     const [sortCriteria, setSortCriteria] = useState<'name' | 'date' | 'size'>('name')
@@ -127,7 +126,7 @@ export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction,
         setSelectedImageIndex(null);
     };
 
-    const getFileUrl = (file: File) => `${apiUrl}${file.url}`;
+    const getFilePath = (file: File) => `${file.filepath}`;
 
     return (
         <div className="space-y-4">
@@ -270,7 +269,6 @@ export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction,
                     files={sortedFiles}
                     initialIndex={selectedImageIndex}
                     onClose={handleCloseViewer}
-                    getFileUrl={getFileUrl}
                 />
             )}
         </div>
