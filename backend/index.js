@@ -210,64 +210,65 @@ async function initializeServer() {
 }
 
 // Routes
-app.get('/files', async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = req.query.limit === 'no-limit' ? null : parseInt(req.query.limit) || 20; // Handle "no-limit"
-    const category = req.query.category || 'all';
-
-    const cacheKey = `files_${category}_${page}_${limit || 'no-limit'}`;
-    const cachedResult = cache.get(cacheKey);
-
-    if (cachedResult) {
-        return res.json(cachedResult);
-    }
-
-    try {
-        const categories = await fsPromises.readdir(rootFolderPath, { withFileTypes: true });
-        const files = await Promise.all(
-            categories
-                .filter(cat => cat.isDirectory() && (category === 'all' || cat.name === category) && cat.name !== 'temp')
-                .map(async (cat) => {
-                    const categoryPath = path.join(rootFolderPath, cat.name);
-                    const categoryFiles = await fsPromises.readdir(categoryPath);
-                    return Promise.all(categoryFiles.map(async (file) => {
-                        const filePath = path.join(categoryPath, file);
-                        const stats = await fsPromises.stat(filePath);
-                        return {
-                            name: file,
-                            category: cat.name,
-                            url: `/images/${cat.name}/${file}`,
-                            filepath: filePath,
-                            size: stats.size,
-                            lastModified: stats.mtime.toISOString()
-                        };
-                    }));
-                })
-        );
-
-        const flattenedFiles = files.flat();
-        const totalFiles = flattenedFiles.length;
-        const totalPages = limit ? Math.ceil(totalFiles / limit) : 1; // 1 page if no limit
-        const startIndex = limit ? (page - 1) * limit : 0;
-        const endIndex = limit ? page * limit : totalFiles;
-
-        const paginatedFiles = limit ? flattenedFiles.slice(startIndex, endIndex) : flattenedFiles;
-
-        const result = {
-            files: paginatedFiles,
-            currentPage: limit ? page : 1,
-            totalPages: limit ? totalPages : 1,
-            totalFiles: totalFiles
-        };
-
-        cache.set(cacheKey, result);
-
-        res.json(result);
-    } catch (err) {
-        logger.error('Error reading files:' + err);
-        res.status(500).json({ error: 'Error reading files' });
-    }
-});
+// Finish Port
+// app.get('/files', async (req, res) => {
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = req.query.limit === 'no-limit' ? null : parseInt(req.query.limit) || 20; // Handle "no-limit"
+//     const category = req.query.category || 'all';
+//
+//     const cacheKey = `files_${category}_${page}_${limit || 'no-limit'}`;
+//     const cachedResult = cache.get(cacheKey);
+//
+//     if (cachedResult) {
+//         return res.json(cachedResult);
+//     }
+//
+//     try {
+//         const categories = await fsPromises.readdir(rootFolderPath, { withFileTypes: true });
+//         const files = await Promise.all(
+//             categories
+//                 .filter(cat => cat.isDirectory() && (category === 'all' || cat.name === category) && cat.name !== 'temp')
+//                 .map(async (cat) => {
+//                     const categoryPath = path.join(rootFolderPath, cat.name);
+//                     const categoryFiles = await fsPromises.readdir(categoryPath);
+//                     return Promise.all(categoryFiles.map(async (file) => {
+//                         const filePath = path.join(categoryPath, file);
+//                         const stats = await fsPromises.stat(filePath);
+//                         return {
+//                             name: file,
+//                             category: cat.name,
+//                             url: `/images/${cat.name}/${file}`,
+//                             filepath: filePath,
+//                             size: stats.size,
+//                             lastModified: stats.mtime.toISOString()
+//                         };
+//                     }));
+//                 })
+//         );
+//
+//         const flattenedFiles = files.flat();
+//         const totalFiles = flattenedFiles.length;
+//         const totalPages = limit ? Math.ceil(totalFiles / limit) : 1; // 1 page if no limit
+//         const startIndex = limit ? (page - 1) * limit : 0;
+//         const endIndex = limit ? page * limit : totalFiles;
+//
+//         const paginatedFiles = limit ? flattenedFiles.slice(startIndex, endIndex) : flattenedFiles;
+//
+//         const result = {
+//             files: paginatedFiles,
+//             currentPage: limit ? page : 1,
+//             totalPages: limit ? totalPages : 1,
+//             totalFiles: totalFiles
+//         };
+//
+//         cache.set(cacheKey, result);
+//
+//         res.json(result);
+//     } catch (err) {
+//         logger.error('Error reading files:' + err);
+//         res.status(500).json({ error: 'Error reading files' });
+//     }
+// });
 //Done port
 // app.get('/categories', async (req, res) => {
 //     try {
@@ -289,72 +290,52 @@ app.get('/files', async (req, res) => {
 //         res.status(500).json({error: 'Error reading categories'});
 //     }
 // });
-
-app.get('/stats', async (req, res) => {
-    try {
-        const {size, count} = await getDirStats(rootFolderPath);
-        const entries = await fsPromises.readdir(rootFolderPath, {withFileTypes: true});
-        const categoriesCount = entries.filter(entry => entry.isDirectory() && entry.name !== 'temp').length;
-
-        res.json({
-            totalImages: count,
-            categories: categoriesCount,
-            storageUsed: size
-        });
-    } catch (err) {
-        logger.error('Error getting stats:' + err);
-        res.status(500).json({error: 'Error getting stats'});
-    }
-});
-
-app.get('/get-folder-path', (req, res) => {
-    res.json({folderPath: rootFolderPath});
-});
-
-app.post('/update-folder-path', async (req, res) => {
-    const {folderPath} = req.body;
-    logger.info('Received request to update folder path to:', folderPath);
-    try {
-        await fsPromises.access(folderPath);
-        rootFolderPath = folderPath;
-        config.folderPath = folderPath;
-        await writeConfig(config);
-        logger.info('Folder path updated successfully');
-        res.json({success: true});
-    } catch (error) {
-        logger.error('Error updating folder path:' + error);
-        res.status(400).json({success: false, message: 'Invalid folder path or permission denied'});
-    }
-});
-
-app.get('/get-settings', async (req, res) => {
-    try {
-        const config = await readConfig();
-        res.json(config);
-    } catch (error) {
-        logger.error('Error reading settings:' + error);
-        res.status(500).json({error: 'Failed to read settings'});
-    }
-});
-
-app.post('/update-settings', async (req, res) => {
-    try {
-        const newSettings = req.body;
-        const currentSettings = await readConfig();
-        const updatedSettings = { ...currentSettings, ...newSettings };
-        await writeConfig(updatedSettings);
-        if (req.body.folderPath && req.body.folderPath !== rootFolderPath) {
-            rootFolderPath = req.body.folderPath;
-            app.use('/images', express.static(rootFolderPath));
-            clearRelevantCaches();
-            logger.info(`Root folder path updated to: ${rootFolderPath}`);
-        }
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error updating settings:', error);
-        res.status(500).json({ success: false, error: 'Failed to update settings' });
-    }
-});
+// Done port
+// app.get('/stats', async (req, res) => {
+//     try {
+//         const {size, count} = await getDirStats(rootFolderPath);
+//         const entries = await fsPromises.readdir(rootFolderPath, {withFileTypes: true});
+//         const categoriesCount = entries.filter(entry => entry.isDirectory() && entry.name !== 'temp').length;
+//
+//         res.json({
+//             totalImages: count,
+//             categories: categoriesCount,
+//             storageUsed: size
+//         });
+//     } catch (err) {
+//         logger.error('Error getting stats:' + err);
+//         res.status(500).json({error: 'Error getting stats'});
+//     }
+// });
+// Done port
+// app.get('/get-settings', async (req, res) => {
+//     try {
+//         const config = await readConfig();
+//         res.json(config);
+//     } catch (error) {
+//         logger.error('Error reading settings:' + error);
+//         res.status(500).json({error: 'Failed to read settings'});
+//     }
+// });
+//Done Port
+// app.post('/update-settings', async (req, res) => {
+//     try {
+//         const newSettings = req.body;
+//         const currentSettings = await readConfig();
+//         const updatedSettings = { ...currentSettings, ...newSettings };
+//         await writeConfig(updatedSettings);
+//         if (req.body.folderPath && req.body.folderPath !== rootFolderPath) {
+//             rootFolderPath = req.body.folderPath;
+//             app.use('/images', express.static(rootFolderPath));
+//             clearRelevantCaches();
+//             logger.info(`Root folder path updated to: ${rootFolderPath}`);
+//         }
+//         res.json({ success: true });
+//     } catch (error) {
+//         console.error('Error updating settings:', error);
+//         res.status(500).json({ success: false, error: 'Failed to update settings' });
+//     }
+// });
 //Done Port
 // app.post('/rename-category', async (req, res) => {
 //     const {oldName, newName} = req.body;
@@ -370,34 +351,34 @@ app.post('/update-settings', async (req, res) => {
 //         res.status(500).json({error: 'Failed to rename category'});
 //     }
 // });
-
-app.post('/delete-category', async (req, res) => {
-    const {name} = req.body;
-    const categoryPath = path.join(rootFolderPath, name);
-
-    try {
-        await fsPromises.rm(categoryPath, {recursive: true});
-        clearRelevantCaches([name]);
-        res.json({success: true});
-    } catch (error) {
-        logger.error('Error deleting category:' + error);
-        res.status(500).json({error: 'Failed to delete category'});
-    }
-});
-
-app.post('/create-category', async (req, res) => {
-    const {name} = req.body;
-    const categoryPath = path.join(rootFolderPath, name);
-
-    try {
-        await fsPromises.mkdir(categoryPath);
-        clearRelevantCaches();
-        res.json({success: true});
-    } catch (error) {
-        logger.error('Error creating category:' + error);
-        res.status(500).json({error: 'Failed to create category'});
-    }
-});
+//done port
+// app.post('/delete-category', async (req, res) => {
+//     const {name} = req.body;
+//     const categoryPath = path.join(rootFolderPath, name);
+//
+//     try {
+//         await fsPromises.rm(categoryPath, {recursive: true});
+//         clearRelevantCaches([name]);
+//         res.json({success: true});
+//     } catch (error) {
+//         logger.error('Error deleting category:' + error);
+//         res.status(500).json({error: 'Failed to delete category'});
+//     }
+// });
+//done port
+// app.post('/create-category', async (req, res) => {
+//     const {name} = req.body;
+//     const categoryPath = path.join(rootFolderPath, name);
+//
+//     try {
+//         await fsPromises.mkdir(categoryPath);
+//         clearRelevantCaches();
+//         res.json({success: true});
+//     } catch (error) {
+//         logger.error('Error creating category:' + error);
+//         res.status(500).json({error: 'Failed to create category'});
+//     }
+// });
 
 app.post('/move-file', async (req, res) => {
     const form = new formidable.IncomingForm({
