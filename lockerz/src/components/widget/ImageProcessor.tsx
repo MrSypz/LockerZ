@@ -23,7 +23,7 @@ export function OptimizedImage({ src, alt, width, height, quality = 80 }: Optimi
             height,
             quality
         })
-            .then((base64Image: string) => {
+            .then((base64Image) => {
                 setOptimizedSrc(`data:image/webp;base64,${base64Image}`);
                 setIsLoaded(true);
                 setError(null);
