@@ -1,46 +1,26 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { X, ZoomIn, ZoomOut, RotateCcw, ExternalLink, ChevronLeft, ChevronRight, Move } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { toast } from "@/hooks/use-toast";
-import {
-    ContextMenu,
-    ContextMenuContent,
-    ContextMenuItem,
-    ContextMenuTrigger,
-} from "@/components/ui/context-menu"
-import { File } from "@/types/file";
+import React, {useCallback, useEffect, useState} from 'react';
+import {TransformComponent, TransformWrapper} from 'react-zoom-pan-pinch';
+import {ChevronLeft, ChevronRight, Move, RotateCcw, X, ZoomIn, ZoomOut} from 'lucide-react';
+import {Button} from '@/components/ui/button';
+import {ContextMenu, ContextMenuTrigger,} from "@/components/ui/context-menu"
+import {File} from "@/types/file";
+import {convertFileSrc} from "@tauri-apps/api/core";
 
 interface ImageViewerProps {
     files: File[];
     initialIndex: number;
     onClose: () => void;
-    getFileUrl: (file: File) => string;
 }
 
-export function ImageViewer({ files, initialIndex, onClose, getFileUrl }: ImageViewerProps) {
+export function ImageViewer({ files, initialIndex, onClose}: ImageViewerProps) {
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [scale, setScale] = useState(1);
     const [isPanning, setIsPanning] = useState(false);
-
     const currentFile = files[currentIndex];
-    const src = getFileUrl(currentFile);
+    const src = convertFileSrc(currentFile.filepath);
+    console.log(src);
     const alt = currentFile.name;
     const fileUrl = src;
-
-    const isViewable = ['jpg', 'jpeg', 'png', 'gif', 'webp'].some(ext => src.toLowerCase().endsWith(`.${ext}`));
-
-    const handleViewFullImage = useCallback(() => {
-        if (isViewable) {
-            window.open(src, '_blank');
-        } else {
-            toast({
-                title: "Unsupported file type",
-                description: "This file type cannot be opened in a new tab.",
-                variant: "destructive",
-            });
-        }
-    }, [src, isViewable]);
 
     const handleNavigate = useCallback((direction: 'prev' | 'next') => {
         setCurrentIndex(prevIndex => {
@@ -104,12 +84,6 @@ export function ImageViewer({ files, initialIndex, onClose, getFileUrl }: ImageV
                                             style={{ maxHeight: '100vh', maxWidth: '100vw' }}
                                         />
                                     </ContextMenuTrigger>
-                                    <ContextMenuContent>
-                                        <ContextMenuItem onClick={handleViewFullImage} disabled={!isViewable}>
-                                            <ExternalLink className="mr-2 h-4 w-4"/>
-                                            View Full Image
-                                        </ContextMenuItem>
-                                    </ContextMenuContent>
                                 </ContextMenu>
                             </TransformComponent>
                             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-2 bg-background/80 rounded-full p-1">
