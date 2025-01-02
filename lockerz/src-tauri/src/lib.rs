@@ -58,26 +58,27 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|_app| {
-            let sidecar_command = _app.shell().sidecar("zaphire").unwrap();
-            let (_rx, sidecar_child) = sidecar_command.spawn().expect("Failed to spawn sidecar");
+            // Disable sidecar
+            // let sidecar_command = _app.shell().sidecar("zaphire").unwrap();
+            // let (_rx, sidecar_child) = sidecar_command.spawn().expect("Failed to spawn sidecar");
 
-            let child = Arc::new(Mutex::new(Some(sidecar_child)));
+            // let child = Arc::new(Mutex::new(Some(sidecar_child)));
 
-            let child_clone = Arc::clone(&child);
-
-            let window = _app.get_webview_window("main").unwrap();
-
-            window.on_window_event(move |event| {
-                if let tauri::WindowEvent::Destroyed { .. } = event {
-                    let mut child_lock = child_clone.lock().unwrap();
-                    if let Some(mut child_process) = child_lock.take() {
-                        // LOGGER.archive_log();
-                        if let Err(e) = child_process.write("exit\n".as_bytes()) {
-                            eprintln!("Failed to write to stdin: {}", e);
-                        }
-                    }
-                }
-            });
+            // let child_clone = Arc::clone(&child);
+            //
+            // let window = _app.get_webview_window("main").unwrap();
+            //
+            // window.on_window_event(move |event| {
+            //     if let tauri::WindowEvent::Destroyed { .. } = event {
+            //         let mut child_lock = child_clone.lock().unwrap();
+            //         if let Some(mut child_process) = child_lock.take() {
+            //             // LOGGER.archive_log();
+            //             if let Err(e) = child_process.write("exit\n".as_bytes()) {
+            //                 eprintln!("Failed to write to stdin: {}", e);
+            //             }
+            //         }
+            //     }
+            // });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
