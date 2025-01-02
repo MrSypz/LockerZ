@@ -10,7 +10,17 @@ import React, { useEffect, useState, useCallback } from "react"
 import { usePathname } from 'next/navigation'
 import {Sidebar} from "@/components/widget/Sidebar";
 import { SettingsProvider } from "@/utils/SettingsContext";
+import {invoke} from "@tauri-apps/api/core";
 
+
+interface Settings {
+    folderPath: string;
+    rememberCategory: boolean;
+    lang: string;
+    imageQuality: number;
+    imageWidth: number;
+    imageHeight: number;
+}
 
 export default function RootLayout({
                                        children,
@@ -23,8 +33,7 @@ export default function RootLayout({
 
     const fetchLanguageSetting = useCallback(async () => {
         try {
-            const response = await fetch('http://localhost:3001/get-settings')
-            const data = await response.json()
+            const data:Settings = await invoke("get_settings");
             const newLang = data.lang || 'en'
             if (newLang !== currentLang) {
                 setCurrentLang(newLang)
