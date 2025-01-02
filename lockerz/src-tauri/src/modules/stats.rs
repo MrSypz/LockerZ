@@ -1,7 +1,7 @@
-use std::fs::{self, DirEntry};
-use std::path::{Path, PathBuf};
-use serde::Serialize;
 use crate::modules::config::CONFIG;
+use serde::Serialize;
+use std::fs::{self};
+use std::path::Path;
 
 #[derive(Serialize)]
 pub struct StatsResponse {
