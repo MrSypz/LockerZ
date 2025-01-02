@@ -14,11 +14,8 @@ pub struct Logger {
 
 impl Logger {
     pub fn new() -> io::Result<Self> {
-        let home_dir = std::env::var("APPDATA")
-            .or_else(|_| std::env::var("HOME"))
-            .map_err(|e| io::Error::new(io::ErrorKind::NotFound, e))?;
-
-        let log_dir = Path::new(&home_dir).join("lockerz").join("logs");
+        let home_dir = "log";  // Config directory
+        let log_dir = Path::new(&home_dir).join("logs");
         let latest_log_file = log_dir.join("latest.log");
         
         // Session start time as a formatted string
