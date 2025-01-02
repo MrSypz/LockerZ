@@ -379,89 +379,89 @@ async function initializeServer() {
 //         res.status(500).json({error: 'Failed to create category'});
 //     }
 // });
-
-app.post('/move-file', async (req, res) => {
-    const form = new formidable.IncomingForm({
-        keepExtensions: true,
-        multiples: true,
-    });
-
-    try {
-        const [fields] = await form.parse(req);
-        const originalPath = fields.originalPath?.[0];
-        const category = fields.category?.[0] || 'uncategorized';
-
-        if (!originalPath) {
-            return res.status(400).json({ error: 'No file path provided' });
-        }
-
-        const fileName = path.basename(originalPath);
-        const targetDir = path.join(rootFolderPath, category);
-        const targetPath = path.join(targetDir, fileName);
-
-        await fsPromises.mkdir(targetDir, { recursive: true });
-
-        let stats;
-        try {
-            await fsPromises.rename(originalPath, targetPath);
-            stats = await fsPromises.stat(targetPath);
-            logger.info(`File successfully moved: ${fileName}`);
-        } catch (moveError) {
-            if (moveError.code === 'EXDEV') {
-                await fsPromises.copyFile(originalPath, targetPath);
-                stats = await fsPromises.stat(targetPath);
-                try {
-                    await fsPromises.unlink(originalPath);
-                    logger.info(`Original file deleted after copy: ${originalPath}`);
-                } catch (unlinkError) {
-                    logger.error(`Failed to delete original file: ${originalPath}`, unlinkError);
-                }
-            } else {
-                logger.error(`Error moving file: ${fileName}`, moveError);
-            }
-        }
-
-        try {
-            await clearRelevantCaches([category]);
-            logger.info(`Cache cleared for category: ${category}`);
-        } catch (cacheError) {
-            logger.error(`Failed to clear cache for category: ${category}`, cacheError);
-        }
-
-        return res.json({
-            success: true,
-            file: {
-                name: fileName,
-                category,
-                url: `/images/${category}/${fileName}`,
-                size: stats.size,
-                lastModified: stats.mtime.toISOString()
-            }
-        });
-    } catch (error) {
-        console.error(`File processing error: ${error.message}`);
-        return res.status(500).json({
-            error: 'Failed to process file',
-            details: error.message
-        });
-    }
-});
-
-app.post('/delete-file', async (req, res) => {
-    const {category, name} = req.body;
-    const filePath = path.join(rootFolderPath, category, name);
-
-    try {
-        await fsPromises.unlink(filePath);
-        clearRelevantCaches([category]);
-        logger.info(`File deleted: ${filePath}`);
-        logger.info('Related caches cleared');
-        res.json({success: true});
-    } catch (error) {
-        logger.error('Error deleting file:' + error);
-        res.status(500).json({error: 'Failed to delete file'});
-    }
-});
+//Done port
+// app.post('/move-file', async (req, res) => {
+//     const form = new formidable.IncomingForm({
+//         keepExtensions: true,
+//         multiples: true,
+//     });
+//
+//     try {
+//         const [fields] = await form.parse(req);
+//         const originalPath = fields.originalPath?.[0];
+//         const category = fields.category?.[0] || 'uncategorized';
+//
+//         if (!originalPath) {
+//             return res.status(400).json({ error: 'No file path provided' });
+//         }
+//
+//         const fileName = path.basename(originalPath);
+//         const targetDir = path.join(rootFolderPath, category);
+//         const targetPath = path.join(targetDir, fileName);
+//
+//         await fsPromises.mkdir(targetDir, { recursive: true });
+//
+//         let stats;
+//         try {
+//             await fsPromises.rename(originalPath, targetPath);
+//             stats = await fsPromises.stat(targetPath);
+//             logger.info(`File successfully moved: ${fileName}`);
+//         } catch (moveError) {
+//             if (moveError.code === 'EXDEV') {
+//                 await fsPromises.copyFile(originalPath, targetPath);
+//                 stats = await fsPromises.stat(targetPath);
+//                 try {
+//                     await fsPromises.unlink(originalPath);
+//                     logger.info(`Original file deleted after copy: ${originalPath}`);
+//                 } catch (unlinkError) {
+//                     logger.error(`Failed to delete original file: ${originalPath}`, unlinkError);
+//                 }
+//             } else {
+//                 logger.error(`Error moving file: ${fileName}`, moveError);
+//             }
+//         }
+//
+//         try {
+//             await clearRelevantCaches([category]);
+//             logger.info(`Cache cleared for category: ${category}`);
+//         } catch (cacheError) {
+//             logger.error(`Failed to clear cache for category: ${category}`, cacheError);
+//         }
+//
+//         return res.json({
+//             success: true,
+//             file: {
+//                 name: fileName,
+//                 category,
+//                 url: `/images/${category}/${fileName}`,
+//                 size: stats.size,
+//                 lastModified: stats.mtime.toISOString()
+//             }
+//         });
+//     } catch (error) {
+//         console.error(`File processing error: ${error.message}`);
+//         return res.status(500).json({
+//             error: 'Failed to process file',
+//             details: error.message
+//         });
+//     }
+// });
+//
+// app.post('/delete-file', async (req, res) => {
+//     const {category, name} = req.body;
+//     const filePath = path.join(rootFolderPath, category, name);
+//
+//     try {
+//         await fsPromises.unlink(filePath);
+//         clearRelevantCaches([category]);
+//         logger.info(`File deleted: ${filePath}`);
+//         logger.info('Related caches cleared');
+//         res.json({success: true});
+//     } catch (error) {
+//         logger.error('Error deleting file:' + error);
+//         res.status(500).json({error: 'Failed to delete file'});
+//     }
+// });
 
 app.post('/move-file-category', async (req, res) => {
     const {oldCategory, newCategory, fileName} = req.body;

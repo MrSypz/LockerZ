@@ -5,6 +5,7 @@ mod modules {
     pub mod imgoptimize;
     pub mod files;
     pub mod stats;
+    pub mod filehandler;
 }
 
 use modules::{category::get_categories,
@@ -15,6 +16,8 @@ use modules::{category::get_categories,
               config::setup_folders,
               config::get_settings,
               files::get_files,
+              filehandler::move_file,
+              filehandler::delete_file,
               stats::get_stats,
               imgoptimize::handle_optimize_image_request,
               logger::LOGGER
@@ -86,6 +89,8 @@ pub fn run() {
             delete_category,
             get_settings,
             update_settings,
+            move_file,
+            delete_file,
             get_files,
             get_stats,
             expand_scope,
