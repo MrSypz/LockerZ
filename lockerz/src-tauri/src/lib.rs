@@ -8,27 +8,23 @@ mod modules {
     pub mod filehandler;
 }
 
-use modules::{category::get_categories,
-              category::rename_category,
-              category::create_category,
+use modules::{category::create_category,
               category::delete_category,
-              config::update_settings,
-              config::setup_folders,
+              category::get_categories,
+              category::rename_category,
               config::get_settings,
-              files::get_files,
-              filehandler::move_file,
+              config::setup_folders,
+              config::update_settings,
               filehandler::delete_file,
-              stats::get_stats,
+              filehandler::move_file,
+              files::get_files,
               imgoptimize::handle_optimize_image_request,
-              logger::LOGGER
+              logger::LOGGER,
+              stats::get_stats
 };
-use tauri_plugin_fs::FsExt;
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
 use tauri::Manager;
-use tauri_plugin_shell::ShellExt;
-
-use std::sync::Arc;
+use tauri_plugin_fs::FsExt;
 
 #[tauri::command]
 fn show_in_folder(path: String) {
