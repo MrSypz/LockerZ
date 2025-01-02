@@ -53,9 +53,8 @@
 
 ## Server Routes (app.post)
 - [x] **/categories**
-- [ ] **/update-folder-path**: Port to Rust for handling folder path updates and validation.
-- [ ] **/update-settings**: Port to Rust to update settings and manage folder paths.
-- [ ] **/delete-category**: Port to Rust for deleting categories.
+- [x] **/update-settings**: Port to Rust to update settings and manage folder paths.
+- [x] **/delete-category**: Port to Rust for deleting categories.
 - [x] **/create-category**: Port to Rust for creating categories.
 - [x] **/rename-category**
 - [ ] **/move-file**: Port to Rust for moving files between categories.
