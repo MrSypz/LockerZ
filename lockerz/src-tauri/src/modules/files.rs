@@ -25,19 +25,17 @@ pub struct FileResponse {
 
 #[tauri::command]
 pub async fn get_files(page: u32, limit: Option<i32>, category: Option<String>) -> Result<FileResponse, String> {
-    let root_folder_path = &CONFIG.folderPath; // Replace with actual path
+    let root_folder_path = &CONFIG.folderPath;
 
     if !root_folder_path.exists() {
         return Err("Root folder path does not exist.".to_string());
     }
 
-    let category = category.unwrap_or_else(|| "all".to_string()); // Default to "all" if no category is specified
+    let category = category.unwrap_or_else(|| "all".to_string());
 
-    // Load the category cache (or reload it if it doesn't exist)
     let cache_file_path = Path::new("cache").join(format!("{}_files.bin", category));
     let mut cached_files = read_cache(&cache_file_path).map_err(|e| format!("Error reading cache: {}", e))?;
 
-    // If cache is empty, reload files and cache them
     if cached_files.is_empty() {
         let categories = fs::read_dir(root_folder_path)
             .map_err(|e| format!("Error reading root folder: {}", e))?;
@@ -74,7 +72,7 @@ pub async fn get_files(page: u32, limit: Option<i32>, category: Option<String>) 
                             category: category_name.clone(),
                             filepath: file_path.to_string_lossy().to_string(),
                             size: metadata.len(),
-                            last_modified,  // Use the formatted last modified date
+                            last_modified,
                         };
                         category_file_infos.push(file_info);
                     }
