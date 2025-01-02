@@ -15,6 +15,8 @@ pub struct Config {
     pub imageHeight: u32,
 }
 
+pub static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().expect("Failed to initialize config"));
+
 impl Config {
     /// Initializes the configuration directory and file.
     pub fn new() -> io::Result<Self> {
@@ -75,7 +77,6 @@ impl Default for Config {
     }
 }
 
-pub static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().expect("Failed to initialize config"));
 
 pub fn setup_folders() -> io::Result<()> {
     let root_folder_path = &CONFIG.folderPath;
