@@ -8,7 +8,7 @@ import {FileContextMenu} from '@/components/widget/Context-menu'
 import {File} from '@/types/file'
 import {motion, AnimatePresence} from "framer-motion"
 import {useTranslation} from 'react-i18next'
-import {ArrowDown, ArrowUp, ArrowUpDown, Clock, FileIcon, Search, Text} from 'lucide-react'
+import {ArrowDown, ArrowUp, ArrowUpDown, Clock, ClockArrowUp, FileIcon, Search, Text} from 'lucide-react'
 import {ImageViewer} from './Image-viewer';
 import {useSharedSettings} from "@/utils/SettingsContext";
 import {OptimizedImage} from "@/components/widget/ImageProcessor";
@@ -66,7 +66,7 @@ export function FileGrid({
                          }: FileGridProps) {
     const totalColumns = useColumnCount()
     const [sortedFiles, setSortedFiles] = useState(files)
-    const [sortCriteria, setSortCriteria] = useState<'name' | 'date' | 'size'>('name')
+    const [sortCriteria, setSortCriteria] = useState<'name' | 'date' | 'createat' | 'size'>('name')
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
     const [searchTerm, setSearchTerm] = useState('')
     const {t} = useTranslation()
@@ -101,6 +101,9 @@ export function FileGrid({
                 case 'date':
                     comparison = new Date(a.last_modified).getTime() - new Date(b.last_modified).getTime();
                     break;
+                case 'createat':
+                    comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                    break;
                 case 'size':
                     comparison = a.size - b.size;
                     break;
@@ -120,7 +123,7 @@ export function FileGrid({
         setSortedFiles(sorted.slice(start, end));
     }, [allFiles, sortCriteria, sortOrder, searchTerm, currentPage, imagesPerPage]);
 
-    const handleSort = (criteria: 'name' | 'date' | 'size', order: 'asc' | 'desc') => {
+    const handleSort = (criteria: 'name' | 'date' | 'createat' | 'size', order: 'asc' | 'desc') => {
         setSortCriteria(criteria);
         setSortOrder(order);
     }
@@ -163,7 +166,7 @@ export function FileGrid({
                         <Tabs value={sortCriteria}
                               onValueChange={(value) => setSortCriteria(value as 'name' | 'date' | 'size')}
                               className="w-full p-2">
-                            <TabsList className="grid w-full grid-cols-3 mb-2">
+                            <TabsList className="grid w-full grid-cols-4 mb-2">
                                 <TabsTrigger value="name" className="flex items-center justify-center">
                                     <Text className="w-4 h-4 mr-2"/>
                                     {t('category.image.sort.by-name')}
@@ -171,6 +174,10 @@ export function FileGrid({
                                 <TabsTrigger value="date" className="flex items-center justify-center">
                                     <Clock className="w-4 h-4 mr-2"/>
                                     {t('category.image.sort.by-date')}
+                                </TabsTrigger>
+                                <TabsTrigger value="createat" className="flex items-center justify-center">
+                                    <ClockArrowUp className="w-4 h-4 mr-2"/>
+                                    {t('category.image.sort.by-createat')}
                                 </TabsTrigger>
                                 <TabsTrigger value="size" className="flex items-center justify-center">
                                     <FileIcon className="w-4 h-4 mr-2"/>
@@ -210,6 +217,26 @@ export function FileGrid({
                                     <Button
                                         onClick={() => handleSort('date', 'desc')}
                                         variant={sortCriteria === 'date' && sortOrder === 'desc' ? 'default' : 'outline'}
+                                        className="w-full justify-between py-1 px-2 text-sm"
+                                    >
+                                        {t('category.image.sort.descending')}
+                                        <ArrowDown className="h-3 w-3"/>
+                                    </Button>
+                                </div>
+                            </TabsContent>
+                            <TabsContent value="createat" className="mt-2">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Button
+                                        onClick={() => handleSort('createat', 'asc')}
+                                        variant={sortCriteria === 'createat' && sortOrder === 'asc' ? 'default' : 'outline'}
+                                        className="w-full justify-between py-1 px-2 text-sm"
+                                    >
+                                        {t('category.image.sort.ascending')}
+                                        <ArrowUp className="h-3 w-3"/>
+                                    </Button>
+                                    <Button
+                                        onClick={() => handleSort('createat', 'desc')}
+                                        variant={sortCriteria === 'createat' && sortOrder === 'desc' ? 'default' : 'outline'}
                                         className="w-full justify-between py-1 px-2 text-sm"
                                     >
                                         {t('category.image.sort.descending')}
