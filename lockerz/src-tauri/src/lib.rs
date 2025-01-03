@@ -17,12 +17,12 @@ use modules::{category::create_category,
               config::update_settings,
               filehandler::delete_file,
               filehandler::move_file,
+              filehandler::move_file_category,
               files::get_files,
               imgoptimize::handle_optimize_image_request,
               logger::LOGGER,
               stats::get_stats
 };
-use serde::{Deserialize, Serialize};
 use tauri::Manager;
 use tauri_plugin_fs::FsExt;
 
@@ -47,34 +47,20 @@ fn expand_scope(app_handle: tauri::AppHandle, folder_path: std::path::PathBuf) -
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let _ = setup_folders();
-    LOGGER.info("Application started").expect("Failed to log");
+    log_pre!("Application started");
 
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|_app| {
-            // Disable sidecar
-            // let sidecar_command = _app.shell().sidecar("zaphire").unwrap();
-            // let (_rx, sidecar_child) = sidecar_command.spawn().expect("Failed to spawn sidecar");
-
-            // let child = Arc::new(Mutex::new(Some(sidecar_child)));
-
-            // let child_clone = Arc::clone(&child);
+            let window = _app.get_webview_window("main").unwrap();
             //
-            // let window = _app.get_webview_window("main").unwrap();
-            //
-            // window.on_window_event(move |event| {
-            //     if let tauri::WindowEvent::Destroyed { .. } = event {
-            //         let mut child_lock = child_clone.lock().unwrap();
-            //         if let Some(mut child_process) = child_lock.take() {
-            //             // LOGGER.archive_log();
-            //             if let Err(e) = child_process.write("exit\n".as_bytes()) {
-            //                 eprintln!("Failed to write to stdin: {}", e);
-            //             }
-            //         }
-            //     }
-            // });
+            window.on_window_event(move |event| {
+                if let tauri::WindowEvent::Destroyed { .. } = event {
+                        LOGGER.archive_log();
+                }
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -88,6 +74,7 @@ pub fn run() {
             update_settings,
             move_file,
             delete_file,
+            move_file_category,
             get_files,
             get_stats,
             expand_scope,
