@@ -30,6 +30,7 @@
         "by-name": "Name",
         "by-date": "Date",
         "by-size": "Size",
+        "by-createat": "CreateAt",
         "ascending": "Ascending",
         "descending": "Descending"
       }
