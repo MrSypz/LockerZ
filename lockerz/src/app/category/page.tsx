@@ -25,10 +25,9 @@ import {
     DialogTrigger
 } from "@/components/ui/dialog"
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover"
-import {Pencil, Trash2, FolderPlus, ImageIcon, FolderOpen} from 'lucide-react'
+import {Pencil, FolderPlus, FolderOpen} from 'lucide-react'
 import {toast} from "@/hooks/use-toast"
 import {useTranslation} from "react-i18next"
-import {API_URL} from "@/lib/zaphire"
 import {invoke} from '@tauri-apps/api/core'
 
 interface Category {
