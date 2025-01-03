@@ -4,6 +4,7 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 use once_cell::sync::Lazy;
+use std::fmt::Arguments;
 
 pub struct Logger {
     log_dir: PathBuf,
@@ -17,12 +18,12 @@ impl Logger {
         let home_dir = "log";  // Config directory
         let log_dir = Path::new(&home_dir).join("logs");
         let latest_log_file = log_dir.join("latest.log");
-        
+
         // Session start time as a formatted string
         let session_start_time = Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true).replace(":", "-");
-        
+
         let max_log_files = 69;
-        
+
         // Ensure the log directory exists
         if !log_dir.exists() {
             fs::create_dir_all(&log_dir)?;
@@ -53,7 +54,7 @@ impl Logger {
 
         // Format the timestamp using chrono
         let formatted_timestamp = datetime.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
-        
+
         let log_message = format!("[{}] {}: {}\n", log_type.to_uppercase(), formatted_timestamp, message);
         let mut file = fs::OpenOptions::new()
             .append(true)
@@ -62,24 +63,24 @@ impl Logger {
         Ok(())
     }
 
-    pub fn info(&self, message: &str) -> io::Result<()> {
-        self.log(message, "info")
+    pub fn info(&self, args: Arguments) -> io::Result<()> {
+        self.log(&format!("{}", args), "info")
     }
 
-    pub fn warn(&self, message: &str) -> io::Result<()> {
-        self.log(message, "warn")
+    pub fn warn(&self, args: Arguments) -> io::Result<()> {
+        self.log(&format!("{}", args), "warn")
     }
 
-    pub fn error(&self, message: &str) -> io::Result<()> {
-        self.log(message, "error")
+    pub fn error(&self, args: Arguments) -> io::Result<()> {
+        self.log(&format!("{}", args), "error")
     }
 
-    pub fn debug(&self, message: &str) -> io::Result<()> {
-        self.log(message, "debug")
+    pub fn debug(&self, args: Arguments) -> io::Result<()> {
+        self.log(&format!("{}", args), "debug")
     }
 
-    pub fn pre(&self, message: &str) -> io::Result<()> {
-        self.log(message, "pre")
+    pub fn pre(&self, args: Arguments) -> io::Result<()> {
+        self.log(&format!("{}", args), "pre")
     }
 
     pub fn archive_log(&self) -> io::Result<()> {
@@ -88,7 +89,6 @@ impl Logger {
 
         // Rename latest.log to log_{session_start_time}.log
         fs::rename(&self.latest_log_file, &new_file_path)?;
-        // self.log("Log renamed", "info")?;
 
         // Create a new latest.log file
         File::create(&self.latest_log_file)?;
@@ -126,7 +126,36 @@ impl Logger {
         Ok(())
     }
 }
-
+#[macro_export]
+macro_rules! log_info {
+    ($($arg:tt)*) => {
+        crate::LOGGER.info(format_args!($($arg)*)).unwrap();
+    };
+}
+#[macro_export]
+macro_rules! log_warn {
+    ($($arg:tt)*) => {
+        crate::LOGGER.warn(format_args!($($arg)*)).unwrap();
+    };
+}
+#[macro_export]
+macro_rules! log_error {
+    ($($arg:tt)*) => {
+        crate::LOGGER.error(format_args!($($arg)*)).unwrap();
+    };
+}
+#[macro_export]
+macro_rules! log_debug {
+    ($($arg:tt)*) => {
+        crate::LOGGER.debug(format_args!($($arg)*)).unwrap();
+    };
+}
+#[macro_export]
+macro_rules! log_pre {
+    ($($arg:tt)*) => {
+        crate::LOGGER.pre(format_args!($($arg)*)).unwrap();
+    };
+}
 // Declare a global static instance of Logger using Lazy
 pub static LOGGER: Lazy<Logger> = Lazy::new(|| {
     Logger::new().expect("Failed to initialize logger")
