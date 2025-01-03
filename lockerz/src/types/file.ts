@@ -5,6 +5,7 @@ export interface File {
     size: number;
     tags?: string[];
     last_modified: string;
+    created_at: string;
 }
 
 export interface FileResponse {
@@ -14,3 +15,10 @@ export interface FileResponse {
     total_files: number;
 }
 
+export interface Category {
+    [x: string]: any
+
+    name: string
+    file_count: number
+    size: number
+}
