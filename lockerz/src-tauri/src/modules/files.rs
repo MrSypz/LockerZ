@@ -1,10 +1,12 @@
-use crate::modules::config::CONFIG;
+use crate::modules::config::get_config;
 use bincode::{deserialize, serialize};
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
 use std::path::Path;
+
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FileInfo {
@@ -12,8 +14,10 @@ pub struct FileInfo {
     pub category: String,
     pub filepath: String,
     pub size: u64,
-    pub last_modified: String,  // We'll store the formatted date as a string
+    pub last_modified: String,
+    pub created_at: String,  // Add created_at field
 }
+
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FileResponse {
@@ -25,7 +29,7 @@ pub struct FileResponse {
 
 #[tauri::command]
 pub async fn get_files(page: u32, limit: Option<i32>, category: Option<String>) -> Result<FileResponse, String> {
-    let root_folder_path = &CONFIG.folderPath;
+    let root_folder_path = get_config().folderPath;
 
     if !root_folder_path.exists() {
         return Err("Root folder path does not exist.".to_string());
@@ -33,11 +37,14 @@ pub async fn get_files(page: u32, limit: Option<i32>, category: Option<String>) 
 
     let category = category.unwrap_or_else(|| "all".to_string());
 
-    let cache_file_path = Path::new("cache").join(format!("{}_files.bin", category));
+    let cache_folder = Path::new("cache");
+    let cache_file_name = format!("{}_files.bin", hash_directory_path(&root_folder_path, &category));
+    let cache_file_path = cache_folder.join(cache_file_name);
+
     let mut cached_files = read_cache(&cache_file_path).map_err(|e| format!("Error reading cache: {}", e))?;
 
     if cached_files.is_empty() {
-        let categories = fs::read_dir(root_folder_path)
+        let categories = fs::read_dir(root_folder_path.clone())
             .map_err(|e| format!("Error reading root folder: {}", e))?;
 
         for entry in categories {
@@ -62,7 +69,12 @@ pub async fn get_files(page: u32, limit: Option<i32>, category: Option<String>) 
 
                         let modified_time = metadata.modified()
                             .map_err(|e| format!("Error reading file modified time: {}", e))?;
+                        let creation_time = metadata.created()
+                            .map_err(|e| format!("Error reading file creation time: {}", e))?;
 
+                        let created_at: String = DateTime::<Local>::from(creation_time)
+                            .format("%Y-%m-%d %H:%M:%S")
+                            .to_string();
                         let last_modified: String = DateTime::<Local>::from(modified_time)
                             .format("%Y-%m-%d %H:%M:%S")
                             .to_string();
@@ -73,6 +85,7 @@ pub async fn get_files(page: u32, limit: Option<i32>, category: Option<String>) 
                             filepath: file_path.to_string_lossy().to_string(),
                             size: metadata.len(),
                             last_modified,
+                            created_at, // Include creation date
                         };
                         category_file_infos.push(file_info);
                     }
@@ -97,7 +110,6 @@ pub async fn get_files(page: u32, limit: Option<i32>, category: Option<String>) 
         1 // If there's no limit, treat it as 1 page
     };
 
-    // Apply pagination logic
     let (start_index, end_index) = if let Some(lim) = limit {
         if lim == -1 {
             (0, total_files as u32) // Convert total_files to u32
@@ -124,36 +136,36 @@ pub async fn get_files(page: u32, limit: Option<i32>, category: Option<String>) 
     })
 }
 
-/// Writes the cache content to the file in binary format
-fn write_cache(cache_path: &Path, content: &Vec<FileInfo>) -> io::Result<()> {
-    // Ensure the cache directory exists
+pub fn hash_directory_path(path: &Path, category: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(path.to_string_lossy().as_bytes());
+    hasher.update(category.as_bytes());
+    format!("{:x}", hasher.finalize())
+}
+pub fn write_cache(cache_path: &Path, content: &Vec<FileInfo>) -> io::Result<()> {
     let cache_dir = cache_path.parent().unwrap();
     if !cache_dir.exists() {
         fs::create_dir_all(cache_dir)?;
     }
 
-    // Serialize the data to binary format using bincode
     let serialized_data = serialize(content)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
 
-    // Write the binary data to the cache file
     let mut file = File::create(cache_path)?;
     file.write_all(&serialized_data)?;
     Ok(())
 }
 
-/// Reads the cached content from the file in binary format
-fn read_cache(cache_path: &Path) -> io::Result<Vec<FileInfo>> {
+pub fn read_cache(cache_path: &Path) -> io::Result<Vec<FileInfo>> {
     if cache_path.exists() {
         let mut file = File::open(cache_path)?;
         let mut data = Vec::new();
         file.read_to_end(&mut data)?;
 
-        // Deserialize the data from binary format using bincode
         let deserialized_data: Vec<FileInfo> = deserialize(&data)
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
         Ok(deserialized_data)
     } else {
-        Ok(Vec::new())  // Return empty vector if cache file doesn't exist
+        Ok(Vec::new())
     }
 }
