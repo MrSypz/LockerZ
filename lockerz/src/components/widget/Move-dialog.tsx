@@ -11,13 +11,14 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { useTranslation } from 'react-i18next'
+import {Category} from "@/types/file";
 
 
 interface MoveDialogProps {
     isOpen: boolean
     onCloseAction: () => void
     onMoveAction: (category: string) => void
-    categories: string[]
+    categories: Category[]
     currentCategory: string
 }
 
