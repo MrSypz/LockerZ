@@ -1,11 +1,13 @@
+use crate::{log_info, log_pre};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::fs;
 use std::io::{self};
-use serde_json::Value;
 use std::path::{Path, PathBuf};
+use std::sync::RwLock;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
     pub folderPath: PathBuf,
     pub rememberCategory: bool,
@@ -15,14 +17,17 @@ pub struct Config {
     pub imageHeight: u32,
 }
 
-pub static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().expect("Failed to initialize config"));
+pub static CONFIG: Lazy<RwLock<Config>> = Lazy::new(|| {
+    let initial_config = Config::new().unwrap_or_else(|_| Config::default());
+    RwLock::new(initial_config)
+});
 
 impl Config {
     /// Initializes the configuration directory and file.
     pub fn new() -> io::Result<Self> {
         let home_dir = "config";  // Config directory
-        let config_dir = Path::new(&home_dir);  // Path for the config folder
-        let config_path = config_dir.join("config.json");  // Path for the config file
+        let config_dir = Path::new(&home_dir);
+        let config_path = config_dir.join("config.json");
 
         // Create the directory if it doesn't exist
         if !config_dir.exists() {
@@ -32,7 +37,7 @@ impl Config {
 
         // Create the config file if it doesn't exist
         if !config_path.exists() {
-            let default_config = Config::default(); // Now we can use default
+            let default_config = Config::default();
             let config_json = serde_json::to_string_pretty(&default_config)?;
             fs::write(&config_path, config_json)?;
             println!("Created config file: {:?}", config_path);
@@ -41,7 +46,6 @@ impl Config {
         Self::read_config(&config_path).or_else(|_| Ok(Config::default()))
     }
 
-    /// Reads the configuration from the config file.
     pub fn read_config(config_path: &Path) -> io::Result<Self> {
         if config_path.exists() {
             let config_content = fs::read_to_string(config_path)?;
@@ -52,7 +56,6 @@ impl Config {
         }
     }
 
-    /// Writes the current config to the specified file path.
     pub fn write_config(&self, config_path: &Path) -> io::Result<()> {
         let config_json = serde_json::to_string_pretty(self)?;
         fs::write(config_path, config_json)?;
@@ -79,17 +82,30 @@ impl Default for Config {
 
 
 pub fn setup_folders() -> io::Result<()> {
-    let root_folder_path = &CONFIG.folderPath;
+    let config = get_config();
 
-    println!("Initial root folder path: {:?}", root_folder_path);
+    let root_folder_path = &config.folderPath;
+    log_pre!("Initial root folder path: {:?}", root_folder_path);
 
     fs::create_dir_all(root_folder_path)?;
 
-    let temp_dir = root_folder_path.join("temp");
-    fs::create_dir_all(&temp_dir)?;
-
     println!("Directories initialized successfully.");
     Ok(())
+}
+
+pub fn refresh_config() -> io::Result<()> {
+    let config_dir = Path::new("config");
+    let config_path = config_dir.join("config.json");
+
+    let new_config = Config::read_config(&config_path)?;
+    let mut global_config = CONFIG.write().unwrap();
+    *global_config = new_config;
+    Ok(())
+}
+
+
+pub fn get_config() -> Config {
+    CONFIG.read().unwrap().clone()
 }
 
 #[tauri::command]
@@ -108,33 +124,40 @@ pub async fn update_settings(new_settings: Value) -> Result<Config, String> {
     let config_dir = Path::new("config");
     let config_path = config_dir.join("config.json");
 
-    println!("Modifying config file at: {:?}", config_path);
+    log_info!("Modifying config file at: {:?}", config_path);
 
     let mut current_config = Config::read_config(&config_path)
         .map_err(|e| format!("Failed to read config: {}", e))?;
 
     if let Some(folder_path) = new_settings.get("folderPath").and_then(|v| v.as_str()) {
         current_config.folderPath = PathBuf::from(folder_path);
+        log_info!("- Setting Change! -",);
+        log_info!("Folder path: {:?}", current_config.folderPath);
     }
     if let Some(remember_category) = new_settings.get("rememberCategory").and_then(|v| v.as_bool()) {
         current_config.rememberCategory = remember_category;
+        log_info!("Remember category: {:?}", current_config.rememberCategory);
     }
     if let Some(lang) = new_settings.get("lang").and_then(|v| v.as_str()) {
         current_config.lang = lang.to_string();
+        log_info!("Lang: {:?}", current_config.lang);
     }
     if let Some(image_quality) = new_settings.get("imageQuality").and_then(|v| v.as_u64()) {
         current_config.imageQuality = image_quality as u8;
+        log_info!("Image quality: {:?}", current_config.imageQuality);
     }
     if let Some(image_width) = new_settings.get("imageWidth").and_then(|v| v.as_u64()) {
         current_config.imageWidth = image_width as u32;
+        log_info!("Image width: {:?}", current_config.imageWidth);
     }
     if let Some(image_height) = new_settings.get("imageHeight").and_then(|v| v.as_u64()) {
         current_config.imageHeight = image_height as u32;
+        log_info!("Image height: {:?}", current_config.imageHeight);
     }
 
     current_config
         .write_config(&config_path)
         .map_err(|e| format!("Failed to write config: {}", e))?;
-
+    refresh_config().map_err(|e| format!("Failed to refresh global config: {}", e))?;
     Ok(current_config)
 }
