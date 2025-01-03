@@ -3,7 +3,7 @@ use serde::Serialize;
 use tokio::fs;
 use tokio::task;
 use std::path::{Path, PathBuf};
-use crate::modules::config;
+use crate::modules::config::get_config;
 
 #[derive(Serialize)]
 pub struct Category {
@@ -42,7 +42,6 @@ pub async fn fetch_categories_async(root_folder_path: PathBuf) -> Result<Vec<Cat
         Err(err) => return Err(format!("Failed to read directory: {}", err)),
     };
 
-    // Collect entries into a vector for parallel processing
     let mut entry_vec = Vec::new();
     let mut read_dir = entries;
 
@@ -88,13 +87,13 @@ pub async fn fetch_categories_async(root_folder_path: PathBuf) -> Result<Vec<Cat
 
 #[tauri::command]
 pub async fn get_categories() -> Result<Vec<Category>, String> {
-    let root_folder_path = config::CONFIG.folderPath.clone();
+    let root_folder_path = get_config().folderPath.clone();
     fetch_categories_async(root_folder_path).await
 }
 
 #[tauri::command]
 pub async fn rename_category(old_name: &str, new_name: &str) -> Result<String, String> {
-    let root_folder_path = config::CONFIG.folderPath.clone();
+    let root_folder_path =  get_config().folderPath.clone();
     let old_path = Path::new(&root_folder_path).join(old_name);
     let new_path = Path::new(&root_folder_path).join(new_name);
 
@@ -122,7 +121,7 @@ pub async fn rename_category(old_name: &str, new_name: &str) -> Result<String, S
 
 #[tauri::command]
 pub async fn create_category(name: &str) -> Result<(), String> {
-    let root_folder_path = config::CONFIG.folderPath.clone();
+    let root_folder_path = get_config().folderPath.clone();
 
     let new_path = Path::new(&root_folder_path).join(name);
 
@@ -143,7 +142,7 @@ pub async fn create_category(name: &str) -> Result<(), String> {
 }
 #[tauri::command]
 pub async fn delete_category(name: &str) -> Result<String, String> {
-    let root_folder_path = config::CONFIG.folderPath.clone();
+    let root_folder_path = get_config().folderPath.clone();
     let new_path = Path::new(&root_folder_path).join(name);
 
     if !new_path.exists() {
