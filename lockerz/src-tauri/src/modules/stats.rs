@@ -1,4 +1,4 @@
-use crate::modules::config::CONFIG;
+use crate::modules::config::{get_config};
 use serde::Serialize;
 use std::fs::{self};
 use std::path::Path;
@@ -41,14 +41,14 @@ fn get_dir_stats(path: &Path) -> Result<(u64, u64), String> {
 
 #[tauri::command]
 pub async fn get_stats() -> Result<StatsResponse, String> {
-    let root_folder_path = &CONFIG.folderPath;
+    let root_folder_path = get_config().folderPath;
 
     if !root_folder_path.exists() {
         return Err("Root folder path does not exist.".to_string());
     }
 
     // Get directory stats (size and file count)
-    let (size, count) = get_dir_stats(root_folder_path)?;
+    let (size, count) = get_dir_stats(&*root_folder_path)?;
 
     // Get categories count (directories excluding "temp" directory)
     let entries = fs::read_dir(root_folder_path)
