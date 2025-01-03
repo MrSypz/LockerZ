@@ -194,7 +194,7 @@ export default function Locker() {
                     }]
                 });
                 if (!selectedFiles?.length) {
-                    toast({title: "No Files Selected", description: "No files were selected.", variant: "destructive"});
+                    toast({title: "No images Selected", description: "No images were selected.", variant: "destructive"});
                     return;
                 }
                 filesToProcess = selectedFiles;
@@ -225,7 +225,7 @@ export default function Locker() {
         if (duplicateFiles.length) {
             toast({
                 title: t('toast.titleType.warning'),
-                description: `${duplicateFiles.length} duplicate file(s) skipped.`,
+                description: `${duplicateFiles.length} duplicate image(s) skipped.`,
                 variant: "destructive"
             });
             return;
@@ -291,12 +291,12 @@ export default function Locker() {
             setFiles(prevFiles => prevFiles.filter(f => f.name !== file.name || f.category !== file.category))
             toast({
                 title: t('toast.titleType.success'),
-                description: "File deleted successfully",
+                description: `${file.name} deleted successfully`,
             })
         } catch (error) {
             toast({
                 title: t('toast.titleType.error'),
-                description: "Failed to delete file",
+                description: `Failed to delete Image ${file.name}`,
                 variant: "destructive",
             })
         }
