@@ -19,24 +19,14 @@ import {
 import {FileGrid} from '@/components/widget/FileGrid'
 import {CategorySelector} from '@/components/widget/CategorySelector'
 import {PaginationControls} from '@/components/widget/PaginationControls'
-import {File, FileResponse} from '@/types/file'
+import {File, FileResponse, Category} from '@/types/file'
 import {useTranslation} from "react-i18next";
-import {API_URL} from "@/lib/zaphire";
 import {useSharedSettings} from "@/utils/SettingsContext";
 
 const ALLOWED_FILE_TYPES = ['.png', '.jpg', '.jpeg', '.jfif', '.webp'];
 
 const PAGE_STORAGE_KEY = 'lockerz-current-page'
 const IMAGES_PER_PAGE_STORAGE_KEY = 'lockerz-images-per-page'
-
-interface Category {
-    [x: string]: any
-
-    name: string
-    file_count: number
-    size: number
-    imageUrl?: string
-}
 
 interface FileMoveResponse {
     success: boolean;
@@ -158,7 +148,6 @@ export default function Locker() {
             setImagesPerPage(parseInt(savedImagesPerPage, 10));
         }
 
-        // Remember the last selected category if applicable
         if (rememberCategory && selectedCategory) {
             localStorage.setItem('lastSelectedCategory', selectedCategory);
         }
@@ -189,154 +178,6 @@ export default function Locker() {
         fetchPaginatedFiles,     // Function dependencies
     ]);
 
-    // const handleFileDrop = useCallback(async (droppedFiles?: string[]) => {
-    //     let filesToProcess: (globalThis.File | string)[] = [];
-    //     if (droppedFiles?.length === 0) return;
-    //
-    //     if (droppedFiles && droppedFiles.length > 0) {
-    //         filesToProcess = droppedFiles;
-    //     } else {
-    //         try {
-    //             const selectedFiles = await open({
-    //                 multiple: true,
-    //                 directory: false,
-    //                 filters: [{
-    //                     name: 'Images',
-    //                     extensions: ['png', 'jpg', 'jpeg', 'jfif', 'webp']
-    //                 }]
-    //             });
-    //             if (selectedFiles && Array.isArray(selectedFiles) && selectedFiles.length > 0) {
-    //                 filesToProcess = selectedFiles;
-    //             } else {
-    //                 toast({
-    //                     title: "No Files Selected",
-    //                     description: "No files were selected.",
-    //                     variant: "destructive",
-    //                 });
-    //                 return;
-    //             }
-    //         } catch (error) {
-    //             toast({
-    //                 title: t('toast.titleType.error'),
-    //                 description: "An error occurred while opening the file dialog.",
-    //                 variant: "destructive",
-    //             });
-    //             return;
-    //         }
-    //     }
-    //
-    //     const getFileName = (file: globalThis.File | string): string => {
-    //         if (file instanceof globalThis.File) {
-    //             return file.name;
-    //         } else {
-    //             return file.replace(/^.*[\\/]/, ''); // This removes everything up to the last slash or backslash
-    //         }
-    //     };
-    //
-    //
-    //     const validFiles = filesToProcess.filter(file =>
-    //         ALLOWED_FILE_TYPES.some(type =>
-    //             getFileName(file).toLowerCase().endsWith(type)
-    //         )
-    //     );
-    //
-    //     if (validFiles.length === 0) {
-    //         toast({
-    //             title: "No Valid Files",
-    //             description: "No files of the allowed types were selected.",
-    //             variant: "destructive",
-    //         });
-    //         return;
-    //     }
-    //
-    //     const duplicateFiles = validFiles.filter(file => {
-    //         const fileName = getFileName(file);
-    //         return files.some(existingFile =>
-    //             existingFile.name === fileName && existingFile.category === selectedCategory
-    //         );
-    //     });
-    //
-    //     if (duplicateFiles.length > 0) {
-    //         toast({
-    //             title: t('toast.titleType.warning'),
-    //             description: `${duplicateFiles.length} file(s) already exist in this category and will be skipped.`,
-    //             variant: "destructive",
-    //         });
-    //         return;
-    //     }
-    //
-    //     const newFiles = validFiles.filter(file => {
-    //         const fileName = getFileName(file);
-    //         return !files.some(existingFile =>
-    //             existingFile.name === fileName && existingFile.category === selectedCategory
-    //         );
-    //     });
-    //
-    //     if (newFiles.length === 0) {
-    //         toast({
-    //             title: "No New Files",
-    //             description: "All selected files already exist in this category.",
-    //             variant: "destructive",
-    //         });
-    //         return;
-    //     }
-    //
-    //     let successCount = 0;
-    //     let failCount = 0;
-    //
-    //     for (const file of newFiles) {
-    //         const formData = new FormData();
-    //         if (file instanceof globalThis.File) {
-    //             formData.append('file', file);
-    //         } else {
-    //             formData.append('originalPath', file);
-    //         }
-    //         formData.append('category', categoryRef.current === 'all' ? 'uncategorized' : categoryRef.current);
-    //         try {
-    //             const response = await fetch(`${API_URL}/move-file`, {
-    //                 method: 'POST',
-    //                 body: formData,
-    //             });
-    //             if (!response.ok) {
-    //                 new Error('File move failed');
-    //             }
-    //             const data = await response.json();
-    //             setFiles(prevFiles => [data.file, ...prevFiles]);
-    //             successCount++;
-    //         } catch (error) {
-    //             failCount++;
-    //         }
-    //     }
-    //
-    //     if (successCount > 0) {
-    //         toast({
-    //             title: t('toast.titleType.success'),
-    //             description: successCount === 1
-    //                 ? `1 file moved successfully`
-    //                 : `${successCount} files moved successfully`,
-    //         });
-    //     }
-    //
-    //     if (failCount > 0) {
-    //         toast({
-    //             title: t('toast.titleType.error'),
-    //             description: failCount === 1
-    //                 ? `Failed to move 1 file`
-    //                 : `Failed to move ${failCount} files`,
-    //             variant: "destructive",
-    //         });
-    //     }
-    //
-    //     fetchAllFiles();
-    //
-    //     if (validFiles.length < filesToProcess.length) {
-    //         toast({
-    //             title: "Some Files Skipped",
-    //             description: `${filesToProcess.length - validFiles.length} file(s) were skipped due to invalid file type.`,
-    //             variant: "destructive",
-    //         });
-    //     }
-    // }, [selectedCategory, files, API_URL, fetchAllFiles, t]);
     const handleFileDrop = useCallback(async (droppedFiles?: string[]) => {
         let filesToProcess: (globalThis.File | string)[] = [];
 
@@ -353,12 +194,12 @@ export default function Locker() {
                     }]
                 });
                 if (!selectedFiles?.length) {
-                    toast({ title: "No Files Selected", description: "No files were selected.", variant: "destructive" });
+                    toast({title: "No Files Selected", description: "No files were selected.", variant: "destructive"});
                     return;
                 }
                 filesToProcess = selectedFiles;
             } catch (error) {
-                toast({ title: t('toast.titleType.error'), description: "File dialog error", variant: "destructive" });
+                toast({title: t('toast.titleType.error'), description: "File dialog error", variant: "destructive"});
                 return;
             }
         }
@@ -371,7 +212,7 @@ export default function Locker() {
         );
 
         if (!validFiles.length) {
-            toast({ title: "No Valid Files", description: "No valid file types selected.", variant: "destructive" });
+            toast({title: "No Valid Files", description: "No valid file types selected.", variant: "destructive"});
             return;
         }
 
@@ -382,7 +223,11 @@ export default function Locker() {
         );
 
         if (duplicateFiles.length) {
-            toast({ title: t('toast.titleType.warning'), description: `${duplicateFiles.length} duplicate file(s) skipped.`, variant: "destructive" });
+            toast({
+                title: t('toast.titleType.warning'),
+                description: `${duplicateFiles.length} duplicate file(s) skipped.`,
+                variant: "destructive"
+            });
             return;
         }
 
@@ -397,12 +242,12 @@ export default function Locker() {
                     response = await invoke<FileMoveResponse>('save_and_move_file', {
                         fileName: file.name,
                         fileContent: Array.from(new Uint8Array(buffer)),
-                        category
+                        category: category
                     });
                 } else {
                     response = await invoke<FileMoveResponse>('move_file', {
                         originalPath: file,
-                        category
+                        category: category
                     });
                 }
                 setFiles(prevFiles => [response.file, ...prevFiles]);
@@ -414,13 +259,17 @@ export default function Locker() {
         }
 
         if (successCount) {
-            toast({ title: t('toast.titleType.success'), description: `${successCount} file(s) moved successfully` });
+            toast({title: t('toast.titleType.success'), description: `${successCount} file(s) moved successfully`});
         }
         if (failCount) {
-            toast({ title: t('toast.titleType.error'), description: `Failed to move ${failCount} file(s)`, variant: "destructive" });
+            toast({
+                title: t('toast.titleType.error'),
+                description: `Failed to move ${failCount} file(s)`,
+                variant: "destructive"
+            });
         }
 
-        fetchAllFiles();
+        await fetchAllFiles();
 
     }, [selectedCategory, files, fetchAllFiles, t]);
 
@@ -452,26 +301,17 @@ export default function Locker() {
             })
         }
         setDeleteDialogOpen(false)
-        fetchAllFiles()
+        await fetchAllFiles()
     }
+
     const handleMove = async (newCategory: string) => {
         if (!selectedFile) return
-
         try {
-            const response = await fetch(`${API_URL}/move-file-category`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    oldCategory: selectedFile.category,
-                    newCategory,
-                    fileName: selectedFile.name,
-                }),
+            await invoke("move_file_category", {
+                oldCategory: selectedFile.category,
+                newCategory,
+                fileName: selectedFile.name,
             })
-            if (!response.ok) {
-                throw new Error('Failed to move file')
-            }
             setFiles(prevFiles => prevFiles.filter(f => f.name !== selectedFile.name || f.category !== selectedFile.category))
             toast({
                 title: t('toast.titleType.success'),
