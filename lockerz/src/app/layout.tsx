@@ -11,6 +11,7 @@ import { usePathname } from 'next/navigation'
 import {Sidebar} from "@/components/widget/Sidebar";
 import { SettingsProvider } from "@/utils/SettingsContext";
 import {invoke} from "@tauri-apps/api/core";
+// @ts-ignore
 import { WebviewWindow } from "@tauri-apps/api/window"
 
 interface Settings {
@@ -89,19 +90,19 @@ export default function RootLayout({
                 <img src="/icon.png" className="titlebar-icon" alt="App Icon"/>
                 <div className="titlebar-button" id="titlebar-minimize" onClick={windowMinimize}>
                     <img
-                        src="https://api.iconify.design/mdi:window-minimize.svg"
+                        src="/mdi_window-minimize.svg"
                         alt="minimize"
                     />
                 </div>
                 <div className="titlebar-button" id="titlebar-maximize" onClick={windowToggleMaximize}>
                     <img
-                        src="https://api.iconify.design/mdi:window-maximize.svg"
+                        src="/mdi_window-maximize.svg"
                         alt="maximize"
                     />
                 </div>
                 <div className="titlebar-button" id="titlebar-close" onClick={windowClose}>
                     <img
-                        src="https://api.iconify.design/mdi:close.svg"
+                        src="/mdi_close.svg"
                         alt="close"
                     />
                 </div>
