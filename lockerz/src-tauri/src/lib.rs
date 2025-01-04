@@ -24,7 +24,6 @@ use modules::{category::create_category,
               stats::get_stats
 };
 use tauri::Manager;
-use tauri_plugin_fs::FsExt;
 
 #[tauri::command]
 fn show_in_folder(path: String) {
@@ -37,12 +36,6 @@ fn show_in_folder(path: String) {
     }
 }
 
-#[tauri::command]
-fn expand_scope(app_handle: tauri::AppHandle, folder_path: std::path::PathBuf) -> Result<(), String> {
-    app_handle.fs_scope().allow_directory(&folder_path, true)
-        .map_err(|err| err.to_string())
-}
-
 // Run the Tauri app
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -50,12 +43,9 @@ pub fn run() {
     log_pre!("Application started");
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|_app| {
             let window = _app.get_webview_window("main").unwrap();
-            //
             window.on_window_event(move |event| {
                 if let tauri::WindowEvent::Destroyed { .. } = event {
                         LOGGER.archive_log();
@@ -76,8 +66,7 @@ pub fn run() {
             delete_file,
             move_file_category,
             get_files,
-            get_stats,
-            expand_scope,
+            get_stats
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
