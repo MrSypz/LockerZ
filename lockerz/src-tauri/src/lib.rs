@@ -24,6 +24,7 @@ use modules::{category::create_category,
               stats::get_stats
 };
 use tauri::Manager;
+use window_vibrancy::{apply_acrylic};
 
 #[tauri::command]
 fn show_in_folder(path: String) {
@@ -51,6 +52,10 @@ pub fn run() {
                         LOGGER.archive_log();
                 }
             });
+            #[cfg(target_os = "windows")]
+            apply_acrylic(&window, Some((0, 0, 0, 10)))
+                .expect("Unsupported platform! 'apply_blur' is only supported on Windows");
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
