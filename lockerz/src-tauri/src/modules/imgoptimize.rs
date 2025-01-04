@@ -10,7 +10,7 @@ use opencv::{
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex as AsyncMutex;
 use tokio::task;
 
@@ -156,8 +156,6 @@ pub async fn optimize_image(
 
         let mut buf = Vector::new();
 
-        // let process_start = Instant::now();
-
         if target_width < src_width || target_height < src_height {
             // If resizing to smaller dimensions, GPU
             let mut resized = UMat::new_def();
@@ -177,10 +175,6 @@ pub async fn optimize_image(
             params.push(quality);
             imgcodecs::imencode(".jpg", &resized, &mut buf, &params)?;
         }
-
-        // let process_elapsed = process_start.elapsed();
-        // println!("Image processing (resize + encode) took: {:.2?}", process_elapsed);
-
         Ok(buf.to_vec())
     })
         .await?
