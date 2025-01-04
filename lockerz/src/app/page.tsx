@@ -42,6 +42,18 @@ const changelogItems = [
                 content: `
               <h3 class="text-lg font-semibold mb-2">Image Loading</h3><p><strong>Fix:</strong> freeze the screen when loading optimize images`
             },
+            {
+                title: "Feature",
+                type: "feature",
+                content: `
+              <h3 class="text-lg font-semibold mb-2">Transparency Window</h3> new window look styles`
+            },
+            {
+                title: "Feature",
+                type: "feature",
+                content: `
+              <h3 class="text-lg font-semibold mb-2">New Titlebar</h3> Just for new look :)`
+            }
         ]
     },
     {
@@ -541,7 +553,7 @@ const changelogItems = [
 
 export default function Home() {
     return (
-        <div className="flex flex-col h-screen ">
+        <div className="flex flex-col h-screen">
             <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                 <div className="max-w-7xl mx-auto space-y-8">
                     <Dashboard/>

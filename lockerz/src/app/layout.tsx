@@ -81,36 +81,43 @@ export default function RootLayout({
     return (
         <html lang={currentLang} suppressHydrationWarning>
         <body className={`${fontClass} custom-scrollbar`}>
-        <div data-tauri-drag-region = "true" className="titlebar">
-            <img src="/icon.png" className="titlebar-icon" alt="App Icon"/>
-
-            <div className="titlebar-button" id="titlebar-minimize" onClick={windowMinimize}>
-                <img
-                    src="https://api.iconify.design/mdi:window-minimize.svg"
-                    alt="minimize"
-                />
-            </div>
-            <div className="titlebar-button" id="titlebar-maximize" onClick={windowToggleMaximize}>
-                <img
-                    src="https://api.iconify.design/mdi:window-maximize.svg"
-                    alt="maximize"
-                />
-            </div>
-            <div className="titlebar-button" id="titlebar-close" onClick={windowClose}>
-                <img src="https://api.iconify.design/mdi:close.svg" alt="close"/>
+        <div
+            data-tauri-drag-region="true"
+            className="titlebar"
+        >
+            <div className="titlebar-buttons">
+                <img src="/icon.png" className="titlebar-icon" alt="App Icon"/>
+                <div className="titlebar-button" id="titlebar-minimize" onClick={windowMinimize}>
+                    <img
+                        src="https://api.iconify.design/mdi:window-minimize.svg"
+                        alt="minimize"
+                    />
+                </div>
+                <div className="titlebar-button" id="titlebar-maximize" onClick={windowToggleMaximize}>
+                    <img
+                        src="https://api.iconify.design/mdi:window-maximize.svg"
+                        alt="maximize"
+                    />
+                </div>
+                <div className="titlebar-button" id="titlebar-close" onClick={windowClose}>
+                    <img
+                        src="https://api.iconify.design/mdi:close.svg"
+                        alt="close"
+                    />
+                </div>
             </div>
         </div>
         <SettingsProvider>
             <I18nProvider initialLang={currentLang} onLanguageChangeAction={setCurrentLang}>
-                    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-                        <div className="flex h-screen bg-background text-foreground">
-                            <Sidebar/>
-                            <div className="flex flex-col flex-1 overflow-hidden">
-                                <main className="flex-1 overflow-auto">
-                                    {mounted ? children : null}
-                                </main>
-                                <Toaster/>
-                            </div>
+                <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+                    <div className="flex h-screen bg-background text-foreground">
+                        <Sidebar/>
+                        <div className="flex flex-col flex-1 overflow-hidden">
+                            <main className="flex-1 overflow-auto">
+                                {mounted ? children : null}
+                            </main>
+                            <Toaster/>
+                        </div>
                         </div>
                     </ThemeProvider>
                 </I18nProvider>
