@@ -8,42 +8,10 @@
   "permissions": [
     "core:default",
     "dialog:default",
-    "shell:default",
-    "fs:allow-app-read-recursive",
-    "shell:allow-stdin-write",
-    "shell:allow-kill",
-    {
-      "identifier": "shell:allow-execute",
-      "allow": [
-        {
-          "name": "binaries/zaphire",
-          "args": [
-            "-c",
-            {
-              "validator": "\\S+"
-            }
-          ],
-          "sidecar": true
-        }
-      ]
-    },
-    "shell:allow-open",
-    "fs:default",
-    {
-      "identifier": "fs:allow-read-text-file-lines-next",
-      "allow": [
-        {
-          "path": "$APPDATA/logs/*"
-        }
-      ]
-    },
-    {
-      "identifier": "fs:allow-exists",
-      "allow": [
-        {
-          "path": "$APPDATA/logs/*"
-        }
-      ]
-    }
+    "core:window:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-minimize",
+    "core:window:allow-close",
+    "core:window:allow-toggle-maximize"
   ]
 }

@@ -35,6 +35,19 @@ export function Sidebar() {
 
     fetchVersion()
   }, [])
+  useEffect(() => {
+    const titlebar = document.querySelector('.titlebar');
+    if (titlebar) {
+      if (isCollapsed) {
+        titlebar.classList.remove('titlebar-expanded');
+        titlebar.classList.add('titlebar-collapsed');
+      } else {
+        titlebar.classList.remove('titlebar-collapsed');
+        titlebar.classList.add('titlebar-expanded');
+      }
+    }
+  }, [isCollapsed]);
+
 
   return (
       <aside
@@ -56,7 +69,7 @@ export function Sidebar() {
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="p-2 rounded-md hover:bg-primary/20"
           >
-            <Menu size={24} />
+            <Menu size={24}/>
           </button>
         </div>
         <nav className="flex-1">
@@ -70,7 +83,7 @@ export function Sidebar() {
                           pathname === item.href && "bg-primary/20"
                       )}
                   >
-                    <item.icon size={24} className="text-primary" />
+                    <item.icon size={24} className="text-primary"/>
                     {!isCollapsed && (
                         <span className="ml-4 text-foreground">{item.label}</span>
                     )}
@@ -80,7 +93,7 @@ export function Sidebar() {
           </ul>
         </nav>
         <div className="mt-auto pt-4 space-y-2">
-          <ModeToggle collapsed={isCollapsed} />
+          <ModeToggle collapsed={isCollapsed}/>
           <div className={cn(
               "text-xs text-muted-foreground",
               isCollapsed ? "text-center" : "px-2"

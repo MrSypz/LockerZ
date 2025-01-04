@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { useTranslation } from 'react-i18next'
-import {API_URL} from "@/lib/zaphire";
+import {invoke} from "@tauri-apps/api/core";
 
 interface Category {
   name: string;
@@ -15,9 +15,9 @@ interface Category {
 }
 
 interface Stats {
-  totalImages: number;
+  total_images: number;
   categories: number;
-  storageUsed: number;
+  storage_used: number;
 }
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -33,24 +33,21 @@ export function Dashboard() {
   const { t } = useTranslation();
   const [categories, setCategories] = useState<Category[]>([]);
   const [stats, setStats] = useState<Stats>({
-    totalImages: 0,
+    total_images: 0,
     categories: 0,
-    storageUsed: 0
+    storage_used: 0
   });
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [categoriesResponse, statsResponse] = await Promise.all([
-          fetch(`${API_URL}/categories`),
-          fetch(`${API_URL}/stats`)
+        const [categoriesData, statsData] = await Promise.all([
+          invoke("get_categories"),
+          invoke("get_stats")
         ]);
-        const categoriesData = await categoriesResponse.json();
-        const statsData = await statsResponse.json(); // Corrected variable name here
-
-        setCategories(categoriesData);
-        setStats(statsData);
+        setCategories(categoriesData as Category[]);
+        setStats(statsData as Stats);
       } catch (error) {
         console.error('Failed to fetch data:', error);
       }
@@ -60,9 +57,9 @@ export function Dashboard() {
   }, []);
 
   const statsItems = [
-    { icon: ImageIcon, label: t("dashboard.content.totalimg"), value: stats.totalImages.toString() },
+    { icon: ImageIcon, label: t("dashboard.content.totalimg"), value: stats.total_images.toString() },
     { icon: FolderOpen, label: t("dashboard.content.category"), value: stats.categories.toString() },
-    { icon: BarChart, label: t("dashboard.content.storageused"), value: formatBytes(stats.storageUsed) },
+    { icon: BarChart, label: t("dashboard.content.storageused"), value: formatBytes(stats.storage_used) },
   ];
 
   return (

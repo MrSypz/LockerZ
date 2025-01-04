@@ -3,6 +3,60 @@ import {Changelog} from "@/components/widget/Changelog"
 
 const changelogItems = [
     {
+        version: "0.3.0 - beta",
+        date: "1-1-2025",
+        sections: [
+            {
+                title: "Rewrite",
+                type: "Qol",
+                content: `
+                <div class="bg-blue-100 dark:bg-blue-900 p-4 rounded-md mb-4">
+                    <p class="text-blue-800 dark:text-blue-200">
+                    <em>Note: I just finish port the node.js function into rust function it now native performance!</em>
+                    PS: this one take a while to implement in rust cuz I never learn rust before but I make it! Ouob.
+                    </p>
+                </div>
+              <h3 class="text-lg font-semibold mb-2">Rewrite Backend</h3>This update is huge size reduce around <b>~40mb</b> and it now native performance on rust instead of <b>node.js</b>
+              `
+            },
+            {
+                title: "Image Sorting",
+                type: "feature",
+                content: `
+                    <h3 class="text-lg font-semibold mb-2">New Sorting Option</h3>
+                    <p><strong>New Option:</strong> Sort by CreateAt order the lastest or oldest image that have been add into category</p> 
+                `
+            },
+            {
+                title: "Optimize",
+                type: "preview",
+                content: `
+                    <p><strong>Performance Improvement:</strong> Reduce default image size to 960x540 and using .jpg instead .webp make it huge time process 
+                    gain around ~94.25% faster.</p>
+                    <p><strong>Cache System:</strong> for file lookup(for rust) </p>
+                `
+            },
+            {
+                title: "Fix",
+                type: "feature",
+                content: `
+              <h3 class="text-lg font-semibold mb-2">Image Loading</h3><p><strong>Fix:</strong> freeze the screen when loading optimize images`
+            },
+            {
+                title: "Feature",
+                type: "feature",
+                content: `
+              <h3 class="text-lg font-semibold mb-2">Transparency Window</h3> new window look styles`
+            },
+            {
+                title: "Feature",
+                type: "feature",
+                content: `
+              <h3 class="text-lg font-semibold mb-2">New Titlebar</h3> Just for new look :)`
+            }
+        ]
+    },
+    {
         version: "0.2.6 - beta",
         date: "31-12-2024",
         sections: [
@@ -180,10 +234,6 @@ const changelogItems = [
                 title: "Dashboard",
                 type: "preview",
                 content: "<p>Complete re-design and re-implementation of the dashboard for improved user experience and functionality.</p>",
-                images: {
-                    after: "/img/Screenshot 2024-12-11 204117.png",
-                    before: "/img/Screenshot 2024-12-11 204029.png"
-                }
             },
             {
                 title: "Settings",
@@ -196,11 +246,7 @@ const changelogItems = [
                         <li>Language options</li>
                     </ul>
                     <p class="mt-2">More configurations will be added in future updates.</p>
-                `,
-                images: {
-                    after: "/img/Screenshot 2024-12-11 205513.png",
-                    before: "/img/Screenshot 2024-12-11 205502.png"
-                }
+                `
             },
             {
                 title: "Localization",
@@ -213,11 +259,7 @@ const changelogItems = [
                         <li>English</li>
                         <li>Thai</li>
                     </ul>
-                `,
-                images: {
-                    after: "/img/Screenshot 2024-12-11 205513.png",
-                    before: "/img/Screenshot 2024-12-11 205523.png"
-                }
+                `
             },
             {
                 title: "Categories",
@@ -229,20 +271,12 @@ const changelogItems = [
                         <li>Improved editing capabilities</li>
                         <li>Adding Detail of each category</li>
                     </ul>
-                `,
-                images: {
-                    after: "/img/Screenshot 2024-12-12 025855.png",
-                    before: "/img/Screenshot 2024-12-12 030004.png"
-                }
+                `
             },
             {
                 title: "Viewport",
                 type: "preview",
-                content: "<p>Introduced a new viewport style for improved content viewing and management.</p>",
-                images: {
-                    after: "/img/Screenshot 2024-12-12 015911.png",
-                    before: "/img/Screenshot 2024-12-12 030623.png"
-                }
+                content: "<p>Introduced a new viewport style for improved content viewing and management.</p>"
             },
             {
                 title: "Context Menu",
@@ -252,11 +286,7 @@ const changelogItems = [
                     <ul class="list-disc pl-5 mt-2">
                         <li>Make it more easy to see</li>
                     </ul>
-                `,
-                images: {
-                    before: "/img/Screenshot 2024-12-12 031524.png",
-                    after: "/img/Screenshot 2024-12-12 031515.png"
-                }
+                `
             },
             {
                 title: "Image Viewer",
@@ -268,11 +298,7 @@ const changelogItems = [
                         <li>Easy navigation between nearby images</li>
                         <li>Enhanced image quality and loading speed</li>
                     </ul>
-                `,
-                images: {
-                    before: "/img/oldimageview.png",
-                    after: "/img/newimageview.png"
-                }
+                `
             },
             {
                 title: "Image Sorting",
@@ -286,8 +312,7 @@ const changelogItems = [
                         <li>File size</li>
                     </ol>
                     <p class="mt-2">More sorting options will be added in future updates.</p>
-                `,
-                image: "/img/Screenshot 2024-12-12 030706.png"
+                `
             },
             {
                 title: "Searching",
@@ -299,8 +324,7 @@ const changelogItems = [
                         <li>Filter by file type, date, and size</li>
                         <li>Sort search results</li>
                     </ul>
-                `,
-                image: "/img/Screenshot 2024-12-12 030732.png"
+                `
             },
             {
                 title: "Optimize",
@@ -529,7 +553,7 @@ const changelogItems = [
 
 export default function Home() {
     return (
-        <div className="flex flex-col h-screen bg-background">
+        <div className="flex flex-col h-screen">
             <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                 <div className="max-w-7xl mx-auto space-y-8">
                     <Dashboard/>

@@ -132,7 +132,7 @@ export function Changelog({ items }: ChangelogProps) {
                                                 <Card key={sectionIndex} className="overflow-hidden border-l-4 border-l-primary">
                                                     <CardHeader className={cn("py-3", getTypeColor(section.type))}>
                                                         <CardTitle className="text-lg flex items-center space-x-2">
-                                                            <Icon className="w-5 h-5" />
+                                                            <Icon />
                                                             <span>{section.title}</span>
                                                         </CardTitle>
                                                     </CardHeader>

@@ -1,11 +1,11 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { toast } from "@/hooks/use-toast"
-import { Loader2, AlertCircle } from 'lucide-react'
-import { open } from '@tauri-apps/plugin-dialog'
+import React, {useState, useEffect, useCallback, useRef} from 'react'
+import {toast} from "@/hooks/use-toast"
+import {Loader2, AlertCircle} from 'lucide-react'
+import {open} from '@tauri-apps/plugin-dialog'
 import {invoke} from "@tauri-apps/api/core";
-import { MoveDialog } from '@/components/widget/Move-dialog'
+import {MoveDialog} from '@/components/widget/Move-dialog'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -16,12 +16,11 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { FileGrid } from '@/components/widget/FileGrid'
-import { CategorySelector } from '@/components/widget/CategorySelector'
-import { PaginationControls } from '@/components/widget/PaginationControls'
-import { File } from '@/types/file'
+import {FileGrid} from '@/components/widget/FileGrid'
+import {CategorySelector} from '@/components/widget/CategorySelector'
+import {PaginationControls} from '@/components/widget/PaginationControls'
+import {File, FileResponse, Category} from '@/types/file'
 import {useTranslation} from "react-i18next";
-import {API_URL} from "@/lib/zaphire";
 import {useSharedSettings} from "@/utils/SettingsContext";
 
 const ALLOWED_FILE_TYPES = ['.png', '.jpg', '.jpeg', '.jfif', '.webp'];
@@ -29,13 +28,24 @@ const ALLOWED_FILE_TYPES = ['.png', '.jpg', '.jpeg', '.jfif', '.webp'];
 const PAGE_STORAGE_KEY = 'lockerz-current-page'
 const IMAGES_PER_PAGE_STORAGE_KEY = 'lockerz-images-per-page'
 
+interface FileMoveResponse {
+    success: boolean;
+    file: {
+        name: string;
+        category: string;
+        filepath: string;
+        size: number;
+        last_modified: string;
+    };
+}
+
 export default function Locker() {
-    const { t } = useTranslation();
-    const { settings } = useSharedSettings();
+    const {t} = useTranslation();
+    const {settings} = useSharedSettings();
 
     const [files, setFiles] = useState<File[]>([])
     const [allFiles, setAllFiles] = useState<File[]>([])
-    const [categories, setCategories] = useState<string[]>([])
+    const [categories, setCategories] = useState<Category[]>([])
     const [selectedCategory, setSelectedCategory] = useState<string>(() => {
         if (typeof window !== 'undefined' && settings.rememberCategory) {
             return localStorage.getItem('lastSelectedCategory') || 'all';
@@ -64,14 +74,18 @@ export default function Locker() {
         }
     }, [settings.rememberCategory]);
 
+    async function show_in_folder(path: string) {
+        await invoke('show_in_folder', {path});
+    }
+
     const fetchAllFiles = useCallback(async () => {
         try {
-            const response = await fetch(`${API_URL}/files?category=${selectedCategory}&limit=no-limit`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            setAllFiles(data.files);
+            const data: FileResponse = await invoke('get_files', {
+                page: 1,
+                limit: -1,
+                category: selectedCategory, // Category filter
+            });
+            setAllFiles(data.files);  // Store all files in state
         } catch (error) {
             console.error('Error fetching all files:', error);
             toast({
@@ -82,20 +96,16 @@ export default function Locker() {
         }
     }, [selectedCategory, t]);
 
-    async function show_in_folder(path: string) {
-        await invoke('show_in_folder', {path});
-    }
-
     const fetchPaginatedFiles = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_URL}/files?page=${currentPage}&limit=${imagesPerPage}&category=${selectedCategory}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
+            const data: FileResponse = await invoke('get_files', {
+                page: currentPage,
+                limit: imagesPerPage,  // This can be null for no pagination
+                category: selectedCategory,
+            });
             setFiles(data.files);
-            setTotalPages(data.totalPages);
+            setTotalPages(data.total_pages);  // Use total_pages from response
         } catch (error) {
             console.error('Error fetching paginated files:', error);
             toast({
@@ -108,14 +118,14 @@ export default function Locker() {
         }
     }, [currentPage, imagesPerPage, selectedCategory, t]);
 
+
     const fetchCategories = useCallback(async () => {
         setIsCategoriesLoading(true)
         try {
-            const response = await fetch(`${API_URL}/categories`)
-            if (!response.ok) {
+            const data: Category = await invoke("get_categories");
+            if (!data.ok) {
                 new Error('Failed to fetch categories')
             }
-            const data = await response.json()
             setCategories(data.map((category: { name: string }) => category.name))
         } catch (error) {
             toast({
@@ -127,50 +137,51 @@ export default function Locker() {
             setIsCategoriesLoading(false)
         }
     }, [t]);
-
-    useEffect(() => {
-        const savedPage = localStorage.getItem(PAGE_STORAGE_KEY)
-        const savedImagesPerPage = localStorage.getItem(IMAGES_PER_PAGE_STORAGE_KEY)
-
-        if (savedPage) {
-            setCurrentPage(parseInt(savedPage, 10))
-        }
-        if (savedImagesPerPage) {
-            setImagesPerPage(parseInt(savedImagesPerPage, 10))
-        }
-
-        isRememberCategory()
-        fetchCategories();
-        fetchAllFiles().then(() => fetchPaginatedFiles());
-    }, [isRememberCategory, fetchAllFiles, fetchPaginatedFiles, fetchCategories])
-
-
-    useEffect(() => {
-        categoryRef.current = selectedCategory;
-        if (rememberCategory) {
-            localStorage.setItem('lastSelectedCategory', selectedCategory)
-        }
-    }, [selectedCategory, rememberCategory]);
-
-
-    useEffect(() => {
-        if (selectedCategory) {
-            fetchAllFiles().then(() => fetchPaginatedFiles());
-        }
-    }, [selectedCategory, currentPage, imagesPerPage, fetchAllFiles, fetchPaginatedFiles]);
-
     useEffect(() => {
         const savedPage = localStorage.getItem(PAGE_STORAGE_KEY);
+        const savedImagesPerPage = localStorage.getItem(IMAGES_PER_PAGE_STORAGE_KEY);
+
         if (savedPage) {
             setCurrentPage(parseInt(savedPage, 10));
         }
-    }, []);
+        if (savedImagesPerPage) {
+            setImagesPerPage(parseInt(savedImagesPerPage, 10));
+        }
+
+        if (rememberCategory && selectedCategory) {
+            localStorage.setItem('lastSelectedCategory', selectedCategory);
+        }
+
+        // Fetch categories, files, and pagination data only once
+        const loadData = async () => {
+            await fetchCategories(); // Fetch categories
+            if (isRememberCategory()) {
+                const lastCategory = localStorage.getItem('lastSelectedCategory');
+                if (lastCategory) {
+                    setSelectedCategory(lastCategory); // Set the last selected category
+                }
+            }
+            await fetchAllFiles(); // Fetch files
+            await fetchPaginatedFiles(); // Fetch paginated files
+        };
+
+        loadData(); // Call the async function only once
+
+    }, [
+        selectedCategory,        // Dependency on selected category
+        currentPage,             // Dependency on current page
+        imagesPerPage,           // Dependency on images per page
+        rememberCategory,        // Dependency on remember category
+        isRememberCategory,      // Dependency on category remember setting
+        fetchCategories,         // Function dependencies
+        fetchAllFiles,           // Function dependencies
+        fetchPaginatedFiles,     // Function dependencies
+    ]);
 
     const handleFileDrop = useCallback(async (droppedFiles?: string[]) => {
         let filesToProcess: (globalThis.File | string)[] = [];
-        if (droppedFiles?.length === 0) return;
 
-        if (droppedFiles && droppedFiles.length > 0) {
+        if (droppedFiles?.length > 0) {
             filesToProcess = droppedFiles;
         } else {
             try {
@@ -182,78 +193,40 @@ export default function Locker() {
                         extensions: ['png', 'jpg', 'jpeg', 'jfif', 'webp']
                     }]
                 });
-                if (selectedFiles && Array.isArray(selectedFiles) && selectedFiles.length > 0) {
-                    filesToProcess = selectedFiles;
-                } else {
-                    toast({
-                        title: "No Files Selected",
-                        description: "No files were selected.",
-                        variant: "destructive",
-                    });
+                if (!selectedFiles?.length) {
+                    toast({title: "No images Selected", description: "No images were selected.", variant: "destructive"});
                     return;
                 }
+                filesToProcess = selectedFiles;
             } catch (error) {
-                toast({
-                    title: t('toast.titleType.error'),
-                    description: "An error occurred while opening the file dialog.",
-                    variant: "destructive",
-                });
+                toast({title: t('toast.titleType.error'), description: "File dialog error", variant: "destructive"});
                 return;
             }
         }
 
-        const getFileName = (file: globalThis.File | string): string => {
-            if (file instanceof globalThis.File) {
-                return file.name;
-            } else {
-                return file.replace(/^.*[\\/]/, ''); // This removes everything up to the last slash or backslash
-            }
-        };
-
+        const getFileName = (file: globalThis.File | string): string =>
+            file instanceof globalThis.File ? file.name : file.replace(/^.*[\\/]/, '');
 
         const validFiles = filesToProcess.filter(file =>
-            ALLOWED_FILE_TYPES.some(type =>
-                getFileName(file).toLowerCase().endsWith(type)
-            )
+            ALLOWED_FILE_TYPES.some(type => getFileName(file).toLowerCase().endsWith(type))
         );
 
-        if (validFiles.length === 0) {
-            toast({
-                title: "No Valid Files",
-                description: "No files of the allowed types were selected.",
-                variant: "destructive",
-            });
+        if (!validFiles.length) {
+            toast({title: "No Valid Files", description: "No valid file types selected.", variant: "destructive"});
             return;
         }
 
-        const duplicateFiles = validFiles.filter(file => {
-            const fileName = getFileName(file);
-            return files.some(existingFile =>
-                existingFile.name === fileName && existingFile.category === selectedCategory
-            );
-        });
+        const category = categoryRef.current === 'all' ? 'uncategorized' : categoryRef.current;
 
-        if (duplicateFiles.length > 0) {
+        const duplicateFiles = validFiles.filter(file =>
+            files.some(existingFile => existingFile.name === getFileName(file) && existingFile.category === category)
+        );
+
+        if (duplicateFiles.length) {
             toast({
                 title: t('toast.titleType.warning'),
-                description: `${duplicateFiles.length} file(s) already exist in this category and will be skipped.`,
-                variant: "destructive",
-            });
-            return;
-        }
-
-        const newFiles = validFiles.filter(file => {
-            const fileName = getFileName(file);
-            return !files.some(existingFile =>
-                existingFile.name === fileName && existingFile.category === selectedCategory
-            );
-        });
-
-        if (newFiles.length === 0) {
-            toast({
-                title: "No New Files",
-                description: "All selected files already exist in this category.",
-                variant: "destructive",
+                description: `${duplicateFiles.length} duplicate image(s) skipped.`,
+                variant: "destructive"
             });
             return;
         }
@@ -261,59 +234,44 @@ export default function Locker() {
         let successCount = 0;
         let failCount = 0;
 
-        for (const file of newFiles) {
-            const formData = new FormData();
-            if (file instanceof globalThis.File) {
-                formData.append('file', file);
-            } else {
-                formData.append('originalPath', file);
-            }
-            formData.append('category', categoryRef.current === 'all' ? 'uncategorized' : categoryRef.current);
+        for (const file of validFiles) {
             try {
-                const response = await fetch(`${API_URL}/move-file`, {
-                    method: 'POST',
-                    body: formData,
-                });
-                if (!response.ok) {
-                    new Error('File move failed');
+                let response;
+                if (file instanceof globalThis.File) {
+                    const buffer = await file.arrayBuffer();
+                    response = await invoke<FileMoveResponse>('save_and_move_file', {
+                        fileName: file.name,
+                        fileContent: Array.from(new Uint8Array(buffer)),
+                        category: category
+                    });
+                } else {
+                    response = await invoke<FileMoveResponse>('move_file', {
+                        originalPath: file,
+                        category: category
+                    });
                 }
-                const data = await response.json();
-                setFiles(prevFiles => [data.file, ...prevFiles]);
+                setFiles(prevFiles => [response.file, ...prevFiles]);
                 successCount++;
             } catch (error) {
                 failCount++;
+                console.error(error);
             }
         }
 
-        if (successCount > 0) {
-            toast({
-                title: t('toast.titleType.success'),
-                description: successCount === 1
-                    ? `1 file moved successfully`
-                    : `${successCount} files moved successfully`,
-            });
+        if (successCount) {
+            toast({title: t('toast.titleType.success'), description: `${successCount} file(s) moved successfully`});
         }
-
-        if (failCount > 0) {
+        if (failCount) {
             toast({
                 title: t('toast.titleType.error'),
-                description: failCount === 1
-                    ? `Failed to move 1 file`
-                    : `Failed to move ${failCount} files`,
-                variant: "destructive",
+                description: `Failed to move ${failCount} file(s)`,
+                variant: "destructive"
             });
         }
 
-        fetchAllFiles();
+        await fetchAllFiles();
 
-        if (validFiles.length < filesToProcess.length) {
-            toast({
-                title: "Some Files Skipped",
-                description: `${filesToProcess.length - validFiles.length} file(s) were skipped due to invalid file type.`,
-                variant: "destructive",
-            });
-        }
-    }, [selectedCategory, files, API_URL, fetchAllFiles, t]);
+    }, [selectedCategory, files, fetchAllFiles, t]);
 
     const onCategoryChange = useCallback((value: string) => {
         setSelectedCategory(value);
@@ -324,56 +282,36 @@ export default function Locker() {
         }
         fetchAllFiles().then(() => fetchPaginatedFiles());
     }, [rememberCategory, fetchAllFiles, fetchPaginatedFiles]);
-
     const handleDelete = async (file: File) => {
         try {
-            const response = await fetch(`${API_URL}/delete-file`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    category: file.category,
-                    name: file.name,
-                }),
+            await invoke("delete_file", {
+                category: file.category,
+                name: file.name,
             })
-            if (!response.ok) {
-                new Error('Failed to delete file')
-            }
             setFiles(prevFiles => prevFiles.filter(f => f.name !== file.name || f.category !== file.category))
             toast({
                 title: t('toast.titleType.success'),
-                description: "File deleted successfully",
+                description: `${file.name} deleted successfully`,
             })
         } catch (error) {
             toast({
                 title: t('toast.titleType.error'),
-                description: "Failed to delete file",
+                description: `Failed to delete Image ${file.name}`,
                 variant: "destructive",
             })
         }
         setDeleteDialogOpen(false)
-        fetchAllFiles()
+        await fetchAllFiles()
     }
 
     const handleMove = async (newCategory: string) => {
         if (!selectedFile) return
-
         try {
-            const response = await fetch(`${API_URL}/move-file-category`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    oldCategory: selectedFile.category,
-                    newCategory,
-                    fileName: selectedFile.name,
-                }),
+            await invoke("move_file_category", {
+                oldCategory: selectedFile.category,
+                newCategory,
+                fileName: selectedFile.name,
             })
-            if (!response.ok) {
-                throw new Error('Failed to move file')
-            }
             setFiles(prevFiles => prevFiles.filter(f => f.name !== selectedFile.name || f.category !== selectedFile.category))
             toast({
                 title: t('toast.titleType.success'),
@@ -404,7 +342,7 @@ export default function Locker() {
     };
 
     return (
-        <div className="flex h-screen bg-background">
+        <div className="flex h-screen">
             <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto p-4 md:p-8">
                     <div className="container mx-auto max-w-[2000px]">
@@ -418,12 +356,12 @@ export default function Locker() {
                         />
                         {isLoading ? (
                             <div className="flex justify-center items-center h-24 mt-8">
-                                <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary" />
+                                <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary"/>
                                 <p className="text-foreground font-medium">Loading images...</p>
                             </div>
                         ) : files.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-64 mt-8">
-                                <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+                                <AlertCircle className="w-12 h-12 text-muted-foreground mb-4"/>
                                 <p className="text-muted-foreground font-medium">No images found in this category</p>
                             </div>
                         ) : (
@@ -441,7 +379,6 @@ export default function Locker() {
                                     setSelectedFile(file);
                                     setMoveDialogOpen(true);
                                 }}
-                                apiUrl={API_URL}
                                 currentPage={currentPage}
                                 imagesPerPage={imagesPerPage}
                                 onPageChange={handlePageChange}

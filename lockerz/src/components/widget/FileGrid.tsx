@@ -8,8 +8,8 @@ import {FileContextMenu} from '@/components/widget/Context-menu'
 import {File} from '@/types/file'
 import {motion, AnimatePresence} from "framer-motion"
 import {useTranslation} from 'react-i18next'
-import { ArrowDown, ArrowUp, ArrowUpDown, Clock, FileIcon, Search, Text } from 'lucide-react'
-import { ImageViewer } from './Image-viewer';
+import {ArrowDown, ArrowUp, ArrowUpDown, Clock, ClockArrowUp, FileIcon, Search, Text} from 'lucide-react'
+import {ImageViewer} from './Image-viewer';
 import {useSharedSettings} from "@/utils/SettingsContext";
 import {OptimizedImage} from "@/components/widget/ImageProcessor";
 
@@ -47,17 +47,26 @@ interface FileGridProps {
     onViewFileAction: (file: File) => void
     onDeleteFileAction: (file: File) => void
     onMoveFileAction: (file: File) => void
-    apiUrl: string
     currentPage: number
     imagesPerPage: number
     onPageChange: (page: number) => void
     onTotalPagesChange: (pages: number) => void
 }
 
-export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction, onMoveFileAction, apiUrl , currentPage, imagesPerPage, onPageChange, onTotalPagesChange}: FileGridProps) {
+export function FileGrid({
+                             files,
+                             allFiles,
+                             onViewFileAction,
+                             onDeleteFileAction,
+                             onMoveFileAction,
+                             currentPage,
+                             imagesPerPage,
+                             onPageChange,
+                             onTotalPagesChange
+                         }: FileGridProps) {
     const totalColumns = useColumnCount()
     const [sortedFiles, setSortedFiles] = useState(files)
-    const [sortCriteria, setSortCriteria] = useState<'name' | 'date' | 'size'>('name')
+    const [sortCriteria, setSortCriteria] = useState<'name' | 'date' | 'createat' | 'size'>('name')
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
     const [searchTerm, setSearchTerm] = useState('')
     const {t} = useTranslation()
@@ -90,7 +99,10 @@ export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction,
                     comparison = a.name.localeCompare(b.name);
                     break;
                 case 'date':
-                    comparison = new Date(a.lastModified).getTime() - new Date(b.lastModified).getTime();
+                    comparison = new Date(a.last_modified).getTime() - new Date(b.last_modified).getTime();
+                    break;
+                case 'createat':
+                    comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
                     break;
                 case 'size':
                     comparison = a.size - b.size;
@@ -111,7 +123,7 @@ export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction,
         setSortedFiles(sorted.slice(start, end));
     }, [allFiles, sortCriteria, sortOrder, searchTerm, currentPage, imagesPerPage]);
 
-    const handleSort = (criteria: 'name' | 'date' | 'size', order: 'asc' | 'desc') => {
+    const handleSort = (criteria: 'name' | 'date' | 'createat' | 'size', order: 'asc' | 'desc') => {
         setSortCriteria(criteria);
         setSortOrder(order);
     }
@@ -126,8 +138,6 @@ export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction,
     const handleCloseViewer = () => {
         setSelectedImageIndex(null);
     };
-
-    const getFileUrl = (file: File) => `${apiUrl}${file.url}`;
 
     return (
         <div className="space-y-4">
@@ -156,7 +166,7 @@ export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction,
                         <Tabs value={sortCriteria}
                               onValueChange={(value) => setSortCriteria(value as 'name' | 'date' | 'size')}
                               className="w-full p-2">
-                            <TabsList className="grid w-full grid-cols-3 mb-2">
+                            <TabsList className="grid w-full grid-cols-4 mb-2">
                                 <TabsTrigger value="name" className="flex items-center justify-center">
                                     <Text className="w-4 h-4 mr-2"/>
                                     {t('category.image.sort.by-name')}
@@ -164,6 +174,10 @@ export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction,
                                 <TabsTrigger value="date" className="flex items-center justify-center">
                                     <Clock className="w-4 h-4 mr-2"/>
                                     {t('category.image.sort.by-date')}
+                                </TabsTrigger>
+                                <TabsTrigger value="createat" className="flex items-center justify-center">
+                                    <ClockArrowUp className="w-4 h-4 mr-2"/>
+                                    {t('category.image.sort.by-createat')}
                                 </TabsTrigger>
                                 <TabsTrigger value="size" className="flex items-center justify-center">
                                     <FileIcon className="w-4 h-4 mr-2"/>
@@ -210,6 +224,26 @@ export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction,
                                     </Button>
                                 </div>
                             </TabsContent>
+                            <TabsContent value="createat" className="mt-2">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Button
+                                        onClick={() => handleSort('createat', 'asc')}
+                                        variant={sortCriteria === 'createat' && sortOrder === 'asc' ? 'default' : 'outline'}
+                                        className="w-full justify-between py-1 px-2 text-sm"
+                                    >
+                                        {t('category.image.sort.ascending')}
+                                        <ArrowUp className="h-3 w-3"/>
+                                    </Button>
+                                    <Button
+                                        onClick={() => handleSort('createat', 'desc')}
+                                        variant={sortCriteria === 'createat' && sortOrder === 'desc' ? 'default' : 'outline'}
+                                        className="w-full justify-between py-1 px-2 text-sm"
+                                    >
+                                        {t('category.image.sort.descending')}
+                                        <ArrowDown className="h-3 w-3"/>
+                                    </Button>
+                                </div>
+                            </TabsContent>
                             <TabsContent value="size" className="mt-2">
                                 <div className="grid grid-cols-2 gap-2">
                                     <Button
@@ -237,9 +271,11 @@ export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction,
             {
                 searchTerm && (
                     <div className="text-sm text-gray-500">
-                        {t('locker.search.results', {count: allFiles.filter(file =>
+                        {t('locker.search.results', {
+                            count: allFiles.filter(file =>
                                 file.name.toLowerCase().includes(searchTerm.toLowerCase())
-                            ).length})}
+                            ).length
+                        })}
                     </div>
                 )
             }
@@ -270,7 +306,6 @@ export function FileGrid({ files, allFiles,onViewFileAction ,onDeleteFileAction,
                     files={sortedFiles}
                     initialIndex={selectedImageIndex}
                     onClose={handleCloseViewer}
-                    getFileUrl={getFileUrl}
                 />
             )}
         </div>
@@ -288,14 +323,11 @@ interface FileCardProps {
     totalColumns: number
 }
 
-function FileCard({file, onDelete, onMove,onView, onSelect, index, column, totalColumns}: FileCardProps) {
+function FileCard({file, onDelete, onMove, onView, onSelect, index, column, totalColumns}: FileCardProps) {
     const {t} = useTranslation();
-    const { settings } = useSharedSettings();
-
-
+    const {settings} = useSharedSettings();
     const row = Math.floor(index / totalColumns)
     const isDarkSquare = (row + column) % 2 === 0
-
     const getOffset = () => {
         const columnDirection = column % 2 === 0 ? 1 : -1;
         const offsetAmount = 12;
@@ -311,7 +343,7 @@ function FileCard({file, onDelete, onMove,onView, onSelect, index, column, total
         >
             <motion.div
                 layout
-                initial={{ opacity: 0, scale: 0.8, y: 50 }}
+                initial={{opacity: 0, scale: 0.8, y: 50}}
                 animate={{
                     opacity: 1,
                     scale: 1,
@@ -323,18 +355,18 @@ function FileCard({file, onDelete, onMove,onView, onSelect, index, column, total
                         mass: 0.8,
                     }
                 }}
-                exit={{ opacity: 0, scale: 0.8, y: 50 }}
+                exit={{opacity: 0, scale: 0.8, y: 50}}
                 transition={{
-                    opacity: { duration: 0.2 },
-                    layout: { type: "spring", stiffness: 300, damping: 24 }
+                    opacity: {duration: 0.2},
+                    layout: {type: "spring", stiffness: 300, damping: 24}
                 }}
                 whileHover={{
                     scale: 1.05,
                     zIndex: 10,
-                    transition: { duration: 0.2 }
+                    transition: {duration: 0.2}
                 }}
                 className="relative"
-                style={{ zIndex: 1000 - index }}
+                style={{zIndex: 1000 - index}}
             >
                 <Card
                     className={`overflow-hidden transition-all duration-300 ease-in-out hover:ring-2 hover:ring-primary/50 cursor-pointer ${

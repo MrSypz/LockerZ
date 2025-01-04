@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
-import { API_URL } from "@/lib/zaphire";
-import {useTranslation} from "react-i18next";
+import {invoke} from "@tauri-apps/api/core";
 import {t} from "i18next";
 
 interface Settings {
@@ -13,24 +12,14 @@ interface Settings {
     imageHeight: number;
 }
 export function useSettings() {
-    //     folderPath: "",
-    //     rememberCategory: false,
-    //     lang: "en",
-    //     imageQuality: 100,
-    //     imageWidth: 300,
-    //     imageHeight: 450
-    // });
     const [settings, setSettings] = useState<Settings | null>(null);
 
     const [isLoading, setIsLoading] = useState(true);
 
-
     const fetchSettings = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_URL}/get-settings`);
-            if (!response.ok) new Error("Failed to fetch settings");
-            const data = await response.json();
+            const data:Settings = await invoke("get_settings");
             setSettings(data);
         } catch (error) {
             console.error("Error fetching settings:", error);
@@ -47,29 +36,21 @@ export function useSettings() {
     const updateSettings = useCallback(
         async (newSettings: Partial<Settings>) => {
             try {
-                const response = await fetch(`${API_URL}/update-settings`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(newSettings),
+                const currentSettings = await invoke<Settings>("get_settings");
+                const mergedSettings = { ...currentSettings, ...newSettings };
+                const updatedConfig: Settings = await invoke("update_settings", {
+                    newSettings: mergedSettings
                 });
-                if (!response.ok) throw new Error("Failed to update settings");
-                const data = await response.json();
-                if (data.success) {
-                    setSettings(prevSettings => ({ ...prevSettings, ...newSettings } as Settings));
-                    toast({
-                        title: t('toast.titleType.success'),
-                        description: t('settings.toast.success'),
-                    });
-                } else {
-                    throw new Error("Failed to update settings");
-                }
+                setSettings(updatedConfig);
+                toast({
+                    title: t("toast.titleType.success"),
+                    description: t("settings.toast.success"),
+                });
             } catch (error) {
                 console.error("Error updating settings:", error);
                 toast({
-                    title: t('toast.titleType.error'),
-                    description: t('settings.toast.error'),
+                    title: t("toast.titleType.error"),
+                    description: t("settings.toast.error"),
                     variant: "destructive",
                 });
             }

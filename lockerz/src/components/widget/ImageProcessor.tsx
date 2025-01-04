@@ -23,7 +23,7 @@ export function OptimizedImage({ src, alt, width, height, quality = 80 }: Optimi
             height,
             quality
         })
-            .then((base64Image: string) => {
+            .then((base64Image) => {
                 setOptimizedSrc(`data:image/webp;base64,${base64Image}`);
                 setIsLoaded(true);
                 setError(null);
@@ -44,6 +44,7 @@ export function OptimizedImage({ src, alt, width, height, quality = 80 }: Optimi
 
     return (
         <motion.div
+            key={src}
             initial={{ opacity: 0 }}
             animate={{ opacity: isLoaded ? 1 : 0 }}
             transition={{ duration: 0.3 }}

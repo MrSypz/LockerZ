@@ -19,10 +19,11 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import {Category} from "@/types/file";
 
 interface CategorySelectorProps {
     selectedCategory: string;
-    categories: string[];
+    categories: Category[];
     isCategoriesLoading: boolean;
     onCategoryChange: (category: string) => void;
     uploadImgFiles: (droppedFiles?: string[]) => Promise<void>;
