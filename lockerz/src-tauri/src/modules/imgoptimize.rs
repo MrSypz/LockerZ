@@ -10,7 +10,7 @@ use opencv::{
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex as AsyncMutex;
 use tokio::task;
 
@@ -145,35 +145,41 @@ pub async fn optimize_image(
             return Err("Invalid dimensions after resizing calculation.".into());
         }
 
-        let use_gpu = target_width < src_width || target_height < src_height;
-
-        let dsize = Size::new(target_width, target_height);
+        // Adjust interpolation strategy for resizing
         let interpolation = if target_width * target_height <= src_width * src_height {
             imgproc::INTER_AREA
         } else {
             imgproc::INTER_CUBIC
         };
 
+        let dsize = Size::new(target_width, target_height);
+
         let mut buf = Vector::new();
-        if use_gpu {
+
+        let process_start = Instant::now();
+
+        if target_width < src_width || target_height < src_height {
+            // If resizing to smaller dimensions, GPU
             let mut resized = UMat::new_def();
             imgproc::resize(&src_img, &mut resized, dsize, 0.0, 0.0, interpolation)?;
 
             let mut params = Vector::new();
-            params.push(imgcodecs::IMWRITE_WEBP_QUALITY);
+            params.push(imgcodecs::IMWRITE_JPEG_QUALITY);
             params.push(quality);
-
-            imgcodecs::imencode(".webp", &resized, &mut buf, &params)?;
+            imgcodecs::imencode(".jpg", &resized, &mut buf, &params)?;
         } else {
+            // For larger images, use CPU resizing IDk I'm testing it and cpu is more faster
             let mut resized = Mat::default();
             imgproc::resize(&src_img, &mut resized, dsize, 0.0, 0.0, interpolation)?;
 
             let mut params = Vector::new();
-            params.push(imgcodecs::IMWRITE_WEBP_QUALITY);
+            params.push(imgcodecs::IMWRITE_JPEG_QUALITY);
             params.push(quality);
-
-            imgcodecs::imencode(".webp", &resized, &mut buf, &params)?;
+            imgcodecs::imencode(".jpg", &resized, &mut buf, &params)?;
         }
+
+        let process_elapsed = process_start.elapsed();
+        println!("Image processing (resize + encode) took: {:.2?}", process_elapsed);
 
         Ok(buf.to_vec())
     })
