@@ -156,7 +156,7 @@ pub async fn optimize_image(
 
         let mut buf = Vector::new();
 
-        let process_start = Instant::now();
+        // let process_start = Instant::now();
 
         if target_width < src_width || target_height < src_height {
             // If resizing to smaller dimensions, GPU
@@ -178,8 +178,8 @@ pub async fn optimize_image(
             imgcodecs::imencode(".jpg", &resized, &mut buf, &params)?;
         }
 
-        let process_elapsed = process_start.elapsed();
-        println!("Image processing (resize + encode) took: {:.2?}", process_elapsed);
+        // let process_elapsed = process_start.elapsed();
+        // println!("Image processing (resize + encode) took: {:.2?}", process_elapsed);
 
         Ok(buf.to_vec())
     })
