@@ -44,6 +44,7 @@ export function OptimizedImage({ src, alt, width, height, quality = 80 }: Optimi
 
     return (
         <motion.div
+            key={src}
             initial={{ opacity: 0 }}
             animate={{ opacity: isLoaded ? 1 : 0 }}
             transition={{ duration: 0.3 }}
