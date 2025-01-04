@@ -74,8 +74,8 @@ impl Default for Config {
             rememberCategory: true,
             lang: "en".to_string(),
             imageQuality: 75,
-            imageWidth: 1920,
-            imageHeight: 1080,
+            imageWidth: 960,
+            imageHeight: 540,
         }
     }
 }
