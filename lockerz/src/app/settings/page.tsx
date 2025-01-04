@@ -76,7 +76,7 @@ export default function Settings() {
     }
 
     return (
-        <div className="flex h-screen bg-background">
+        <div className="flex h-screen">
             <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto p-6">
                     <h1 className="text-3xl font-bold mb-6 text-foreground">{t('settings.title')}</h1>
