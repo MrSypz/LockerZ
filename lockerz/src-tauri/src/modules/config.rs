@@ -6,6 +6,7 @@ use std::fs;
 use std::io::{self};
 use std::path::{Path, PathBuf};
 use std::sync::RwLock;
+use crate::modules::files::{synchronize_cache_with_filesystem};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
@@ -25,7 +26,7 @@ pub static CONFIG: Lazy<RwLock<Config>> = Lazy::new(|| {
 impl Config {
     /// Initializes the configuration directory and file.
     pub fn new() -> io::Result<Self> {
-        let home_dir = "config";  // Config directory
+        let home_dir = "config"; // Config directory
         let config_dir = Path::new(&home_dir);
         let config_path = config_dir.join("config.json");
 
@@ -67,10 +68,11 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            folderPath: Path::new(&std::env::var("USERPROFILE")
-                .unwrap_or_else(|_| std::env::var("HOME").unwrap()))
-                .join("Documents")
-                .join("LockerZ"),
+            folderPath: Path::new(
+                &std::env::var("USERPROFILE").unwrap_or_else(|_| std::env::var("HOME").unwrap()),
+            )
+            .join("Documents")
+            .join("LockerZ"),
             rememberCategory: true,
             lang: "en".to_string(),
             imageQuality: 75,
@@ -80,16 +82,25 @@ impl Default for Config {
     }
 }
 
-
 pub fn setup_folders() -> io::Result<()> {
     let config = get_config();
 
     let root_folder_path = &config.folderPath;
+    if !root_folder_path.exists() {
+        log_pre!("It seems this path doesn't exist. Creating the folder...");
+        fs::create_dir_all(root_folder_path)?;
+        log_pre!("Created root folder: {:?}", root_folder_path);
+    }
     log_pre!("Initial root folder path: {:?}", root_folder_path);
 
-    fs::create_dir_all(root_folder_path)?;
+    let uncategorized_dir = root_folder_path.join("uncategorized");
+    if !uncategorized_dir.exists() {
+        log_pre!("It seems this path is new. Creating the necessary folders...");
+        fs::create_dir_all(&uncategorized_dir)?;
+        log_pre!("uncategorized has been created successfully!");
+    }
 
-    println!("Directories initialized successfully.");
+    let _ = synchronize_cache_with_filesystem(root_folder_path);
     Ok(())
 }
 
@@ -102,7 +113,6 @@ pub fn refresh_config() -> io::Result<()> {
     *global_config = new_config;
     Ok(())
 }
-
 
 pub fn get_config() -> Config {
     CONFIG.read().unwrap().clone()
@@ -126,15 +136,25 @@ pub async fn update_settings(new_settings: Value) -> Result<Config, String> {
 
     log_info!("Modifying config file at: {:?}", config_path);
 
-    let mut current_config = Config::read_config(&config_path)
-        .map_err(|e| format!("Failed to read config: {}", e))?;
+    let mut current_config =
+        Config::read_config(&config_path).map_err(|e| format!("Failed to read config: {}", e))?;
 
     if let Some(folder_path) = new_settings.get("folderPath").and_then(|v| v.as_str()) {
         current_config.folderPath = PathBuf::from(folder_path);
         log_info!("- Setting Change! -",);
         log_info!("Folder path: {:?}", current_config.folderPath);
+        let uncategorized_dir = current_config.folderPath.join("uncategorized");
+        if !uncategorized_dir.exists() {
+            log_info!("It seems this path is new. Creating the necessary folders...");
+            let _ =  fs::create_dir_all(&uncategorized_dir);
+            log_info!("uncategorized has been created successfully!");
+        }
+
     }
-    if let Some(remember_category) = new_settings.get("rememberCategory").and_then(|v| v.as_bool()) {
+    if let Some(remember_category) = new_settings
+        .get("rememberCategory")
+        .and_then(|v| v.as_bool())
+    {
         current_config.rememberCategory = remember_category;
         log_info!("Remember category: {:?}", current_config.rememberCategory);
     }

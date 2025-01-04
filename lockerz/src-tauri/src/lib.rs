@@ -49,7 +49,7 @@ pub fn run() {
             let window = _app.get_webview_window("main").unwrap();
             window.on_window_event(move |event| {
                 if let tauri::WindowEvent::Destroyed { .. } = event {
-                        LOGGER.archive_log();
+                    let _ = LOGGER.archive_log();
                 }
             });
             #[cfg(target_os = "windows")]

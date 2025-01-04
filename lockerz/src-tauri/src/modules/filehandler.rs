@@ -1,5 +1,5 @@
 use crate::modules::config::get_config;
-use crate::modules::files::{hash_directory_path, read_cache, write_cache, FileInfo};
+use crate::modules::files::{hash_directory_path, read_cache, remove_file_from_cache, write_cache, FileInfo};
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use std::fs::{self};
@@ -124,10 +124,23 @@ pub async fn delete_file(category: String, name: String) -> Result<FileDeleteRes
 
     remove_file_from_cache(&mut cache, &name);
 
+    // Also update the "All" category cache
+    let all_cache_path = Path::new("cache").join(format!("{}_files.bin", hash_directory_path(&root_folder_path, "all")));
+    let mut all_cache = read_cache(&all_cache_path)
+        .map_err(|e| format!("Error reading 'all' category cache: {}", e))?;
+
+    remove_file_from_cache(&mut all_cache, &name);
+
     write_cache(&cache_path, &cache)
         .map_err(|e| {
             let error_msg = format!("Error writing updated cache: {}", e);
             log_error!("{}",error_msg);
+            error_msg
+        })?;
+    write_cache(&all_cache_path, &all_cache)
+        .map_err(|e| {
+            let error_msg = format!("Error writing updated 'all' category cache: {}", e);
+            log_error!("{}", error_msg);
             error_msg
         })?;
 
@@ -219,11 +232,5 @@ fn move_file_with_fallback(src: &str, dst: &PathBuf) -> io::Result<fs::Metadata>
             fs::remove_file(src)?;
             fs::metadata(dst)
         }
-    }
-}
-
-fn remove_file_from_cache(cache: &mut Vec<FileInfo>, file_name: &str) {
-    if let Some(pos) = cache.iter().position(|f| f.name == file_name) {
-        cache.remove(pos);
     }
 }

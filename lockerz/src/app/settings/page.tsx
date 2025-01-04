@@ -28,6 +28,9 @@ export default function Settings() {
             })
             if (selected) {
                 setNewFolderPath(selected as string)
+                if (settings?.rememberCategory) {
+                    localStorage.setItem('lastSelectedCategory','all'); // fallback value to all
+                }
             }
         } catch (error) {
             console.error('Error selecting folder:', error)
