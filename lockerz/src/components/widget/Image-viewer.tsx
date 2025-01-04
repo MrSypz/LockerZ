@@ -18,9 +18,7 @@ export function ImageViewer({ files, initialIndex, onClose}: ImageViewerProps) {
     const [isPanning, setIsPanning] = useState(false);
     const currentFile = files[currentIndex];
     const src = convertFileSrc(currentFile.filepath);
-    console.log(src);
     const alt = currentFile.name;
-    const fileUrl = src;
 
     const handleNavigate = useCallback((direction: 'prev' | 'next') => {
         setCurrentIndex(prevIndex => {
@@ -138,9 +136,9 @@ export function ImageViewer({ files, initialIndex, onClose}: ImageViewerProps) {
                     <ChevronRight className="h-5 w-5"/>
                 </Button>
             </div>
-            {fileUrl && (
+            {currentFile.filepath && (
                 <div className="absolute bottom-16 left-4 bg-background/80 text-foreground px-2 py-1 rounded-md text-xs max-w-xs truncate">
-                    {fileUrl}
+                    {currentFile.filepath}
                 </div>
             )}
         </div>
