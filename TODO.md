@@ -35,7 +35,7 @@
    - Port the `Logger` class and its methods (`log`, `info`, `warn`, `error`, `debug`, `pre`, etc.) into Rust.
    - Use `std::fs` for file handling and `chrono` for timestamps.
 
-- [ ] **Add log rotation and cleanup**
+- [x] **Add log rotation and cleanup**
    - Implement logic for archiving logs and deleting old logs:
      ```js
      async archiveLog()
@@ -57,6 +57,6 @@
 - [x] **/delete-category**: Port to Rust for deleting categories.
 - [x] **/create-category**: Port to Rust for creating categories.
 - [x] **/rename-category**
-- [ ] **/move-file**: Port to Rust for moving files between categories.
-- [ ] **/delete-file**: Port to Rust for deleting files.
-- [ ] **/move-file-category**: Port to Rust for moving files between categories.
+- [x] **/move-file**: Port to Rust for moving files between categories.
+- [x] **/delete-file**: Port to Rust for deleting files.
+- [x] **/move-file-category**: Port to Rust for moving files between categories.
