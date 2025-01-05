@@ -8,6 +8,7 @@ use std::fs;
 use std::io::{self};
 use std::path::{Path, PathBuf};
 use std::sync::RwLock;
+use crate::modules::logger::LOGGER;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
@@ -86,7 +87,7 @@ impl Config {
             log_pre!("Creating necessary folders...");
             match fs::create_dir_all(&uncategorized_dir) {
                 Ok(_) => {
-                    log_pre!("uncategorized has been created successfully!")
+                    LOGGER.pre(format_args!("uncategorized has been created successfully!"))?;
                 },
                 Err(e) => {
                     log_error!("Failed to create uncategorized directory: {}", e);
