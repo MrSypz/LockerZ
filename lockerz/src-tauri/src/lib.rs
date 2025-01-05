@@ -1,31 +1,24 @@
 mod modules {
-    pub mod config;
-    pub mod logger;
     pub mod category;
-    pub mod imgoptimize;
-    pub mod files;
-    pub mod stats;
-    pub mod filehandler;
+    pub mod config;
     pub mod filecache;
+    pub mod filehandler;
+    pub mod files;
+    pub mod imgoptimize;
+    pub mod logger;
+    pub mod stats;
+    pub mod pathutils;
 }
 
-use modules::{category::create_category,
-              category::delete_category,
-              category::get_categories,
-              category::rename_category,
-              config::get_settings,
-              config::setup_folders,
-              config::update_settings,
-              filehandler::delete_file,
-              filehandler::move_file,
-              filehandler::move_file_category,
-              files::get_files,
-              imgoptimize::handle_optimize_image_request,
-              logger::LOGGER,
-              stats::get_stats
+use modules::{
+    category::create_category, category::delete_category, category::get_categories,
+    category::rename_category, config::get_settings, config::setup_folders,
+    config::update_settings, filehandler::delete_file, filehandler::move_file,
+    filehandler::move_file_category, files::get_files, imgoptimize::handle_optimize_image_request,
+    logger::LOGGER, stats::get_stats,
 };
 use tauri::Manager;
-use window_vibrancy::{apply_acrylic};
+use window_vibrancy::apply_acrylic;
 
 #[tauri::command]
 fn show_in_folder(path: String) {

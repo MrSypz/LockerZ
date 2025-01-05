@@ -1,4 +1,4 @@
-use crate::modules::config::{get_config};
+use crate::modules::config::get_config;
 use serde::Serialize;
 use std::fs::{self};
 use std::path::Path;
@@ -15,8 +15,7 @@ fn get_dir_stats(path: &Path) -> Result<(u64, u64), String> {
     let mut count = 0;
 
     // Read the directory entries recursively
-    let entries = fs::read_dir(path)
-        .map_err(|e| format!("Error reading directory: {}", e))?;
+    let entries = fs::read_dir(path).map_err(|e| format!("Error reading directory: {}", e))?;
 
     for entry in entries {
         let entry = entry.map_err(|e| format!("Error reading entry: {}", e))?;
@@ -29,8 +28,8 @@ fn get_dir_stats(path: &Path) -> Result<(u64, u64), String> {
             count += subdir_count;
         } else if entry_path.is_file() {
             // For files, accumulate the size and count
-            let metadata = fs::metadata(&entry_path)
-                .map_err(|e| format!("Error reading metadata: {}", e))?;
+            let metadata =
+                fs::metadata(&entry_path).map_err(|e| format!("Error reading metadata: {}", e))?;
             total_size += metadata.len();
             count += 1;
         }
@@ -51,14 +50,17 @@ pub async fn get_stats() -> Result<StatsResponse, String> {
     let (size, count) = get_dir_stats(&*root_folder_path)?;
 
     // Get categories count (directories excluding "temp" directory)
-    let entries = fs::read_dir(root_folder_path)
-        .map_err(|e| format!("Error reading root folder: {}", e))?;
-    let categories_count = entries.filter(|entry| {
-        match entry {
-            Ok(entry) => entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false) && entry.file_name() != "temp",
+    let entries =
+        fs::read_dir(root_folder_path).map_err(|e| format!("Error reading root folder: {}", e))?;
+    let categories_count = entries
+        .filter(|entry| match entry {
+            Ok(entry) => {
+                entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false)
+                    && entry.file_name() != "temp"
+            }
             Err(_) => false,
-        }
-    }).count();
+        })
+        .count();
 
     Ok(StatsResponse {
         total_images: count,

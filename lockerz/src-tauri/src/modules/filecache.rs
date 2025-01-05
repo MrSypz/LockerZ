@@ -1,10 +1,10 @@
 use bincode::{deserialize, serialize};
+use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
 use std::path::Path;
-use chrono::{DateTime, Local};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FileInfo {

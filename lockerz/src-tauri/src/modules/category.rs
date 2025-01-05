@@ -1,9 +1,9 @@
+use crate::modules::config::get_config;
 use rayon::prelude::*;
 use serde::Serialize;
+use std::path::{Path, PathBuf};
 use tokio::fs;
 use tokio::task;
-use std::path::{Path, PathBuf};
-use crate::modules::config::get_config;
 
 #[derive(Serialize)]
 pub struct Category {
@@ -13,7 +13,9 @@ pub struct Category {
 }
 
 /// Recursively calculate directory size and file count with optimized parallelism.
-async fn get_dir_stats_async(dir_path: &Path) -> Result<(u64, usize), Box<dyn std::error::Error + Send + Sync>> {
+async fn get_dir_stats_async(
+    dir_path: &Path,
+) -> Result<(u64, usize), Box<dyn std::error::Error + Send + Sync>> {
     let mut size: u64 = 0;
     let mut count: usize = 0;
 
@@ -57,30 +59,28 @@ pub async fn fetch_categories_async(root_folder_path: PathBuf) -> Result<Vec<Cat
     }
 
     // Use Tokio tasks for parallelism
-    let categories = futures::future::join_all(
-        entry_vec.into_iter().map(|entry| {
-            let dir_name = entry.file_name().to_string_lossy().to_string();
-            let dir_path = root_folder_path.join(&dir_name);
+    let categories = futures::future::join_all(entry_vec.into_iter().map(|entry| {
+        let dir_name = entry.file_name().to_string_lossy().to_string();
+        let dir_path = root_folder_path.join(&dir_name);
 
-            task::spawn(async move {
-                match get_dir_stats_async(&dir_path).await {
-                    Ok((size, count)) => Some(Category {
-                        name: dir_name,
-                        file_count: count,
-                        size,
-                    }),
-                    Err(err) => {
-                        eprintln!("Error calculating stats for {:?}: {}", dir_path, err);
-                        None
-                    }
+        task::spawn(async move {
+            match get_dir_stats_async(&dir_path).await {
+                Ok((size, count)) => Some(Category {
+                    name: dir_name,
+                    file_count: count,
+                    size,
+                }),
+                Err(err) => {
+                    eprintln!("Error calculating stats for {:?}: {}", dir_path, err);
+                    None
                 }
-            })
+            }
         })
-    )
-        .await
-        .into_iter()
-        .filter_map(|result| result.ok().flatten())
-        .collect();
+    }))
+    .await
+    .into_iter()
+    .filter_map(|result| result.ok().flatten())
+    .collect();
 
     Ok(categories)
 }
@@ -93,7 +93,7 @@ pub async fn get_categories() -> Result<Vec<Category>, String> {
 
 #[tauri::command]
 pub async fn rename_category(old_name: &str, new_name: &str) -> Result<String, String> {
-    let root_folder_path =  get_config().folderPath.clone();
+    let root_folder_path = get_config().folderPath.clone();
     let old_path = Path::new(&root_folder_path).join(old_name);
     let new_path = Path::new(&root_folder_path).join(new_name);
 
@@ -156,7 +156,10 @@ pub async fn delete_category(name: &str) -> Result<String, String> {
             Ok(message)
         }
         Err(e) => {
-            let error_message = format!("Failed to delete category '{}': Directory is not empty or other error: {}", name, e);
+            let error_message = format!(
+                "Failed to delete category '{}': Directory is not empty or other error: {}",
+                name, e
+            );
             Err(error_message)
         }
     }

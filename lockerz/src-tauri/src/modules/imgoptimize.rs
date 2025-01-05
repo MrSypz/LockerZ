@@ -14,7 +14,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex as AsyncMutex;
 use tokio::task;
 
-
 #[tauri::command]
 pub async fn handle_optimize_image_request(
     src: String,
@@ -109,10 +108,8 @@ pub async fn optimize_image(
             return Err(format!("File does not exist: {}", src).into());
         }
 
-        let src_img = imgcodecs::imread(&src, imgcodecs::IMREAD_COLOR)?.get_umat(
-            ACCESS_READ,
-            USAGE_ALLOCATE_DEVICE_MEMORY,
-        )?;
+        let src_img = imgcodecs::imread(&src, imgcodecs::IMREAD_COLOR)?
+            .get_umat(ACCESS_READ, USAGE_ALLOCATE_DEVICE_MEMORY)?;
         let src_width = src_img.cols();
         let src_height = src_img.rows();
 
@@ -177,5 +174,5 @@ pub async fn optimize_image(
         }
         Ok(buf.to_vec())
     })
-        .await?
+    .await?
 }
