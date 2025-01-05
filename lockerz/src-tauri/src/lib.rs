@@ -6,6 +6,7 @@ mod modules {
     pub mod files;
     pub mod stats;
     pub mod filehandler;
+    pub mod filecache;
 }
 
 use modules::{category::create_category,
