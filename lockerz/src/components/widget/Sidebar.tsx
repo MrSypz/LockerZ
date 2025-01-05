@@ -93,7 +93,7 @@ export function Sidebar() {
           </ul>
         </nav>
         <div className="mt-auto pt-4 space-y-2">
-          <ModeToggle collapsed={isCollapsed}/>
+          {/* Disable Light Mode <ModeToggle collapsed={isCollapsed}/>*/}
           <div className={cn(
               "text-xs text-muted-foreground",
               isCollapsed ? "text-center" : "px-2"
