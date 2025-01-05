@@ -97,10 +97,7 @@ pub async fn get_files(page: u32, limit: Option<i32>, category: Option<String>) 
         // Write the new cache data after loading it
         write_cache(&cache_file_path, &cached_files).map_err(|e| format!("Error writing cache: {}", e))?;
     }
-    println!("Cache after modification:");
-    for file in &cached_files {
-        println!("{:?}", file);
-    }
+
     // Apply pagination if the limit is not -1
     let total_files = cached_files.len();
     let total_pages = if let Some(lim) = limit {
