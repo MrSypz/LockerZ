@@ -110,7 +110,7 @@ export default function RootLayout({
         </div>
         <SettingsProvider>
             <I18nProvider initialLang={currentLang} onLanguageChangeAction={setCurrentLang}>
-                <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+                <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
                     <div className="flex h-screen bg-background text-foreground">
                         <Sidebar/>
                         <div className="flex flex-col flex-1 overflow-hidden">
@@ -119,7 +119,7 @@ export default function RootLayout({
                             </main>
                             <Toaster/>
                         </div>
-                        </div>
+                    </div>
                     </ThemeProvider>
                 </I18nProvider>
             </SettingsProvider>
