@@ -312,5 +312,3 @@ pub fn remove_file_from_cache(cache: &mut Vec<FileInfo>, file_name: &str) {
         cache.remove(pos);
     }
 }
-
-
