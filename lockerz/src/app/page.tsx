@@ -4,7 +4,7 @@ import {Changelog} from "@/components/widget/Changelog"
 const changelogItems = [
     {
         version: "0.3.0 - beta",
-        date: "1-1-2025",
+        date: "5-1-2025",
         sections: [
             {
                 title: "Rewrite",
