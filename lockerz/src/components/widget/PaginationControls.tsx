@@ -102,7 +102,7 @@ export function PaginationControls({
                 value={imagesPerPage.toString()}
                 onValueChange={(value) => onImagesPerPageChange(Number(value))}
             >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] bg-black/50 ">
                     <SelectValue placeholder="Images per page" />
                 </SelectTrigger>
                 <SelectContent>
