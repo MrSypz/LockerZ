@@ -32,6 +32,8 @@ pub async fn move_file(
     let root_folder_path = get_config().folderPath;
     let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
 
+    log_info!("Category Moving to: {:?}", category);
+
     let category = category.unwrap_or_else(|| "uncategorized".to_string());
     let category_path = root_folder_path.join(&category);
 
@@ -210,7 +212,7 @@ pub async fn move_file_category(
     })?;
 
     if let Some(pos) = old_cache.iter().position(|f| f.name == file_name) {
-        let file_info = old_cache.remove(pos);
+       old_cache.remove(pos);
 
         // Get updated metadata for the file
         let metadata = fs::metadata(&new_path).map_err(|e| {
