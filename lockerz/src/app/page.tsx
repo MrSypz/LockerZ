@@ -3,6 +3,28 @@ import {Changelog} from "@/components/widget/Changelog"
 
 const changelogItems = [
     {
+        version: "0.3.2 - beta",
+        date: "6-1-2025",
+        sections: [
+            {
+                title: "Fix",
+                type: "feature",
+                content: `
+              <h3 class="text-lg font-semibold mb-2">Mehh It dupe my image</h3>
+              Fix: It not update cache file category cuz image dupe
+              <h3 class="text-lg font-semibold mb-2">Bro I can see it though the space</h3>
+              Fix: Too much transparency tho
+              `
+            },
+            {
+                title: "Feature",
+                type: "feature",
+                content: `
+              <h3 class="text-lg font-semibold mb-2">It now Remember the sort style!!</h3> Feature: Remember Sort Style`
+            },
+        ]
+    },
+    {
         version: "0.3.1 - beta",
         date: "6-1-2025",
         sections: [
@@ -10,7 +32,7 @@ const changelogItems = [
                 title: "Fix",
                 type: "feature",
                 content: `
-              <h3 class="text-lg font-semibold mb-2">Incorrect Path of Config/log/Cache</h3> it now where the .exe at`
+              <h3 class="text-lg font-semibold mb-2">Incorrect Path of Config/log/Cache</h3>Fix: it now where the .exe at`
             },
         ]
     },
