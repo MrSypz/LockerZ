@@ -1,10 +1,11 @@
 use crate::modules::config::get_config;
 use crate::modules::filecache::{FileCache, FileInfo};
+use crate::{log_error, log_info};
 use serde::{Deserialize, Serialize};
 use std::fs::{self};
 use std::io;
 use std::path::{Path, PathBuf};
-use crate::{log_error, log_info};
+use crate::modules::pathutils::get_main_path;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FileMoveResponse {
@@ -24,17 +25,21 @@ pub struct MoveFileCategoryResponse {
 }
 
 #[tauri::command]
-pub async fn move_file(original_path: String, category: Option<String>) -> Result<FileMoveResponse, String> {
+pub async fn move_file(
+    original_path: String,
+    category: Option<String>,
+) -> Result<FileMoveResponse, String> {
     let root_folder_path = get_config().folderPath;
+    let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
+
     let category = category.unwrap_or_else(|| "uncategorized".to_string());
     let category_path = root_folder_path.join(&category);
 
-    fs::create_dir_all(&category_path)
-        .map_err(|e| {
-            let error_msg = format!("Error creating directory: {}", e);
-            log_error!("{}", error_msg);
-            error_msg
-        })?;
+    fs::create_dir_all(&category_path).map_err(|e| {
+        let error_msg = format!("Error creating directory: {}", e);
+        log_error!("{}", error_msg);
+        error_msg
+    })?;
 
     let file_name = Path::new(&original_path)
         .file_name()
@@ -53,7 +58,7 @@ pub async fn move_file(original_path: String, category: Option<String>) -> Resul
     };
 
     log_info!("File {} has uploaded to Category: {} ", file_name, category);
-    let new_cache_path = Path::new("cache").join(format!(
+    let new_cache_path = main_path.join("cache").join(format!(
         "{}_files.bin",
         FileCache::hash_directory_path(&root_folder_path, &category)
     ));
@@ -66,17 +71,13 @@ pub async fn move_file(original_path: String, category: Option<String>) -> Resul
     })?;
 
     // Create and add the file info to the new category cache
-    let file_info = FileCache::create_file_info(
-        file_name.clone(),
-        category.clone(),
-        &target_path,
-        &stats,
-    )
-        .map_err(|e| {
-            let error_msg = format!("Error creating file info: {}", e);
-            log_error!("{}", error_msg);
-            error_msg
-        })?;
+    let file_info =
+        FileCache::create_file_info(file_name.clone(), category.clone(), &target_path, &stats)
+            .map_err(|e| {
+                let error_msg = format!("Error creating file info: {}", e);
+                log_error!("{}", error_msg);
+                error_msg
+            })?;
 
     new_cache.push(file_info.clone());
 
@@ -97,6 +98,7 @@ pub async fn move_file(original_path: String, category: Option<String>) -> Resul
 pub async fn delete_file(category: String, name: String) -> Result<FileDeleteResponse, String> {
     let root_folder_path = get_config().folderPath;
     let file_path = root_folder_path.join(&category).join(&name);
+    let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
 
     // Remove the file from the filesystem
     fs::remove_file(&file_path).map_err(|e| {
@@ -108,7 +110,7 @@ pub async fn delete_file(category: String, name: String) -> Result<FileDeleteRes
     log_info!("File {} has been deleted from Category: {}", name, category);
 
     // Update category cache
-    let cache_path = Path::new("cache").join(format!(
+    let cache_path = main_path.join("cache").join(format!(
         "{}_files.bin",
         FileCache::hash_directory_path(&root_folder_path, &category)
     ));
@@ -118,7 +120,7 @@ pub async fn delete_file(category: String, name: String) -> Result<FileDeleteRes
     FileCache::remove_file_from_cache(&mut cache, &name);
 
     // Update "All" category cache
-    let all_cache_path = Path::new("cache").join(format!(
+    let all_cache_path = main_path.join("cache").join(format!(
         "{}_files.bin",
         FileCache::hash_directory_path(&root_folder_path, "all")
     ));
@@ -190,12 +192,13 @@ pub async fn move_file_category(
             e
         ));
     }
+    let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
 
-    let old_cache_path = Path::new("cache").join(format!(
+    let old_cache_path = main_path.join("cache").join(format!(
         "{}_files.bin",
         FileCache::hash_directory_path(&root_folder_path, &old_category)
     ));
-    let new_cache_path = Path::new("cache").join(format!(
+    let new_cache_path = main_path.join("cache").join(format!(
         "{}_files.bin",
         FileCache::hash_directory_path(&root_folder_path, &new_category)
     ));

@@ -1,8 +1,9 @@
 use crate::modules::config::get_config;
+use crate::modules::filecache::{FileCache, FileInfo};
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
-use serde::{Deserialize, Serialize};
-use crate::modules::filecache::{FileCache, FileInfo}; // Add this import
+use crate::modules::pathutils::get_main_path;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FileResponse {
@@ -13,7 +14,11 @@ pub struct FileResponse {
 }
 
 #[tauri::command]
-pub async fn get_files(page: u32, limit: Option<i32>, category: Option<String>) -> Result<FileResponse, String> {
+pub async fn get_files(
+    page: u32,
+    limit: Option<i32>,
+    category: Option<String>,
+) -> Result<FileResponse, String> {
     let root_folder_path = get_config().folderPath;
 
     if !root_folder_path.exists() {
@@ -21,9 +26,13 @@ pub async fn get_files(page: u32, limit: Option<i32>, category: Option<String>) 
     }
 
     let category = category.unwrap_or_else(|| "all".to_string());
+    let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
 
-    let cache_folder = Path::new("cache");
-    let cache_file_name = format!("{}_files.bin", FileCache::hash_directory_path(&root_folder_path, &category));
+    let cache_folder = main_path.join("cache");
+    let cache_file_name = format!(
+        "{}_files.bin",
+        FileCache::hash_directory_path(&root_folder_path, &category)
+    );
     let cache_file_path = cache_folder.join(cache_file_name);
 
     let mut cached_files = FileCache::read_cache(&cache_file_path)
@@ -106,11 +115,14 @@ pub async fn get_files(page: u32, limit: Option<i32>, category: Option<String>) 
 }
 
 pub fn synchronize_cache_with_filesystem(root_folder_path: &Path) -> Result<(), String> {
-    let categories = fs::read_dir(root_folder_path)
-        .map_err(|e| format!("Error reading root folder: {}", e))?;
+    let categories =
+        fs::read_dir(root_folder_path).map_err(|e| format!("Error reading root folder: {}", e))?;
+    let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
 
-    let all_cache_path = Path::new("cache")
-        .join(format!("{}_files.bin", FileCache::hash_directory_path(&root_folder_path, "all")));
+    let all_cache_path = main_path.join("cache").join(format!(
+        "{}_files.bin",
+        FileCache::hash_directory_path(&root_folder_path, "all")
+    ));
     let mut all_cache = FileCache::read_cache(&all_cache_path).unwrap_or_else(|_| Vec::new());
 
     for entry in categories {
@@ -121,15 +133,22 @@ pub fn synchronize_cache_with_filesystem(root_folder_path: &Path) -> Result<(), 
         if category_path.is_dir() {
             println!("Synchronizing category: {}", category_name);
 
-            let new_cache_path = Path::new("cache")
-                .join(format!("{}_files.bin", FileCache::hash_directory_path(&root_folder_path, &category_name)));
-            let mut cached_files = FileCache::read_cache(&new_cache_path).unwrap_or_else(|_| Vec::new());
+            let new_cache_path = main_path.join("cache").join(format!(
+                "{}_files.bin",
+                FileCache::hash_directory_path(&root_folder_path, &category_name)
+            ));
+            let mut cached_files =
+                FileCache::read_cache(&new_cache_path).unwrap_or_else(|_| Vec::new());
 
             let category_files = fs::read_dir(&category_path)
                 .map_err(|e| format!("Error reading category folder: {}", e))?;
 
             let actual_files: Vec<String> = category_files
-                .filter_map(|entry| entry.ok().map(|e| e.file_name().to_string_lossy().to_string()))
+                .filter_map(|entry| {
+                    entry
+                        .ok()
+                        .map(|e| e.file_name().to_string_lossy().to_string())
+                })
                 .collect();
 
             // Remove non-existent files from caches
@@ -146,7 +165,10 @@ pub fn synchronize_cache_with_filesystem(root_folder_path: &Path) -> Result<(), 
 
             // Add new files
             for file_entry in actual_files {
-                if !cached_files.iter().any(|f| f.name == file_entry && f.category == category_name) {
+                if !cached_files
+                    .iter()
+                    .any(|f| f.name == file_entry && f.category == category_name)
+                {
                     let file_path = category_path.join(&file_entry);
                     let metadata = fs::metadata(&file_path)
                         .map_err(|e| format!("Error reading file metadata: {}", e))?;
@@ -156,7 +178,8 @@ pub fn synchronize_cache_with_filesystem(root_folder_path: &Path) -> Result<(), 
                         category_name.clone(),
                         &file_path,
                         &metadata,
-                    ).map_err(|e| format!("Error creating file info: {}", e))?;
+                    )
+                    .map_err(|e| format!("Error creating file info: {}", e))?;
 
                     cached_files.push(file_info);
 
@@ -165,14 +188,16 @@ pub fn synchronize_cache_with_filesystem(root_folder_path: &Path) -> Result<(), 
                         "all".to_string(),
                         &file_path,
                         &metadata,
-                    ).map_err(|e| format!("Error creating all category file info: {}", e))?;
+                    )
+                    .map_err(|e| format!("Error creating all category file info: {}", e))?;
 
                     all_cache.push(all_file_info);
                 }
             }
 
-            FileCache::write_cache(&new_cache_path, &cached_files)
-                .map_err(|e| format!("Error writing cache for category {}: {}", category_name, e))?;
+            FileCache::write_cache(&new_cache_path, &cached_files).map_err(|e| {
+                format!("Error writing cache for category {}: {}", category_name, e)
+            })?;
         }
     }
 

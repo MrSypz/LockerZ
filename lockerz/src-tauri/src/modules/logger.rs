@@ -1,10 +1,11 @@
-use chrono::{Utc, TimeZone};
+use chrono::{TimeZone, Utc};
+use once_cell::sync::Lazy;
+use std::fmt::Arguments;
 use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
-use once_cell::sync::Lazy;
-use std::fmt::Arguments;
+use crate::modules::pathutils::get_main_path;
 
 pub struct Logger {
     log_dir: PathBuf,
@@ -15,12 +16,16 @@ pub struct Logger {
 
 impl Logger {
     pub fn new() -> io::Result<Self> {
-        let home_dir = "log";  // Config directory
+        let main_path = get_main_path()?;
+
+        let home_dir = main_path.join("log"); // Config directory
         let log_dir = Path::new(&home_dir).join("logs");
         let latest_log_file = log_dir.join("latest.log");
 
         // Session start time as a formatted string
-        let session_start_time = Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true).replace(":", "-");
+        let session_start_time = Utc::now()
+            .to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
+            .replace(":", "-");
 
         let max_log_files = 69;
 
@@ -47,15 +52,18 @@ impl Logger {
 
     fn log(&self, message: &str, log_type: &str) -> io::Result<()> {
         // Get the current timestamp from SystemTime and convert to DateTime<Utc>
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap();
+        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         let datetime = Utc.timestamp(timestamp.as_secs() as i64, 0);
 
         // Format the timestamp using chrono
         let formatted_timestamp = datetime.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
 
-        let log_message = format!("[{}] {}: {}\n", log_type.to_uppercase(), formatted_timestamp, message);
+        let log_message = format!(
+            "[{}] {}: {}\n",
+            log_type.to_uppercase(),
+            formatted_timestamp,
+            message
+        );
         let mut file = fs::OpenOptions::new()
             .append(true)
             .open(&self.latest_log_file)?;
@@ -157,6 +165,4 @@ macro_rules! log_pre {
     };
 }
 // Declare a global static instance of Logger using Lazy
-pub static LOGGER: Lazy<Logger> = Lazy::new(|| {
-    Logger::new().expect("Failed to initialize logger")
-});
+pub static LOGGER: Lazy<Logger> = Lazy::new(|| Logger::new().expect("Failed to initialize logger"));
