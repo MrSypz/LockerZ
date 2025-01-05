@@ -59,40 +59,78 @@ pub async fn move_file(
         }
     };
 
-    log_info!("File {} has uploaded to Category: {} ", file_name, category);
-    let new_cache_path = main_path.join("cache").join(format!(
+    log_info!("File {} has been uploaded to category: {}", file_name, category);
+    let category_cache_path = main_path.join("cache").join(format!(
         "{}_files.bin",
         FileCache::hash_directory_path(&root_folder_path, &category)
     ));
+    let mut category_cache = FileCache::read_cache(&category_cache_path).unwrap_or_else(|_| vec![]);
 
-    // Create or update the new category cache
-    let mut new_cache = FileCache::read_cache(&new_cache_path).map_err(|e| {
-        let error_msg = format!("Error reading new cache: {}", e);
-        log_error!("{}", error_msg);
-        error_msg
-    })?;
-
-    // Create and add the file info to the new category cache
-    let file_info =
-        FileCache::create_file_info(file_name.clone(), category.clone(), &target_path, &stats)
+    // Add file info to category cache if not already present
+    if !category_cache.iter().any(|f| f.name == file_name) {
+        let file_info = FileCache::create_file_info(
+            file_name.clone(),
+            category.clone(),
+            &target_path,
+            &stats,
+        )
             .map_err(|e| {
                 let error_msg = format!("Error creating file info: {}", e);
                 log_error!("{}", error_msg);
                 error_msg
             })?;
 
-    new_cache.push(file_info.clone());
+        category_cache.push(file_info);
 
-    // Write the updated cache back to disk
-    FileCache::write_cache(&new_cache_path, &new_cache).map_err(|e| {
-        let error_msg = format!("Error writing new cache: {}", e);
-        log_error!("{}", error_msg);
-        error_msg
-    })?;
+        // Write updated category cache
+        FileCache::write_cache(&category_cache_path, &category_cache).map_err(|e| {
+            let error_msg = format!("Error writing category cache: {}", e);
+            log_error!("{}", error_msg);
+            error_msg
+        })?;
+    }
 
+    // --- Update Global 'All' Cache ---
+    let all_cache_path = main_path.join("cache").join(format!(
+        "{}_files.bin",
+        FileCache::hash_directory_path(&root_folder_path, "all")
+    ));
+    let mut all_cache = FileCache::read_cache(&all_cache_path).unwrap_or_else(|_| vec![]);
+
+    // Ensure no duplicates in the global cache
+    if !all_cache.iter().any(|f| f.name == file_name) {
+        let all_file_info = FileCache::create_file_info(
+            file_name.clone(),
+            category.clone(), // Use the correct category here!
+            &target_path,
+            &stats,
+        )
+            .map_err(|e| {
+                let error_msg = format!("Error creating all category file info: {}", e);
+                log_error!("{}", error_msg);
+                error_msg
+            })?;
+
+        all_cache.push(all_file_info);
+
+        // Write updated 'all' cache
+        FileCache::write_cache(&all_cache_path, &all_cache).map_err(|e| {
+            let error_msg = format!("Error writing all cache: {}", e);
+            log_error!("{}", error_msg);
+            error_msg
+        })?;
+    }
+
+    // Return successful response
     Ok(FileMoveResponse {
         success: true,
-        file: file_info,
+        file: FileCache::create_file_info(
+            file_name,
+            category,
+            &target_path,
+            &stats,
+        )
+            .map_err(|e| format!("Error creating response file info: {}", e))?,
     })
 }
 
