@@ -13,6 +13,26 @@ import {ImageViewer} from './Image-viewer';
 import {useSharedSettings} from "@/utils/SettingsContext";
 import {OptimizedImage} from "@/components/widget/ImageProcessor";
 
+type SortCriteria = 'name' | 'date' | 'createat' | 'size';
+type SortOrder = 'asc' | 'desc';
+
+interface SortPreferences {
+    criteria: SortCriteria;
+    order: SortOrder;
+}
+
+const getSavedSortPreferences = (): SortPreferences => {
+    const saved = localStorage.getItem('fileSortPreferences');
+    if (saved) {
+        return JSON.parse(saved);
+    }
+    return { criteria: 'name', order: 'asc' };
+};
+
+const saveSortPreferences = (preferences: SortPreferences) => {
+    localStorage.setItem('fileSortPreferences', JSON.stringify(preferences));
+};
+
 function useColumnCount() {
     const [columnCount, setColumnCount] = useState(5)
 
@@ -66,18 +86,26 @@ export function FileGrid({
                          }: FileGridProps) {
     const totalColumns = useColumnCount()
     const [sortedFiles, setSortedFiles] = useState(files)
-    const [sortCriteria, setSortCriteria] = useState<'name' | 'date' | 'createat' | 'size'>('name')
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+    const savedPreferences = getSavedSortPreferences();
+    const [sortCriteria, setSortCriteria] = useState<SortCriteria>(savedPreferences.criteria)
+    const [sortOrder, setSortOrder] = useState<SortOrder>(savedPreferences.order)
     const [searchTerm, setSearchTerm] = useState('')
     const {t} = useTranslation()
     const [isOpen, setIsOpen] = useState(false)
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
+    // Handle sort with persistence
+    const handleSort = (criteria: SortCriteria, order: SortOrder) => {
+        setSortCriteria(criteria);
+        setSortOrder(order);
+        saveSortPreferences({ criteria, order });
+    }
+
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.ctrlKey && event.code === 'Space') {
                 event.preventDefault();
-                setIsOpen(prevState => !prevState); // Toggle the isOpen state
+                setIsOpen(prevState => !prevState);
             }
         };
 
@@ -88,10 +116,15 @@ export function FileGrid({
     }, []);
 
     useEffect(() => {
-        const filtered = searchTerm
-            ? allFiles.filter(file => file.name.toLowerCase().includes(searchTerm.toLowerCase()))
-            : allFiles;
+        let filtered = allFiles;
 
+        if (searchTerm.trim()) {
+            filtered = allFiles.filter(file =>
+                file.name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        // Always sort, even if there are no search results
         const sorted = [...filtered].sort((a, b) => {
             let comparison = 0;
             switch (sortCriteria) {
@@ -114,23 +147,26 @@ export function FileGrid({
         const totalFilteredPages = Math.ceil(sorted.length / imagesPerPage);
         onTotalPagesChange(totalFilteredPages);
 
-        if (currentPage > totalFilteredPages) {
+        // If current page is out of bounds, reset to page 1
+        if (currentPage > totalFilteredPages && totalFilteredPages > 0) {
             onPageChange(1);
         }
 
+        // Calculate pagination slice
         const start = (currentPage - 1) * imagesPerPage;
         const end = start + imagesPerPage;
         setSortedFiles(sorted.slice(start, end));
     }, [allFiles, sortCriteria, sortOrder, searchTerm, currentPage, imagesPerPage]);
 
-    const handleSort = (criteria: 'name' | 'date' | 'createat' | 'size', order: 'asc' | 'desc') => {
-        setSortCriteria(criteria);
-        setSortOrder(order);
-    }
-
     const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(event.target.value);
-    }
+        const newSearchTerm = event.target.value;
+        setSearchTerm(newSearchTerm);
+        // Reset to first page when search changes
+        if (currentPage !== 1) {
+            onPageChange(1);
+        }
+    };
+
     const handleSelectImage = (index: number) => {
         setSelectedImageIndex(index);
     };
@@ -142,7 +178,7 @@ export function FileGrid({
     return (
         <div className="space-y-4">
             <div className="flex items-center space-x-4">
-                <div className="relative flex-grow">
+                <div className="relative bg-black flex-grow">
                     <Input
                         type="text"
                         placeholder={t('locker.search.placeholder')}
