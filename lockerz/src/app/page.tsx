@@ -3,6 +3,18 @@ import {Changelog} from "@/components/widget/Changelog"
 
 const changelogItems = [
     {
+        version: "0.3.1 - beta",
+        date: "6-1-2025",
+        sections: [
+            {
+                title: "Fix",
+                type: "feature",
+                content: `
+              <h3 class="text-lg font-semibold mb-2">Incorrect Path of Config/log/Cache</h3> it now where the .exe at`
+            },
+        ]
+    },
+    {
         version: "0.3.0 - beta",
         date: "5-1-2025",
         sections: [
