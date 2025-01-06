@@ -29,6 +29,7 @@ import {Pencil, FolderPlus, FolderOpen} from 'lucide-react'
 import {toast} from "@/hooks/use-toast"
 import {useTranslation} from "react-i18next"
 import {invoke} from '@tauri-apps/api/core'
+import {formatBytes} from "@/components/widget/Dashboard";
 
 interface Category {
     name: string
@@ -272,7 +273,7 @@ export default function Category() {
                                         </div>
                                         <div className="mt-2 space-y-1">
                                             <p className="text-sm text-muted-foreground">{category.file_count} files</p>
-                                            <p className="text-sm text-muted-foreground">Size: {(category.size / 1024 / 1024).toFixed(2)} MB</p>
+                                            <p className="text-sm text-muted-foreground">Size: {(formatBytes(category.size))}</p>
                                         </div>
                                     </CardContent>
                                 </Card>
