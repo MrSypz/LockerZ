@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.3.3 - beta",
+    "date": "6-1-2025",
+    "sections": [
+      {
+        "title": "Feature",
+        "type": "feature",
+        "content": "<h3 class=\"text-lg font-semibold mb-2\">Japanese Translation</h3>Feature: Japanese translation added. A big thank you to Mr. 山野すもも / Leatherpeach12!"
+      },
+      {
+        "title": "Improvement",
+        "content": "<h3 class=\"text-lg font-semibold mb-2\">It Huge</h3>Optimize opencv size from ~60mb -> ~18mb",
+        "type": "preview"
+      }
+    ]
+  },
+  {
     "version": "0.3.2 - beta",
     "date": "6-1-2025",
     "sections": [
