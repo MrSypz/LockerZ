@@ -1,4 +1,4 @@
-use chrono::{TimeZone, Utc};
+use chrono::{Local, TimeZone, Utc};
 use once_cell::sync::Lazy;
 use std::fmt::Arguments;
 use std::fs::{self, File};
@@ -53,10 +53,12 @@ impl Logger {
     fn log(&self, message: &str, log_type: &str) -> io::Result<()> {
         // Get the current timestamp from SystemTime and convert to DateTime<Utc>
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-        let datetime = Utc.timestamp(timestamp.as_secs() as i64, 0);
+        let datetime = Utc.timestamp_opt(timestamp.as_secs() as i64, 0);
 
-        // Format the timestamp using chrono
-        let formatted_timestamp = datetime.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+        let local_time = datetime.unwrap().with_timezone(&Local);
+
+        // Format the local time
+        let formatted_timestamp = local_time.to_string();
 
         let log_message = format!(
             "[{}] {}: {}\n",
@@ -92,16 +94,15 @@ impl Logger {
     }
 
     pub fn archive_log(&self) -> io::Result<()> {
-        let new_file_name = format!("log_{}.log", self.session_start_time);
+        let session_start_time = Local::now().format("%Y-%m-%d_%H-%M-%S").to_string();
+
+        let new_file_name = format!("log_{}.log", session_start_time);
         let new_file_path = self.log_dir.join(&new_file_name);
 
-        // Rename latest.log to log_{session_start_time}.log
         fs::rename(&self.latest_log_file, &new_file_path)?;
 
-        // Create a new latest.log file
         File::create(&self.latest_log_file)?;
 
-        // Clean up old logs
         self.cleanup_old_logs()?;
 
         Ok(())
