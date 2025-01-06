@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {Home, FolderOpen, Image, Settings, Menu, Info} from 'lucide-react'
+import {Home, FolderOpen, Image, Settings, Menu, Info, Code} from 'lucide-react'
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { ModeToggle } from "@/components/widget/Mode-toggle"
@@ -21,6 +21,9 @@ export function Sidebar() {
     { icon: FolderOpen, label: t('sidebar.folder'), href: "/category" },
     { icon: Settings, label: t('sidebar.settings'), href: "/settings" },
     { icon: Info , label: t('sidebar.about'), href: "/about" },
+    ...(process.env.NODE_ENV === 'development' ? [
+      { icon: Code, label: "Dev", href: "/generatepatch" }
+    ] : [])
   ]
 
   useEffect(() => {
