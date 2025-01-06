@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, {useEffect, useState} from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,10 +25,6 @@ interface ChangelogItem {
     sections: ChangelogSection[]
 }
 
-interface ChangelogProps {
-    items: ChangelogItem[]
-}
-
 const iconMap: { [key: string]: React.ComponentType } = {
     Features: Sparkles,
     Fixes: Wrench,
@@ -51,8 +47,41 @@ const getTypeColor = (type: string = 'default') => {
     return colors[type] || colors.default
 }
 
-export function Changelog({ items }: ChangelogProps) {
-    const [activeVersion, setActiveVersion] = useState(items[0]?.version)
+export function Changelog() {
+    const [items, setItems] = useState<ChangelogItem[]>([])
+    const [activeVersion, setActiveVersion] = useState<string>("")
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        fetch("/changelog.json")
+            .then((response) => response.json())
+            .then((data) => {
+                setItems(data)
+                setActiveVersion(data[0]?.version || "")
+                setLoading(false)
+            })
+            .catch((error) => {
+                console.error("Error loading changelog:", error)
+                setLoading(false)
+            })
+    }, [])
+
+    if (loading) {
+        return (
+            <Card className="w-full max-w-[90vw] lg:max-w-[80vw] xl:max-w-[1200px] mx-auto h-[90vh] flex items-center justify-center">
+                <div className="text-lg text-muted-foreground">Loading changelog...</div>
+            </Card>
+        )
+    }
+
+    if (items.length === 0) {
+        return (
+            <Card className="w-full max-w-[90vw] lg:max-w-[80vw] xl:max-w-[1200px] mx-auto h-[90vh] flex items-center justify-center">
+                <div className="text-lg text-muted-foreground">No changelog entries found.</div>
+            </Card>
+        )
+    }
+
 
     return (
         <Card className="w-full max-w-[90vw] lg:max-w-[80vw] xl:max-w-[1200px] mx-auto h-[90vh] flex flex-col">

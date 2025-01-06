@@ -1,0 +1,329 @@
+[
+  {
+    "version": "0.3.2 - beta",
+    "date": "6-1-2025",
+    "sections": [
+      {
+        "title": "Fix",
+        "type": "feature",
+        "content": "<h3 class=\"text-lg font-semibold mb-2\">Mehh It dupe my image</h3>Fix: It not update cache file category cuz image dupe<h3 class=\"text-lg font-semibold mb-2\">Bro I can see it though the space</h3>\n              Fix: Too much transparency tho\n              "
+      },
+      {
+        "title": "Feature",
+        "type": "feature",
+        "content": "\n              <h3 class=\"text-lg font-semibold mb-2\">It now Remember the sort style!!</h3> Feature: Remember Sort Style"
+      }
+    ]
+  },
+  {
+    "version": "0.3.1 - beta",
+    "date": "6-1-2025",
+    "sections": [
+      {
+        "title": "Fix",
+        "type": "feature",
+        "content": "\n              <h3 class=\"text-lg font-semibold mb-2\">Incorrect Path of Config/log/Cache</h3>Fix: it now where the .exe at"
+      }
+    ]
+  },
+  {
+    "version": "0.3.0 - beta",
+    "date": "5-1-2025",
+    "sections": [
+      {
+        "title": "Rewrite",
+        "type": "Qol",
+        "content": "\n                <div class=\"bg-blue-100 dark:bg-blue-900 p-4 rounded-md mb-4\">\n                    <p class=\"text-blue-800 dark:text-blue-200\">\n                    <em>Note: I just finish port the node.js function into rust function it now native performance!</em>\n                    PS: this one take a while to implement in rust cuz I never learn rust before but I make it! Ouob.\n                    </p>\n                </div>\n              <h3 class=\"text-lg font-semibold mb-2\">Rewrite Backend</h3>This update is huge size reduce around <b>~40mb</b> and it now native performance on rust instead of <b>node.js</b>\n              "
+      },
+      {
+        "title": "Image Sorting",
+        "type": "feature",
+        "content": "\n                    <h3 class=\"text-lg font-semibold mb-2\">New Sorting Option</h3>\n                    <p><strong>New Option:</strong> Sort by CreateAt order the lastest or oldest image that have been add into category</p> \n                "
+      },
+      {
+        "title": "Optimize",
+        "type": "preview",
+        "content": "\n                    <p><strong>Performance Improvement:</strong> Reduce default image size to 960x540 and using .jpg instead .webp make it huge time process \n                    gain around ~94.25% faster.</p>\n                    <p><strong>Cache System:</strong> for file lookup(for rust) </p>\n                "
+      },
+      {
+        "title": "Fix",
+        "type": "feature",
+        "content": "\n              <h3 class=\"text-lg font-semibold mb-2\">Image Loading</h3><p><strong>Fix:</strong> freeze the screen when loading optimize images"
+      },
+      {
+        "title": "Feature",
+        "type": "feature",
+        "content": "\n              <h3 class=\"text-lg font-semibold mb-2\">Transparency Window</h3> new window look styles"
+      },
+      {
+        "title": "Feature",
+        "type": "feature",
+        "content": "\n              <h3 class=\"text-lg font-semibold mb-2\">New Titlebar</h3> Just for new look :)"
+      }
+    ]
+  },
+  {
+    "version": "0.2.6 - beta",
+    "date": "31-12-2024",
+    "sections": [
+      {
+        "title": "Fix",
+        "type": "feature",
+        "content": "\n              <h3 class=\"text-lg font-semibold mb-2\">Missing opencv4100.dll</h3> it now include into the file"
+      }
+    ]
+  },
+  {
+    "version": "0.2.5 - beta",
+    "date": "16-12-2024",
+    "sections": [
+      {
+        "title": "Fix",
+        "type": "feature",
+        "content": "\n              <h3 class=\"text-lg font-semibold mb-2\">Node.js</h3> Now remove archive it size smaller around 4kb\n              <h3 class=\"text-lg font-semibold mb-2\">Backend</h3> Fix Image Process Before linear to Area"
+      }
+    ]
+  },
+  {
+    "version": "0.2.4 - beta",
+    "date": "18-12-2024",
+    "sections": [
+      {
+        "title": "Performance",
+        "type": "preview",
+        "content": "\n              <h1 class=\"text-lg font-semibold mb-2\">Image Optimize</h1>\n              <p class=\"mb-4\">Change the Sharp image optimize now using openCV</p>\n              Hardcode rewrite image optimize are now native in tauri not on the node.js \n              <div class=\"bg-blue-100 dark:bg-blue-900 p-4 rounded-md mb-4\">\n                <p class=\"text-blue-800 dark:text-blue-200\">\n                <em>Note: Due to sharp it have native dependency that make I can't compile into a binary file, so I decide to make it standalone in rust instead by using opencv the good is it can use hardware accurate\n                </p>\n              </div>\n              "
+      },
+      {
+        "title": "Quality of Life",
+        "type": "preview",
+        "content": "\n              <h1 class=\"text-lg font-semibold mb-2\">ContextMenu - Update</h1>\n              <p class=\"mb-4\">Now it can open the image folder directory!</p>\n              "
+      }
+    ]
+  },
+  {
+    "version": "0.2.3 - beta",
+    "date": "15-12-2024",
+    "sections": [
+      {
+        "title": "Fix",
+        "type": "feature",
+        "content": "\n              <h3 class=\"text-lg font-semibold mb-2\">Combobox Issue</h3>\n              can't click on the combobox"
+      },
+      {
+        "title": "Performance",
+        "type": "preview",
+        "content": "\n              <h1 class=\"text-lg font-semibold mb-2\">Image Upload</h1>\n              <p class=\"mb-4\">Slightly improve the performance on uploadfile to locker</p>\n              "
+      }
+    ]
+  },
+  {
+    "version": "0.2.2 - beta",
+    "date": "14-12-2024",
+    "sections": [
+      {
+        "title": "Performance",
+        "type": "preview",
+        "content": "\n              <h1 class=\"text-lg font-semibold mb-2\">Image Render</h1>\n              <p class=\"mb-4\">More Optimize to make it more configable Seeing in Locker Setting</p>\n              "
+      },
+      {
+        "title": "Quality of Life",
+        "type": "preview",
+        "content": "\n              <h1 class=\"text-lg font-semibold mb-2\">Locker Setting</h1>\n              <ul class=\"list-disc pl-5 mt-2\">\n                <li>Image Quality : downgrade the image quality aka resolution</li>\n                <li>Heigh Pixel : down/up grade the image resolution </li>\n                <li>Width Pixel : down/up grade the image resolution</li>\n              </ul>\n              <div class=\"bg-blue-100 dark:bg-blue-900 p-4 rounded-md mb-4\">\n                <p class=\"text-blue-800 dark:text-blue-200\">\n                <em>Note: Heigh and Width Pixel are the highest performance impact depend on your image size if you got image ~8k resolution or your image size are really big like around > 5 mb when loadign it'll take a time to loading image.</em>\n                PS: this one will affect when first load only after that will nolonger affect due to cache image but cache are clear every year.\n                </p>\n              </div>\n              "
+      },
+      {
+        "title": "Fix",
+        "type": "feature",
+        "content": "\n              <h3 class=\"text-lg font-semibold mb-2\">Calling Dupe</h3>\n              When refresh the page it like refresh 3 time and now it fix it only call once slighly performance improve\n              "
+      }
+    ]
+  },
+  {
+    "version": "0.2.1 - beta",
+    "date": "12-12-2024",
+    "sections": [
+      {
+        "title": "Performance",
+        "type": "preview",
+        "content": "\n              <h1 class=\"text-lg font-semibold mb-2\">Image Render</h1>\n              <p class=\"mb-4\">I'm testing with my own pc and it comeout perty good the one thing is image loading and image rendering it now almost instant show up\n              and when change page it update smootly nolonger have spike lag.</p>\n              "
+      },
+      {
+        "title": "Quality of Life",
+        "type": "preview",
+        "content": "\n              <h1 class=\"text-lg font-semibold mb-2\">Remember Cagetory/Page</h1>\n              <p class=\"mb-4\">when change to dashboard or setting and go back or close the program and open again.</p>\n              <h1 class=\"text-lg font-semibold mb-2\">Pag Navigation</h1>\n              <p class=\"mb-4\">Users can type the page wherever they want to go.</p>\n              "
+      },
+      {
+        "title": "Fix",
+        "type": "feature",
+        "content": "\n              <h3 class=\"text-lg font-semibold mb-2\">Searching</h3>\n              it now took the whole path/category not just in that page that you're currently on\n              <h3 class=\"text-lg font-semibold mb-2\">Image Viewer</h3>\n              <p class=\"mb-4\">it now use the full screen viewport.</p>\n\n              "
+      }
+    ]
+  },
+  {
+    "version": "0.2.0 - beta",
+    "date": "10-12-2024",
+    "sections": [
+      {
+        "title": "Rewrite",
+        "content": "\n                    <h3 class=\"text-lg font-semibold mb-2\">Framework Migration</h3>\n                    <p class=\"mb-4\">Moved the main application from Electron.js to Tauri 2.0 for improved performance and smaller bundle size.</p>\n                    <div class=\"bg-blue-100 dark:bg-blue-900 p-4 rounded-md mb-4\">\n                        <p class=\"text-blue-800 dark:text-blue-200\"><em>Note: Node.js is still used for the server; future plans include moving to native Tauri for further performance improvements.</em></p>\n                    </div>\n                    <h4 class=\"text-md font-semibold mb-2\">Complete Rewrite</h4>\n                    <p>The application has been entirely rewritten, which may result in some features not being immediately available in this version.</p>\n                "
+      },
+      {
+        "title": "Config",
+        "type": "preview",
+        "content": "\n                    <p>The new LockerZ Config path is now located at:</p>\n                    <code class=\"block bg-gray-100 dark:bg-gray-800 p-2 rounded-md my-2\">%appdata%\\lockerz\\config\\config.json</code>\n                "
+      },
+      {
+        "title": "Dashboard",
+        "type": "preview",
+        "content": "<p>Complete re-design and re-implementation of the dashboard for improved user experience and functionality.</p>"
+      },
+      {
+        "title": "Settings",
+        "type": "preview",
+        "content": "\n                    <p>Enhanced configurability with more options:</p>\n                    <ul class=\"list-disc pl-5 mt-2\">\n                        <li>The root directory path</li>\n                        <li>Category Remember</li>\n                        <li>Language options</li>\n                    </ul>\n                    <p class=\"mt-2\">More configurations will be added in future updates.</p>\n                "
+      },
+      {
+        "title": "Localization",
+        "type": "preview",
+        "content": "\n                    <p>Introduced multi-language support! 🌍</p>\n                    <p>You can now change the application language to your preference.</p>\n                    <p class=\"mt-2\">Currently supported languages:</p>\n                    <ul class=\"list-disc pl-5 mt-2\">\n                        <li>English</li>\n                        <li>Thai</li>\n                    </ul>\n                "
+      },
+      {
+        "title": "Categories",
+        "type": "preview",
+        "content": "\n                    <p>Overhauled category management system:</p>\n                    <ul class=\"list-disc pl-5 mt-2\">\n                        <li>New intuitive design for easier navigation</li>\n                        <li>Improved editing capabilities</li>\n                        <li>Adding Detail of each category</li>\n                    </ul>\n                "
+      },
+      {
+        "title": "Viewport",
+        "type": "preview",
+        "content": "<p>Introduced a new viewport style for improved content viewing and management.</p>"
+      },
+      {
+        "title": "Context Menu",
+        "type": "preview",
+        "content": "\n                    <p>Visualize</p>\n                    <ul class=\"list-disc pl-5 mt-2\">\n                        <li>Make it more easy to see</li>\n                    </ul>\n                "
+      },
+      {
+        "title": "Image Viewer",
+        "type": "preview",
+        "content": "\n                    <p>Major improvements to the image viewer:</p>\n                    <ul class=\"list-disc pl-5 mt-2\">\n                        <li>Smooth panning and zooming capabilities</li>\n                        <li>Easy navigation between nearby images</li>\n                        <li>Enhanced image quality and loading speed</li>\n                    </ul>\n                "
+      },
+      {
+        "title": "Image Sorting",
+        "type": "feature",
+        "content": "\n                    <p><strong>New Feature:</strong> Image sorting functionality</p>\n                    <p>Current sorting options include:</p>\n                    <ol class=\"list-decimal pl-5 mt-2\">\n                        <li>Date added</li>\n                        <li>File name</li>\n                        <li>File size</li>\n                    </ol>\n                    <p class=\"mt-2\">More sorting options will be added in future updates.</p>\n                "
+      },
+      {
+        "title": "Searching",
+        "type": "feature",
+        "content": "\n                    <p><strong>New Feature:</strong> Advanced search capabilities</p>\n                    <ul class=\"list-disc pl-5 mt-2\">\n                        <li>Search across all categories</li>\n                        <li>Filter by file type, date, and size</li>\n                        <li>Sort search results</li>\n                    </ul>\n                "
+      },
+      {
+        "title": "Optimize",
+        "content": "\n                    <h4 class=\"font-semibold mb-2\">Performance Enhancements:</h4>\n                    <ul class=\"list-disc pl-5\">\n                        <li>Fuxking huge improved image loading speed</li>\n                        <li>Optimized image viewing experience</li>\n                        <li>Reduced memory usage for large image collections</li>\n                    </ul>\n                ",
+        "type": "concept"
+      },
+      {
+        "title": "Fixes",
+        "content": "\n                    <h4 class=\"font-semibold mb-2\">Bug Fixes:</h4>\n                    <ul class=\"list-disc pl-5\">\n                        <li>Resolved spike lag issues when viewing images</li>\n                        <li>Fixed problems with drag and drop functionality</li>\n                        <li>Addressed various minor UI glitches</li>\n                    </ul>\n                ",
+        "type": "concept"
+      },
+      {
+        "title": "Features",
+        "content": "\n                    <h4 class=\"font-semibold mb-2\">New and Improved Features:</h4>\n                    <ul class=\"list-disc pl-5\">\n                        <li>Redesigned sidebar for improved navigation</li>\n                        <li>Enhanced image handling with drag-and-drop and click-to-select</li>\n                        <li>Implemented category search functionality for easier organization</li>\n                        <li>Added customizable hotkeys for frequently used actions</li>\n                    </ul>\n                ",
+        "type": "feature"
+      },
+      {
+        "title": "Porting",
+        "content": "\n                    <h1 class=\"font-semibold mb-2\">Porting Some Features from ElectronJs:</h1>\n                    <ul class=\"list-disc pl-5\">\n                        <li>Drag and drop Feature</li>\n                        <li>Category Editing</li>\n                        <li>Image Context Menu</li>\n                    </ul>\n                "
+      }
+    ]
+  },
+  {
+    "version": "0.1.3 - beta",
+    "date": "10-11-2024",
+    "sections": [
+      {
+        "title": "Features",
+        "type": "feature",
+        "content": "\n                    <p><strong>New Capability:</strong> Move files between categories without restarting the application.</p>\n                    <p class=\"mt-2\">This feature greatly improves workflow efficiency for managing large image collections.</p>\n                "
+      },
+      {
+        "title": "Fixes",
+        "content": "\n                    <h4 class=\"font-semibold mb-2\">Resolved Issues:</h4>\n                    <ul class=\"list-disc pl-5\">\n                        <li>Fixed content offset when scrolling through images</li>\n                        <li>Resolved issues with drag and drop functionality</li>\n                    </ul>\n                "
+      }
+    ]
+  },
+  {
+    "version": "0.1.2 - beta",
+    "date": "08-11-2024",
+    "sections": [
+      {
+        "title": "Features",
+        "type": "feature",
+        "content": "\n                    <h3 class=\"text-lg font-semibold mb-2\">Tag Feature</h3>\n                    <p>Introducing a powerful tagging system for your images:</p>\n                    <ul class=\"list-disc pl-5 mt-2\">\n                        <li>Add custom tags to images (e.g., action, sexy, etc.)</li>\n                        <li>Organize and find images based on tags</li>\n                        <li>Improve categorization within your image collections</li>\n                    </ul>\n                    <p class=\"mt-2\">This feature allows for more granular organization and easier image retrieval.</p>\n                "
+      },
+      {
+        "title": "Quality of Life",
+        "type": "Qol",
+        "content": "\n                    <h4 class=\"font-semibold mb-2\">Improvements:</h4>\n                    <ul class=\"list-disc pl-5\">\n                        <li>Implemented file moving instead of copying to avoid redundancy</li>\n                        <li>Added confirmation modal when adding images to categories</li>\n                        <li>Introduced fading effect for smoother image loading</li>\n                        <li>Category selection now remembers the last browsed category</li>\n                        <li>Integrated Discord Rich Presence support</li>\n                        <li>Enhanced progress logging for better user feedback during operations</li>\n                    </ul>\n                "
+      },
+      {
+        "title": "Optimize",
+        "content": "\n                    <p><strong>Performance Improvement:</strong> Implemented image unloading for off-screen content to reduce memory usage.</p>\n                "
+      }
+    ]
+  },
+  {
+    "version": "0.1.1 - beta",
+    "date": "06-11-2024",
+    "sections": [
+      {
+        "title": "Performance",
+        "content": "\n                    <h4 class=\"font-semibold mb-2\">Optimizations:</h4>\n                    <ul class=\"list-disc pl-5\">\n                        <li>Enhanced multithreading for flaskLog and flaskProcess</li>\n                        <li>Improved response times for HTTP requests</li>\n                    </ul>\n                "
+      },
+      {
+        "title": "Quality of Life",
+        "content": "\n                    <h4 class=\"font-semibold mb-2\">UI Enhancements:</h4>\n                    <ul class=\"list-disc pl-5\">\n                        <li>Added confirmation dialog for category deletion</li>\n                        <li>Implemented modal for creating new categories</li>\n                        <li>Introduced feedback modals for successful or failed edits</li>\n                    </ul>\n                "
+      },
+      {
+        "title": "Fixes",
+        "content": "<p><strong>Bug Fix:</strong> Resolved issues with category editing functionality.</p>"
+      }
+    ]
+  },
+  {
+    "version": "0.1.0 - beta",
+    "date": "05-11-2024",
+    "sections": [
+      {
+        "title": "Initial Beta",
+        "type": "feature",
+        "content": "\n                    <p>Welcome to the first beta release of LockerZ!</p>\n                    <p class=\"mt-2\">This application aims to solve the problem of inefficient reference image management for artists and designers.</p>\n                    <p class=\"mt-2\">Key features:</p>\n                    <ul class=\"list-disc pl-5 mt-2\">\n                        <li>Real-time image preview</li>\n                        <li>Easy navigation through categorized images</li>\n                        <li>Streamlined workflow for managing large image collections</li>\n                    </ul>\n                "
+      },
+      {
+        "title": "Concept",
+        "type": "concept",
+        "content": "\n                    <p>LockerZ is designed around the concept of a digital locker room for your images:</p>\n                    <ul class=\"list-disc pl-5 mt-2\">\n                        <li>Store and organize images in virtual \"lockers\" (categories)</li>\n                        <li>Navigate your image collection using intuitive category names</li>\n                        <li>All files are stored locally at: <code>C:\\Users\\\"YourUser\"\\LockerZ</code></li>\n                    </ul>\n                    <p class=\"mt-2\">Think of it as a matrix-like environment where you can navigate your visual references effortlessly!</p>\n                "
+      },
+      {
+        "title": "Category",
+        "type": "category",
+        "content": "\n                    <h4 class=\"font-semibold mb-2\">Category Management:</h4>\n                    <ul class=\"list-disc pl-5\">\n                        <li>Start with a clean slate - create categories based on your needs</li>\n                        <li>Navigate your files efficiently using custom categories</li>\n                        <li>Edit or delete categories as your needs evolve (ensure categories are empty before editing)</li>\n                    </ul>\n                "
+      },
+      {
+        "title": "Locker",
+        "type": "feature",
+        "content": "\n                    <p>The core of LockerZ - your personal image vaults:</p>\n                    <ul class=\"list-disc pl-5 mt-2\">\n                        <li>Each category acts as a separate \"locker\" for your images</li>\n                        <li>Built-in image preview functionality for quick reference</li>\n                        <li>Efficient storage and retrieval of your visual assets</li>\n                    </ul>\n                "
+      },
+      {
+        "title": "Image Preview",
+        "type": "preview",
+        "content": "\n                    <p>Enhanced image viewing experience:</p>\n                    <ul class=\"list-disc pl-5 mt-2\">\n                        <li>View images without excessive zooming (no more 300% zoom required!)</li>\n                        <li>Click to see full-size images for detailed inspection</li>\n                        <li>Smooth and responsive image loading for a seamless experience</li>\n                    </ul>\n                "
+      },
+      {
+        "title": "Drag n Drop",
+        "type": "feature",
+        "content": "\n                    <p><strong>Intuitive File Management:</strong> Easily upload images to your categories using drag and drop functionality.</p>\n                    <p class=\"mt-2\">This feature streamlines the process of populating your image collection, making organization a breeze.</p>\n                "
+      }
+    ]
+  }
+]
