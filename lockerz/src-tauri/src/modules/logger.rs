@@ -1,3 +1,4 @@
+use crate::modules::pathutils::get_main_path;
 use chrono::{Local, TimeZone, Utc};
 use once_cell::sync::Lazy;
 use std::fmt::Arguments;
@@ -5,7 +6,6 @@ use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::modules::pathutils::get_main_path;
 
 pub struct Logger {
     log_dir: PathBuf,

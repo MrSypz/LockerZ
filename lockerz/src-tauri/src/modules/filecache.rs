@@ -32,8 +32,8 @@ impl FileCache {
             fs::create_dir_all(cache_dir)?;
         }
 
-        let serialized_data = serialize(content)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+        let serialized_data =
+            serialize(content).map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
 
         let mut file = File::create(cache_path)?;
         file.write_all(&serialized_data)?;

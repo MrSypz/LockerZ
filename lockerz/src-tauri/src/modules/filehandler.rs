@@ -1,11 +1,11 @@
 use crate::modules::config::get_config;
 use crate::modules::filecache::{FileCache, FileInfo};
+use crate::modules::pathutils::get_main_path;
 use crate::{log_error, log_info};
 use serde::{Deserialize, Serialize};
 use std::fs::{self};
 use std::io;
 use std::path::{Path, PathBuf};
-use crate::modules::pathutils::get_main_path;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FileMoveResponse {
@@ -59,7 +59,11 @@ pub async fn move_file(
         }
     };
 
-    log_info!("File {} has been uploaded to category: {}", file_name, category);
+    log_info!(
+        "File {} has been uploaded to category: {}",
+        file_name,
+        category
+    );
     let category_cache_path = main_path.join("cache").join(format!(
         "{}_files.bin",
         FileCache::hash_directory_path(&root_folder_path, &category)
@@ -68,17 +72,13 @@ pub async fn move_file(
 
     // Add file info to category cache if not already present
     if !category_cache.iter().any(|f| f.name == file_name) {
-        let file_info = FileCache::create_file_info(
-            file_name.clone(),
-            category.clone(),
-            &target_path,
-            &stats,
-        )
-            .map_err(|e| {
-                let error_msg = format!("Error creating file info: {}", e);
-                log_error!("{}", error_msg);
-                error_msg
-            })?;
+        let file_info =
+            FileCache::create_file_info(file_name.clone(), category.clone(), &target_path, &stats)
+                .map_err(|e| {
+                    let error_msg = format!("Error creating file info: {}", e);
+                    log_error!("{}", error_msg);
+                    error_msg
+                })?;
 
         category_cache.push(file_info);
 
@@ -105,11 +105,11 @@ pub async fn move_file(
             &target_path,
             &stats,
         )
-            .map_err(|e| {
-                let error_msg = format!("Error creating all category file info: {}", e);
-                log_error!("{}", error_msg);
-                error_msg
-            })?;
+        .map_err(|e| {
+            let error_msg = format!("Error creating all category file info: {}", e);
+            log_error!("{}", error_msg);
+            error_msg
+        })?;
 
         all_cache.push(all_file_info);
 
@@ -124,12 +124,7 @@ pub async fn move_file(
     // Return successful response
     Ok(FileMoveResponse {
         success: true,
-        file: FileCache::create_file_info(
-            file_name,
-            category,
-            &target_path,
-            &stats,
-        )
+        file: FileCache::create_file_info(file_name, category, &target_path, &stats)
             .map_err(|e| format!("Error creating response file info: {}", e))?,
     })
 }
@@ -154,8 +149,8 @@ pub async fn delete_file(category: String, name: String) -> Result<FileDeleteRes
         "{}_files.bin",
         FileCache::hash_directory_path(&root_folder_path, &category)
     ));
-    let mut cache = FileCache::read_cache(&cache_path)
-        .map_err(|e| format!("Error reading cache: {}", e))?;
+    let mut cache =
+        FileCache::read_cache(&cache_path).map_err(|e| format!("Error reading cache: {}", e))?;
 
     FileCache::remove_file_from_cache(&mut cache, &name);
 
@@ -250,7 +245,7 @@ pub async fn move_file_category(
     })?;
 
     if let Some(pos) = old_cache.iter().position(|f| f.name == file_name) {
-       old_cache.remove(pos);
+        old_cache.remove(pos);
 
         // Get updated metadata for the file
         let metadata = fs::metadata(&new_path).map_err(|e| {
@@ -265,11 +260,11 @@ pub async fn move_file_category(
             &new_path,
             &metadata,
         )
-            .map_err(|e| {
-                let error_msg = format!("Error creating updated file info: {}", e);
-                log_error!("{}", error_msg);
-                error_msg
-            })?;
+        .map_err(|e| {
+            let error_msg = format!("Error creating updated file info: {}", e);
+            log_error!("{}", error_msg);
+            error_msg
+        })?;
 
         let mut new_cache = FileCache::read_cache(&new_cache_path).map_err(|e| {
             let error_msg = format!("Error reading new cache: {}", e);

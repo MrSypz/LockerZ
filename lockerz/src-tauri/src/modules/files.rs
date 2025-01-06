@@ -1,9 +1,9 @@
 use crate::modules::config::get_config;
 use crate::modules::filecache::{FileCache, FileInfo};
+use crate::modules::pathutils::get_main_path;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
-use crate::modules::pathutils::get_main_path;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FileResponse {
@@ -53,7 +53,8 @@ pub async fn get_files(
                         .map_err(|e| format!("Error reading category folder: {}", e))?;
 
                     for file_entry in category_files {
-                        let file_entry = file_entry.map_err(|e| format!("Error reading file entry: {}", e))?;
+                        let file_entry =
+                            file_entry.map_err(|e| format!("Error reading file entry: {}", e))?;
                         let file_name = file_entry.file_name().to_string_lossy().to_string();
                         let file_path = category_path.join(&file_name);
                         let metadata = fs::metadata(&file_path)
@@ -64,7 +65,8 @@ pub async fn get_files(
                             category_name.clone(),
                             &file_path,
                             &metadata,
-                        ).map_err(|e| format!("Error creating file info: {}", e))?;
+                        )
+                        .map_err(|e| format!("Error creating file info: {}", e))?;
 
                         cached_files.push(file_info);
                     }
@@ -193,7 +195,7 @@ pub fn synchronize_cache_with_filesystem(root_folder_path: &Path) -> Result<(), 
                             &file_path,
                             &metadata,
                         )
-                            .map_err(|e| format!("Error creating all category file info: {}", e))?;
+                        .map_err(|e| format!("Error creating all category file info: {}", e))?;
 
                         all_cache.push(all_file_info);
                     }
@@ -206,9 +208,8 @@ pub fn synchronize_cache_with_filesystem(root_folder_path: &Path) -> Result<(), 
         }
     }
 
-    FileCache::write_cache(&all_cache_path, &all_cache).map_err(|e| {
-        format!("Error writing 'All' category cache: {}", e)
-    })?;
+    FileCache::write_cache(&all_cache_path, &all_cache)
+        .map_err(|e| format!("Error writing 'All' category cache: {}", e))?;
 
     Ok(())
 }

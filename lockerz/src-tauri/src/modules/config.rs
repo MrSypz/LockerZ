@@ -1,4 +1,5 @@
 use crate::modules::files::synchronize_cache_with_filesystem;
+use crate::modules::logger::LOGGER;
 use crate::modules::pathutils::get_main_path;
 use crate::{log_error, log_info, log_pre};
 use once_cell::sync::Lazy;
@@ -8,7 +9,6 @@ use std::fs;
 use std::io::{self};
 use std::path::{Path, PathBuf};
 use std::sync::RwLock;
-use crate::modules::logger::LOGGER;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
@@ -88,7 +88,7 @@ impl Config {
             match fs::create_dir_all(&uncategorized_dir) {
                 Ok(_) => {
                     LOGGER.pre(format_args!("uncategorized has been created successfully!"))?;
-                },
+                }
                 Err(e) => {
                     log_error!("Failed to create uncategorized directory: {}", e);
                     return Err(e);
@@ -105,8 +105,8 @@ impl Default for Config {
             folderPath: Path::new(
                 &std::env::var("USERPROFILE").unwrap_or_else(|_| std::env::var("HOME").unwrap()),
             )
-                .join("Documents")
-                .join("LockerZ"),
+            .join("Documents")
+            .join("LockerZ"),
             rememberCategory: true,
             lang: "en".to_string(),
             imageQuality: 75,
@@ -199,9 +199,15 @@ pub async fn update_settings(new_settings: Value) -> Result<Config, String> {
             return Err(format!("Failed to create uncategorized directory: {}", e));
         }
     }
-    if let Some(remember_category) = new_settings.get("rememberCategory").and_then(|v| v.as_bool()) {
+    if let Some(remember_category) = new_settings
+        .get("rememberCategory")
+        .and_then(|v| v.as_bool())
+    {
         current_config.rememberCategory = remember_category;
-        log_info!("Updated remember category: {}", current_config.rememberCategory);
+        log_info!(
+            "Updated remember category: {}",
+            current_config.rememberCategory
+        );
     }
     if let Some(lang) = new_settings.get("lang").and_then(|v| v.as_str()) {
         current_config.lang = lang.to_string();

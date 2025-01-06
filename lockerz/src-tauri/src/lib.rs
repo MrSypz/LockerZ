@@ -6,8 +6,8 @@ mod modules {
     pub mod files;
     pub mod imgoptimize;
     pub mod logger;
-    pub mod stats;
     pub mod pathutils;
+    pub mod stats;
 }
 
 use modules::{
