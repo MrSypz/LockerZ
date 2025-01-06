@@ -20,10 +20,7 @@ export function Sidebar() {
     { icon: Image, label: t('sidebar.image'), href: "/locker" },
     { icon: FolderOpen, label: t('sidebar.folder'), href: "/category" },
     { icon: Settings, label: t('sidebar.settings'), href: "/settings" },
-    { icon: Info , label: t('sidebar.about'), href: "/about" },
-    ...(process.env.NODE_ENV === 'development' ? [
-      { icon: Code, label: "Dev", href: "/generatepatch" }
-    ] : [])
+    { icon: Info , label: t('sidebar.about'), href: "/about" }
   ]
 
   useEffect(() => {
