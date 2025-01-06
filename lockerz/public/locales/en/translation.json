@@ -92,7 +92,8 @@
     },
     "search": {
       "results": "Found {{count}} image(s)",
-      "placeholder": "Type the Image name"
+      "placeholder": "Type the Image name",
+      "no_results": "No results found for \"{{searchTerm}}\"."
     },
     "toast": {
       "errorfetching": "Error fetching current settings"

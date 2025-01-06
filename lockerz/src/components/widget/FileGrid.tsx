@@ -8,7 +8,7 @@ import {FileContextMenu} from '@/components/widget/Context-menu'
 import {File} from '@/types/file'
 import {motion, AnimatePresence} from "framer-motion"
 import {useTranslation} from 'react-i18next'
-import {ArrowDown, ArrowUp, ArrowUpDown, Clock, ClockArrowUp, FileIcon, Search, Text} from 'lucide-react'
+import {AlertCircle, ArrowDown, ArrowUp, ArrowUpDown, Clock, ClockArrowUp, FileIcon, Search, Text} from 'lucide-react'
 import {ImageViewer} from './Image-viewer';
 import {useSharedSettings} from "@/utils/SettingsContext";
 import {OptimizedImage} from "@/components/widget/ImageProcessor";
@@ -178,7 +178,7 @@ export function FileGrid({
     return (
         <div className="space-y-4">
             <div className="flex items-center space-x-4">
-                <div className="relative bg-black flex-grow">
+                <div className="relative bg-black/50 flex-grow">
                     <Input
                         type="text"
                         placeholder={t('locker.search.placeholder')}
@@ -322,19 +322,26 @@ export function FileGrid({
                 key={`${sortCriteria}-${sortOrder}`}
             >
                 <AnimatePresence>
-                    {sortedFiles.map((file, index) => (
-                        <FileCard
-                            key={`${file.category}-${file.name}`}
-                            file={file}
-                            onView={() => onViewFileAction(file)}
-                            onDelete={() => onDeleteFileAction(file)}
-                            onMove={() => onMoveFileAction(file)}
-                            onSelect={() => handleSelectImage(index)}
-                            index={index}
-                            column={index % totalColumns}
-                            totalColumns={totalColumns}
-                        />
-                    ))}
+                    {sortedFiles.length > 0 ? (
+                        sortedFiles.map((file, index) => (
+                            <FileCard
+                                key={`${file.category}-${file.name}`}
+                                file={file}
+                                onView={() => onViewFileAction(file)}
+                                onDelete={() => onDeleteFileAction(file)}
+                                onMove={() => onMoveFileAction(file)}
+                                onSelect={() => handleSelectImage(index)}
+                                index={index}
+                                column={index % totalColumns}
+                                totalColumns={totalColumns}
+                            />
+                        ))
+                    ) : (
+                        <div className="col-span-full flex flex-col items-center justify-center h-64 mt-8">
+                            <AlertCircle className="w-12 h-12 text-muted-foreground mb-4"/>
+                            <p className="text-muted-foreground font-medium">{t('locker.search.no_results', {searchTerm})}</p>
+                        </div>
+                    )}
                 </AnimatePresence>
             </motion.div>
             {selectedImageIndex !== null && (
