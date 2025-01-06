@@ -5,6 +5,7 @@ import i18n from 'i18next'
 import { initReactI18next, I18nextProvider } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import resourcesToBackend from 'i18next-resources-to-backend'
+import {languages} from "@/lib/lang";
 
 interface I18nProviderProps {
     children: React.ReactNode;
@@ -20,7 +21,7 @@ const initI18n = async (initialLang: string) => {
             .use(resourcesToBackend((language: string, namespace: string) => import(`../../public/locales/${language}/${namespace}.json`)))
             .init({
                 fallbackLng: initialLang,
-                supportedLngs: ['en', 'th'],
+                supportedLngs: Object.keys(languages),  // Dynamically use keys from the languages object
                 lng: initialLang,
                 interpolation: {
                     escapeValue: false,

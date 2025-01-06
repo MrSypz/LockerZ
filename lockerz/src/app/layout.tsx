@@ -5,7 +5,7 @@ import '../styles/scrollbar.css'
 import { ThemeProvider } from '@/components/Theme-provider'
 import { Toaster } from '@/components/ui/toaster'
 import I18nProvider from '@/components/I18nProvider'
-import { notoSansMono, notoSansThai } from '@/lib/fonts'
+import { notoSansMono } from '@/lib/fonts'
 import React, { useEffect, useState, useCallback } from "react"
 import { usePathname } from 'next/navigation'
 import {Sidebar} from "@/components/widget/Sidebar";
@@ -13,6 +13,7 @@ import { SettingsProvider } from "@/utils/SettingsContext";
 import {invoke} from "@tauri-apps/api/core";
 // @ts-ignore
 import { WebviewWindow } from "@tauri-apps/api/window"
+import {languages} from "@/lib/lang";
 
 interface Settings {
     folderPath: string;
@@ -67,8 +68,7 @@ export default function RootLayout({
 
     useEffect(() => {
         if (!mounted) {
-            fetchLanguageSetting()
-            setMounted(true)
+            fetchLanguageSetting().then(r => setMounted(true))
         }
     }, [mounted, fetchLanguageSetting])
 
@@ -78,7 +78,8 @@ export default function RootLayout({
         }
     }, [pathname, mounted, fetchLanguageSetting])
 
-    const fontClass = currentLang === 'th' ? notoSansThai.className : notoSansMono.className
+    const fontClass = languages[currentLang]?.fontClass.className || notoSansMono.className;
+
     return (
         <html lang={currentLang} suppressHydrationWarning>
         <body className={`${fontClass} custom-scrollbar`}>

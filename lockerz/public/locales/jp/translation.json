@@ -1,0 +1,160 @@
+{
+  "toast": {
+    "titleType": {
+      "error": "エラーが発生しました",
+      "success": "成功しました",
+      "warning": "警告が出ました"
+    }
+  },
+  "sidebar": {
+    "home": "ダッシュボード",
+    "image": "ロッカー",
+    "folder": "カテゴリー",
+    "settings": "設定",
+    "about": "このアプリについて"
+  },
+  "dashboard": {
+    "content": {
+      "totalimg": "保存した画像の数",
+      "category": "カテゴリー数",
+      "storageused": "メモリ使用量",
+      "categories": "カテゴリー"
+    },
+    "header": "ダッシュボード"
+  },
+  "category": {
+    "image": {
+      "sort": {
+        "button": "並べ替え",
+        "title": "並べ替え",
+        "by-name": "名前順",
+        "by-date": "日付順",
+        "by-size": "サイズ順",
+        "by-createat": "作成日",
+        "ascending": "昇順",
+        "descending": "降順"
+      }
+    },
+    "dragdrop": {
+      "idle": "ここにファイルをドロップ！",
+      "hover": "ドラッグ＆ドロップ　もしくは　クリックでファイルを選ぶ"
+    },
+    "search": "カテゴリーを探す...",
+    "allCategories": "すべてのカテゴリー",
+    "tags-empty": "タグ無し"
+  },
+  "categories": {
+    "imageSelection": {
+      "title": "カテゴリーを選ぶ",
+      "noImages": "このカテゴリーには画像がありません…"
+    },
+    "edit": {
+      "title": "カテゴリー編集",
+      "description": "カテゴリの詳細を変更するか、新しい仮の画像を選択します。",
+      "rename": "名称の変更",
+      "changePlaceholder": "仮の画像の変更",
+      "delete": "カテゴリーの消去"
+    },
+    "delete": {
+      "title": "カテゴリーの消去",
+      "description": "本当にこのカテゴリーを削除しますか？この操作は取り消せません。"
+    },
+    "page": {
+      "head": "カテゴリー",
+      "createcat": "カテゴリーを作る",
+      "dialog": {
+        "title": "新しいカテゴリーを作る",
+        "desc": "新しいカテゴリー名を入力！",
+        "input": "カテゴリー名",
+        "action": "作る"
+      }
+    }
+  },
+  "common": {
+    "cancel": "キャンセル",
+    "confirm": "確認する",
+    "delete": "消去"
+  },
+  "locker": {
+    "dialog": {
+      "move": {
+        "title": "カテゴリーを移動する",
+        "desc": "このファイルの移動先を選択してください",
+        "selector": "カテゴリーを選ぶ",
+        "cancel": "キャンセル",
+        "click": "実行"
+      },
+      "menu": {
+        "viewpath": "エクスプローラーで見る",
+        "move": "移動中...",
+        "delete": "消去"
+      }
+    },
+    "search": {
+      "results": "画像が {{count}}見つかりました",
+      "placeholder": "画像の名前を入力してください",
+      "no_results": " \"{{searchTerm}}\"　の結果は見つかりませんでした."
+    },
+    "toast": {
+      "errorfetching": "現在の設定の取得エラー"
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "rootFolder": {
+      "title": "もとになるフォルダの設定",
+      "description": "LockerZのもとになるフォルダを設定し、ファイルやカテゴリーを管理します。",
+      "currentPath": "現在、設定しているフォルダ:",
+      "newPath": "新しい設定先:",
+      "selectFolder": "フォルダを選ぶ",
+      "applyNewPath": "変更を適用する"
+    },
+    "languageSettings": {
+      "title": "言語設定",
+      "description": "お好きな言語をお選びください",
+      "language": "言語"
+    },
+    "lockerSettings": {
+      "title": "ロッカーの設定",
+      "description": "ロッカーの設定を行います",
+      "rememberCategory": "最後に選択したカテゴリーを記憶する",
+      "imageQuality": "画像の解像度",
+      "imageQuality.description": "表示する画像の画質を設定します。画質を上げるとファイルサイズが大きくなります。",
+      "imageWidth": "画像の幅",
+      "imageWidth.description": "表示する画像の最大幅をピクセル単位で設定します。",
+      "imageHeight": "画像の高さ",
+      "imageHeight.description": "表示する画像の最大高さをピクセル単位で設定します。"
+    },
+    "performanceImpact": {
+      "veryhigh": "非常に大きい",
+      "high": "大きい",
+      "medium": "少し大きい",
+      "low": "小さい"
+    },
+    "toast": {
+      "error": "設定の変更に失敗しました",
+      "success": "設定の変更に成功しました"
+    }
+  },
+  "about": {
+    "title": "LockerZについて",
+    "description": {
+      "title": "LockerZとは?",
+      "subtitle": "個人の画像整理の解決策",
+      "content1": "LockerZはシンプルな画像整理ツールで、アーティストが効率的に視覚資料を作成できるようにデザインされています。",
+      "content2": "LockerZを使えば、画像のコレクションを簡単に分類、検索、アクセスすることができます。",
+      "content3": "コンセプトアートの制作、アイデアの収集、参考資料の検索など、インスピレーションを整理する方法が必要なとき、LockerZがあなたをカバーします。"
+    },
+    "reportIssue": "問題を報告する",
+    "appDetails": {
+      "title": "アプリ詳細",
+      "description": "LockerZのシステム情報",
+      "version": "Ver",
+      "developer": "開発者",
+      "website": "Web",
+      "license": "ライセンス",
+      "copyright": "© {2024} MrSypz. 無断転載、複写を禁じます。"
+    }
+  }
+}
+

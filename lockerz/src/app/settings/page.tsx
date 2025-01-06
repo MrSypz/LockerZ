@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { useSettings } from '@/hooks/useSettings'
 import { Loader2 } from 'lucide-react'
 import { PerformanceImpact } from '@/components/ui/performance-impact'
+import {languages} from "@/lib/lang";
 
 export default function Settings() {
     const { t, i18n } = useTranslation()
@@ -134,8 +135,11 @@ export default function Settings() {
                                         <SelectValue placeholder={t('settings.languageSettings.language')}/>
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="en">English</SelectItem>
-                                        <SelectItem value="th">ไทย</SelectItem>
+                                        {Object.values(languages).map((language) => (
+                                            <SelectItem key={language.code} value={language.code}>
+                                                {language.label}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
