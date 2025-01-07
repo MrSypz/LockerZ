@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useState, useEffect, useCallback, useRef} from 'react'
+import React, {useState, useEffect, useCallback} from 'react'
 import {toast} from "@/hooks/use-toast"
 import {Loader2, AlertCircle} from 'lucide-react'
 import {open} from '@tauri-apps/plugin-dialog'
@@ -22,11 +22,7 @@ import {PaginationControls} from '@/components/widget/PaginationControls'
 import {File, FileResponse, Category} from '@/types/file'
 import {useTranslation} from "react-i18next";
 import {useSharedSettings} from "@/utils/SettingsContext";
-
-const ALLOWED_FILE_TYPES = ['.png', '.jpg', '.jpeg', '.jfif', '.webp'];
-
-const PAGE_STORAGE_KEY = 'lockerz-current-page'
-const IMAGES_PER_PAGE_STORAGE_KEY = 'lockerz-images-per-page'
+import {ALLOWED_FILE_TYPES, IMAGES_PER_PAGE_STORAGE_KEY, PAGE_STORAGE_KEY} from "@/lib/localstoragekey";
 
 interface FileMoveResponse {
     success: boolean;
@@ -135,46 +131,6 @@ export default function Locker() {
             setIsCategoriesLoading(false)
         }
     }, [t]);
-    useEffect(() => {
-        const savedPage = localStorage.getItem(PAGE_STORAGE_KEY);
-        const savedImagesPerPage = localStorage.getItem(IMAGES_PER_PAGE_STORAGE_KEY);
-
-        if (savedPage) {
-            setCurrentPage(parseInt(savedPage, 10));
-        }
-        if (savedImagesPerPage) {
-            setImagesPerPage(parseInt(savedImagesPerPage, 10));
-        }
-
-        if (rememberCategory && selectedCategory) {
-            localStorage.setItem('lastSelectedCategory', selectedCategory);
-        }
-
-        // Fetch categories, files, and pagination data only once
-        const loadData = async () => {
-            await fetchCategories(); // Fetch categories
-            if (isRememberCategory()) {
-                const lastCategory = localStorage.getItem('lastSelectedCategory');
-                if (lastCategory) {
-                    setSelectedCategory(lastCategory); // Set the last selected category
-                }
-            }
-            await fetchAllFiles(); // Fetch files
-            await fetchPaginatedFiles(); // Fetch paginated files
-        };
-
-        loadData(); // Call the async function only once
-
-    }, [
-        selectedCategory,        // Dependency on selected category
-        currentPage,             // Dependency on current page
-        imagesPerPage,           // Dependency on images per page
-        rememberCategory,        // Dependency on remember category
-        isRememberCategory,      // Dependency on category remember setting
-        fetchCategories,         // Function dependencies
-        fetchAllFiles,           // Function dependencies
-        fetchPaginatedFiles,     // Function dependencies
-    ]);
 
     const handleFileDrop = useCallback(async (droppedFiles?: string[]) => {
         let filesToProcess: (globalThis.File | string)[] = [];
@@ -338,6 +294,40 @@ export default function Locker() {
         localStorage.setItem(IMAGES_PER_PAGE_STORAGE_KEY, value.toString());
         localStorage.setItem(PAGE_STORAGE_KEY, '1');
     };
+
+    useEffect(() => {
+        const savedPage = localStorage.getItem(PAGE_STORAGE_KEY);
+        const savedImagesPerPage = localStorage.getItem(IMAGES_PER_PAGE_STORAGE_KEY);
+        if (savedPage) setCurrentPage(parseInt(savedPage, 10));
+        if (savedImagesPerPage) setImagesPerPage(parseInt(savedImagesPerPage, 10));
+
+        if (rememberCategory && selectedCategory) localStorage.setItem('lastSelectedCategory', selectedCategory);
+
+        // Fetch categories, files, and pagination data only once
+        const loadData = async () => {
+            await fetchCategories(); // Fetch categories
+            if (rememberCategory) {
+                const lastCategory = localStorage.getItem('lastSelectedCategory');
+                if (lastCategory) {
+                    setSelectedCategory(lastCategory); // Set the last selected category
+                }
+            }
+            await fetchAllFiles(); // Fetch files
+            await fetchPaginatedFiles(); // Fetch paginated files
+        };
+
+        loadData(); // Call the async function only once
+
+    }, [
+        selectedCategory,        // Dependency on selected category
+        currentPage,             // Dependency on current page
+        imagesPerPage,           // Dependency on images per page
+        rememberCategory,        // Dependency on remember category
+        isRememberCategory,      // Dependency on category remember setting
+        fetchCategories,         // Function dependencies
+        fetchAllFiles,           // Function dependencies
+        fetchPaginatedFiles,     // Function dependencies
+    ]);
 
     return (
         <div className="flex h-screen">
