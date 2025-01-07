@@ -1,5 +1,26 @@
 [
   {
+    "version": "0.3.4 - beta",
+    "date": "8-1-2025",
+    "sections": [
+      {
+        "title": "Feature",
+        "type": "feature",
+        "content": "<h3 class=\"text-lg font-semibold mb-2\">Move Category</h3> Rewrite make it more easy to use like search and scrollable instead of pointing to the arrow "
+      },
+      {
+        "title": "Improvement",
+        "content": "    <p>Minor Improvement:</p>    <ul class=\"list-disc pl-5 mt-2\">        <li>- From delete image it nolonger permanent detele it just move to trash/bin instead</li> </ul>",
+        "type": "preview"
+      },
+      {
+        "title": "Fix",
+        "type": "concept",
+        "content": "    <p>Minor Fix:</p>    <ul class=\"list-disc pl-5 mt-2\">        <li>- Time in logger use utc instead of localtime</li>        <li>- Not update correctly when drop file</li></ul>"
+      }
+    ]
+  },
+  {
     "version": "0.3.3 - beta",
     "date": "6-1-2025",
     "sections": [
