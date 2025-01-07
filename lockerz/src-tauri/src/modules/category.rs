@@ -1,5 +1,4 @@
 use crate::modules::config::get_config;
-use rayon::prelude::*;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 use tokio::fs;
