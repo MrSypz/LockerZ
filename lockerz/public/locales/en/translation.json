@@ -82,7 +82,8 @@
         "desc": "Select a category to move this file to",
         "selector": "Select category",
         "cancel": "Cancel",
-        "click": "Move"
+        "click": "Move",
+        "search": "Please enter the category of the image you want to move."
       },
       "menu": {
         "viewpath": "Open in Explorer",
