@@ -43,9 +43,7 @@ export default function Locker() {
     const [allFiles, setAllFiles] = useState<File[]>([])
     const [categories, setCategories] = useState<Category[]>([])
     const [selectedCategory, setSelectedCategory] = useState<string>(() => {
-        if (typeof window !== 'undefined' && settings.rememberCategory) {
-            return localStorage.getItem('lastSelectedCategory') || 'all';
-        }
+        if (typeof window !== 'undefined' && settings.rememberCategory) return localStorage.getItem('lastSelectedCategory') || 'all';
         return 'all';
     });
     const [isLoading, setIsLoading] = useState(true)
