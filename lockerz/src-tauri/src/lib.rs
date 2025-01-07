@@ -8,14 +8,19 @@ mod modules {
     pub mod logger;
     pub mod pathutils;
     pub mod stats;
+    pub mod db;
 }
 
 use modules::{
     category::create_category, category::delete_category, category::get_categories,
-    category::rename_category, config::get_settings, config::setup_folders,
-    config::update_settings, filehandler::delete_file, filehandler::move_file,
-    filehandler::move_file_category, files::get_files, imgoptimize::handle_optimize_image_request,
-    logger::LOGGER, stats::get_stats,
+    category::rename_category,
+    config::get_settings, config::setup_folders,config::update_settings,
+    db::init_db,
+    filehandler::delete_file,    filehandler::move_file, filehandler::move_file_category,
+    files::get_files,
+    imgoptimize::handle_optimize_image_request,
+    logger::LOGGER,
+    stats::get_stats
 };
 use tauri::Manager;
 use window_vibrancy::apply_acrylic;
@@ -35,6 +40,7 @@ fn show_in_folder(path: String) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let _ = setup_folders();
+    let _ = init_db();
     log_pre!("Application started");
 
     tauri::Builder::default()
