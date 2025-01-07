@@ -65,8 +65,6 @@ export default function Locker() {
     })
     const [rememberCategory, setRememberCategory] = useState(settings.rememberCategory)
 
-    const categoryRef = useRef(selectedCategory);
-
     const isRememberCategory = useCallback(() => {
         setRememberCategory(settings.rememberCategory);
         if (!settings.rememberCategory) {
@@ -216,7 +214,7 @@ export default function Locker() {
             return;
         }
 
-        const category = categoryRef.current === 'all' ? 'uncategorized' : categoryRef.current;
+        const category = selectedCategory === 'all' ? 'uncategorized' : selectedCategory;
 
         const duplicateFiles = validFiles.filter(file =>
             files.some(existingFile => existingFile.name === getFileName(file) && existingFile.category === category)
@@ -259,7 +257,7 @@ export default function Locker() {
         }
 
         if (successCount) {
-            toast({title: t('toast.titleType.success'), description: `${successCount} file(s) moved successfully`});
+            toast({title: t('toast.titleType.success'), description: `${successCount} file(s) moved to ${category} successfully`});
         }
         if (failCount) {
             toast({
@@ -315,7 +313,7 @@ export default function Locker() {
             setFiles(prevFiles => prevFiles.filter(f => f.name !== selectedFile.name || f.category !== selectedFile.category))
             toast({
                 title: t('toast.titleType.success'),
-                description: "File moved successfully",
+                description: `File ${selectedFile.name} moved to ${newCategory}successfully`,
             })
         } catch (error) {
             toast({
