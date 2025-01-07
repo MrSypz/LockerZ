@@ -40,7 +40,7 @@ fn show_in_folder(path: String) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let _ = setup_folders();
-    let _ = init_db();
+    // let _ = init_db(); comment
     log_pre!("Application started");
 
     tauri::Builder::default()
