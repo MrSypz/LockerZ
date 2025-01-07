@@ -369,13 +369,9 @@ interface FileCardProps {
 function FileCard({file, onDelete, onMove, onView, onSelect, index, column, totalColumns}: FileCardProps) {
     const {t} = useTranslation();
     const {settings} = useSharedSettings();
-    const row = Math.floor(index / totalColumns)
-    const isDarkSquare = (row + column) % 2 === 0
-    const getOffset = () => {
-        const columnDirection = column % 2 === 0 ? 1 : -1;
-        const offsetAmount = 12;
-        return columnDirection * offsetAmount;
-    };
+    const row = Math.floor(index / totalColumns);
+    const isDarkSquare = (row + column) % 2 === 0;
+    const offset = (column % 2 === 0 ? 1 : -1) * 12;
 
     return (
         <FileContextMenu
@@ -385,34 +381,26 @@ function FileCard({file, onDelete, onMove, onView, onSelect, index, column, tota
             onMoveAction={onMove}
         >
             <motion.div
-                layout
-                initial={{opacity: 0, scale: 0.8, y: 50}}
+                layout="position"
                 animate={{
-                    opacity: 1,
-                    scale: 1,
-                    y: getOffset(),
-                    transition: {
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 24,
-                        mass: 0.8,
-                    }
+                    y: offset,
                 }}
-                exit={{opacity: 0, scale: 0.8, y: 50}}
                 transition={{
-                    opacity: {duration: 0.2},
-                    layout: {type: "spring", stiffness: 300, damping: 24}
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 25,
+                    mass: 1,
                 }}
                 whileHover={{
                     scale: 1.05,
                     zIndex: 10,
-                    transition: {duration: 0.2}
+                    transition: { duration: 0.2 }
                 }}
                 className="relative"
-                style={{zIndex: 1000 - index}}
+                style={{ zIndex: 1000 - index }}
             >
                 <Card
-                    className={`overflow-hidden transition-all duration-300 ease-in-out hover:ring-2 hover:ring-primary/50 cursor-pointer ${
+                    className={`overflow-hidden transition-all duration-200 ease-in-out  hover:ring-2 hover:ring-primary/50 cursor-pointer ${
                         isDarkSquare
                             ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                             : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
@@ -429,26 +417,23 @@ function FileCard({file, onDelete, onMove, onView, onSelect, index, column, tota
                                 quality={settings.imageQuality}
                             />
                         </div>
-                        <motion.div
+                        <div
                             className={`p-3 space-y-1.5 ${
                                 isDarkSquare
                                     ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                                     : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
                             }`}
-                            initial={{opacity: 0, y: 20}}
-                            animate={{opacity: 1, y: 0}}
-                            transition={{delay: 0.1, duration: 0.3}}
                         >
                             <p className="text-sm font-medium truncate">{file.name}</p>
                             <p className="text-xs opacity-80">{file.category}</p>
                             <p className="text-xs italic truncate opacity-80">
                                 {file.tags?.length ? file.tags.join(', ') : t('category.tags-empty')}
                             </p>
-                        </motion.div>
+                        </div>
                     </CardContent>
                 </Card>
             </motion.div>
         </FileContextMenu>
-    )
+    );
 }
 
