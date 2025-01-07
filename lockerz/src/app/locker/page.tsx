@@ -412,4 +412,3 @@ export default function Locker() {
         </div>
     )
 }
-

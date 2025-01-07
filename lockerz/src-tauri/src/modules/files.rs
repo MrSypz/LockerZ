@@ -1,9 +1,9 @@
 use crate::modules::config::get_config;
 use crate::modules::filecache::{FileCache, FileInfo};
-use crate::modules::pathutils::get_main_path;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
+use crate::modules::pathutils::get_main_path;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FileResponse {
@@ -53,8 +53,7 @@ pub async fn get_files(
                         .map_err(|e| format!("Error reading category folder: {}", e))?;
 
                     for file_entry in category_files {
-                        let file_entry =
-                            file_entry.map_err(|e| format!("Error reading file entry: {}", e))?;
+                        let file_entry = file_entry.map_err(|e| format!("Error reading file entry: {}", e))?;
                         let file_name = file_entry.file_name().to_string_lossy().to_string();
                         let file_path = category_path.join(&file_name);
                         let metadata = fs::metadata(&file_path)
@@ -65,8 +64,7 @@ pub async fn get_files(
                             category_name.clone(),
                             &file_path,
                             &metadata,
-                        )
-                        .map_err(|e| format!("Error creating file info: {}", e))?;
+                        ).map_err(|e| format!("Error creating file info: {}", e))?;
 
                         cached_files.push(file_info);
                     }
@@ -125,7 +123,7 @@ pub fn synchronize_cache_with_filesystem(root_folder_path: &Path) -> Result<(), 
         "{}_files.bin",
         FileCache::hash_directory_path(&root_folder_path, "all")
     ));
-    let mut all_cache = FileCache::read_cache(&all_cache_path).unwrap_or_default();
+    let mut all_cache = FileCache::read_cache(&all_cache_path).unwrap_or_else(|_| Vec::new());
 
     for entry in categories {
         let entry = entry.map_err(|e| format!("Error reading directory: {}", e))?;
@@ -139,7 +137,8 @@ pub fn synchronize_cache_with_filesystem(root_folder_path: &Path) -> Result<(), 
                 "{}_files.bin",
                 FileCache::hash_directory_path(&root_folder_path, &category_name)
             ));
-            let mut cached_files = FileCache::read_cache(&new_cache_path).unwrap_or_default();
+            let mut cached_files =
+                FileCache::read_cache(&new_cache_path).unwrap_or_else(|_| Vec::new());
 
             let category_files = fs::read_dir(&category_path)
                 .map_err(|e| format!("Error reading category folder: {}", e))?;
@@ -180,25 +179,19 @@ pub fn synchronize_cache_with_filesystem(root_folder_path: &Path) -> Result<(), 
                         &file_path,
                         &metadata,
                     )
-                    .map_err(|e| format!("Error creating file info: {}", e))?;
+                        .map_err(|e| format!("Error creating file info: {}", e))?;
 
                     cached_files.push(file_info);
 
-                    // Only add to 'all_cache' if not already present
-                    if !all_cache
-                        .iter()
-                        .any(|f| f.name == file_entry && f.category == category_name)
-                    {
-                        let all_file_info = FileCache::create_file_info(
-                            file_entry,
-                            category_name.clone(), // Keep the original category
-                            &file_path,
-                            &metadata,
-                        )
+                    let all_file_info = FileCache::create_file_info(
+                        file_entry,
+                        "all".to_string(),
+                        &file_path,
+                        &metadata,
+                    )
                         .map_err(|e| format!("Error creating all category file info: {}", e))?;
 
-                        all_cache.push(all_file_info);
-                    }
+                    all_cache.push(all_file_info);
                 }
             }
 
