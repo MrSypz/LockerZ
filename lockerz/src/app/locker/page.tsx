@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useState, useEffect, useCallback} from 'react'
+import React, {useState, useEffect, useCallback, useRef} from 'react'
 import {toast} from "@/hooks/use-toast"
 import {Loader2, AlertCircle} from 'lucide-react'
 import {open} from '@tauri-apps/plugin-dialog'
@@ -87,29 +87,87 @@ export default function Locker() {
             });
         }
     }, [selectedCategory, t]);
+    const filesCache = useRef<Map<string, { files: File[]; totalPages: number }>>(new Map());
+
+    const fetchAllPages = useCallback(async () => {
+        setIsLoading(true);
+
+        try {
+            // First, fetch the total number of pages
+            const data: FileResponse = await invoke('get_files', {
+                page: 1,
+                limit: imagesPerPage,
+                category: selectedCategory,
+            });
+
+            setTotalPages(data.total_pages);
+
+            // Pre-fetch all pages in parallel (using Promise.all)
+            const allPagesData = await Promise.all(
+                Array.from({ length: data.total_pages }, (_, index) =>
+                    invoke('get_files', {
+                        page: index + 1,
+                        limit: imagesPerPage,
+                        category: selectedCategory,
+                    })
+                )
+            );
+
+            // Cache each page's data
+            allPagesData.forEach((pageData, index) => {
+                const cacheKey = `${index + 1}-${imagesPerPage}-${selectedCategory}`;
+                filesCache.current.set(cacheKey, {
+                    files: pageData.files,
+                    totalPages: pageData.total_pages,
+                });
+            });
+
+            // Set the initial files for the first page
+            setFiles(allPagesData[0].files);
+        } catch (error) {
+            console.error('Error fetching all pages:', error);
+            // Handle error (e.g., show toast notification)
+        } finally {
+            setIsLoading(false);
+        }
+    }, [imagesPerPage, selectedCategory]);
 
     const fetchPaginatedFiles = useCallback(async () => {
+        const cacheKey = `${currentPage}-${imagesPerPage}-${selectedCategory}`;
+
+        // Check if the data is already cached
+        if (filesCache.current.has(cacheKey)) {
+            const cachedData = filesCache.current.get(cacheKey);
+            setFiles(cachedData?.files || []);
+            setTotalPages(cachedData?.totalPages || 0);
+            return;
+        }
+
+        // If not cached, fetch the page data
         setIsLoading(true);
         try {
             const data: FileResponse = await invoke('get_files', {
                 page: currentPage,
-                limit: imagesPerPage,  // This can be null for no pagination
+                limit: imagesPerPage,
                 category: selectedCategory,
             });
+
+            // Store the fetched page data in cache
+            filesCache.current.set(cacheKey, {
+                files: data.files,
+                totalPages: data.total_pages,
+            });
+
+            // Update state with the fetched data
             setFiles(data.files);
-            setTotalPages(data.total_pages);  // Use total_pages from response
+            setTotalPages(data.total_pages);
         } catch (error) {
             console.error('Error fetching paginated files:', error);
-            toast({
-                title: t('toast.titleType.error'),
-                description: "Failed to fetch files",
-                variant: "destructive",
-            });
+            // Handle error
         } finally {
             setIsLoading(false);
         }
-    }, [currentPage, imagesPerPage, selectedCategory, t]);
-
+    }, [currentPage, imagesPerPage, selectedCategory]);
 
     const fetchCategories = useCallback(async () => {
         setIsCategoriesLoading(true)
@@ -232,7 +290,7 @@ export default function Locker() {
         if (rememberCategory) {
             localStorage.setItem('lastSelectedCategory', value);
         }
-        fetchAllFiles().then(() => fetchPaginatedFiles());
+        fetchAllFiles().then(() => fetchPaginatedFiles().then(fetchAllPages));
     }, [rememberCategory, fetchAllFiles, fetchPaginatedFiles]);
     const handleDelete = async (file: File) => {
         try {
@@ -326,6 +384,9 @@ export default function Locker() {
         fetchAllFiles,           // Function dependencies
         fetchPaginatedFiles,     // Function dependencies
     ]);
+    useEffect(() => {
+        fetchAllPages();
+    }, [imagesPerPage, selectedCategory]);
 
     return (
         <div className="flex h-screen">
