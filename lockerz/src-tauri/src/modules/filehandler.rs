@@ -135,9 +135,9 @@ pub async fn delete_file(category: String, name: String) -> Result<FileDeleteRes
     let file_path = root_folder_path.join(&category).join(&name);
     let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
 
-    // Remove the file from the filesystem
-    fs::remove_file(&file_path).map_err(|e| {
-        let error_msg = format!("Delete failed: {}", e);
+    // Move the file to recycle bin instead of deleting it
+    trash::delete(&file_path).map_err(|e| {
+        let error_msg = format!("Error deleting file: {}", e);
         log_error!("{}", error_msg);
         error_msg
     })?;
