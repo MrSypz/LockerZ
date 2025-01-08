@@ -1,5 +1,5 @@
+use super::filecache::{get_or_init_cache, FileInfo};
 use crate::modules::config::get_config;
-use crate::modules::filecache::{FileCache, FileInfo};
 use crate::modules::pathutils::get_main_path;
 use crate::{log_error, log_info};
 use serde::{Deserialize, Serialize};
@@ -21,7 +21,104 @@ pub struct FileDeleteResponse {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MoveFileCategoryResponse {
-    success: bool,
+    pub success: bool,
+}
+
+// new! Initialize cache at startup
+pub fn initialize_cache() -> io::Result<()> {
+    let main_path = get_main_path()?;
+    let cache_dir = main_path.join("cache");
+    let cache = get_or_init_cache(cache_dir)?;
+
+    let root_folder_path = get_config().folderPath;
+
+    if !root_folder_path.exists() {
+        fs::create_dir_all(&root_folder_path)?;
+    }
+
+    std::thread::spawn(move || {
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        runtime.block_on(async {
+            if let Err(e) = cache.synchronize_cache(&root_folder_path).await {
+                log_error!("Failed to synchronize cache: {}", e);
+            }
+        });
+    });
+
+    Ok(())
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct FileResponse {
+    pub files: Vec<FileInfo>,
+    pub current_page: u32,
+    pub total_pages: u32,
+    pub total_files: usize,
+}
+
+#[tauri::command]
+pub async fn get_files(
+    page: u32,
+    limit: Option<i32>,
+    category: Option<String>,
+) -> Result<FileResponse, String> {
+    let root_folder_path = get_config().folderPath;
+    let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
+    let cache = get_or_init_cache(main_path.join("cache"))
+        .map_err(|e| format!("Failed to get cache: {}", e))?;
+
+    if !root_folder_path.exists() {
+        return Err("Root folder path does not exist.".to_string());
+    }
+
+    let category = category.unwrap_or_else(|| "all".to_string());
+    // Try to get files from cache first
+    let mut cached_files = cache.get_files(&root_folder_path, &category)
+        .map_err(|e| format!("Error getting files: {}", e))?;
+
+    // If cache is empty, rebuild it
+    if cached_files.is_empty() {
+        // Refresh the category cache
+        cached_files = cache.refresh_category(&root_folder_path, &category)
+            .await
+            .map_err(|e| format!("Error refreshing cache: {}", e))?;
+    }
+
+    let total_files = cached_files.len();
+    let total_pages = if let Some(lim) = limit {
+        if lim == -1 {
+            1
+        } else {
+            (total_files as f32 / lim as f32).ceil() as u32
+        }
+    } else {
+        1
+    };
+
+    // Apply pagination if requested
+    let files = if let Some(lim) = limit {
+        if lim == -1 {
+            cached_files // Return all files when limit is -1
+        } else {
+            let start_index = ((page - 1) * lim as u32) as usize;
+            let end_index = std::cmp::min((page * lim as u32) as usize, total_files);
+
+            if start_index < total_files {
+                cached_files[start_index..end_index].to_vec()
+            } else {
+                Vec::new()
+            }
+        }
+    } else {
+        cached_files
+    };
+
+    Ok(FileResponse {
+        files,
+        current_page: page,
+        total_pages,
+        total_files,
+    })
 }
 
 #[tauri::command]
@@ -31,8 +128,8 @@ pub async fn move_file(
 ) -> Result<FileMoveResponse, String> {
     let root_folder_path = get_config().folderPath;
     let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
-
-    log_info!("Category Moving to: {:?}", category);
+    let cache = get_or_init_cache(main_path.join("cache"))
+        .map_err(|e| format!("Failed to get cache: {}", e))?;
 
     let category = category.unwrap_or_else(|| "uncategorized".to_string());
     let category_path = root_folder_path.join(&category);
@@ -60,121 +157,52 @@ pub async fn move_file(
     };
 
     log_info!(
-        "File {} has been uploaded to category: {}",
+        "File {} has been moved to category: {}",
         file_name,
         category
     );
-    let category_cache_path = main_path.join("cache").join(format!(
-        "{}_files.bin",
-        FileCache::hash_directory_path(&root_folder_path, &category)
-    ));
-    let mut category_cache = FileCache::read_cache(&category_cache_path).unwrap_or_else(|_| vec![]);
 
-    // Add file info to category cache if not already present
-    if !category_cache.iter().any(|f| f.name == file_name) {
-        let file_info =
-            FileCache::create_file_info(file_name.clone(), category.clone(), &target_path, &stats)
-                .map_err(|e| {
-                    let error_msg = format!("Error creating file info: {}", e);
-                    log_error!("{}", error_msg);
-                    error_msg
-                })?;
+    // Create file info and update cache
+    let file_info = cache.create_file_info(
+        file_name.clone(),
+        category.clone(),
+        &target_path,
+        &stats,
+        &root_folder_path,
+    ).map_err(|e| format!("Error creating file info: {}", e))?;
 
-        category_cache.push(file_info);
+    // Refresh category cache to include new file
+    cache.refresh_category(&root_folder_path, &category)
+        .await
+        .map_err(|e| format!("Error refreshing category cache: {}", e))?;
 
-        // Write updated category cache
-        FileCache::write_cache(&category_cache_path, &category_cache).map_err(|e| {
-            let error_msg = format!("Error writing category cache: {}", e);
-            log_error!("{}", error_msg);
-            error_msg
-        })?;
-    }
-
-    // --- Update Global 'All' Cache ---
-    let all_cache_path = main_path.join("cache").join(format!(
-        "{}_files.bin",
-        FileCache::hash_directory_path(&root_folder_path, "all")
-    ));
-    let mut all_cache = FileCache::read_cache(&all_cache_path).unwrap_or_else(|_| vec![]);
-
-    // Ensure no duplicates in the global cache
-    if !all_cache.iter().any(|f| f.name == file_name) {
-        let all_file_info = FileCache::create_file_info(
-            file_name.clone(),
-            category.clone(), // Use the correct category here!
-            &target_path,
-            &stats,
-        )
-        .map_err(|e| {
-            let error_msg = format!("Error creating all category file info: {}", e);
-            log_error!("{}", error_msg);
-            error_msg
-        })?;
-
-        all_cache.push(all_file_info);
-
-        // Write updated 'all' cache
-        FileCache::write_cache(&all_cache_path, &all_cache).map_err(|e| {
-            let error_msg = format!("Error writing all cache: {}", e);
-            log_error!("{}", error_msg);
-            error_msg
-        })?;
-    }
-
-    // Return successful response
     Ok(FileMoveResponse {
         success: true,
-        file: FileCache::create_file_info(file_name, category, &target_path, &stats)
-            .map_err(|e| format!("Error creating response file info: {}", e))?,
+        file: file_info,
     })
 }
 
 #[tauri::command]
 pub async fn delete_file(category: String, name: String) -> Result<FileDeleteResponse, String> {
     let root_folder_path = get_config().folderPath;
-    let file_path = root_folder_path.join(&category).join(&name);
     let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
+    let cache = get_or_init_cache(main_path.join("cache"))
+        .map_err(|e| format!("Failed to get cache: {}", e))?;
 
-    // Move the file to recycle bin instead of deleting it
+    let file_path = root_folder_path.join(&category).join(&name);
+
+    // Move to recycle bin instead of permanent deletion
     trash::delete(&file_path).map_err(|e| {
         let error_msg = format!("Error deleting file: {}", e);
         log_error!("{}", error_msg);
         error_msg
     })?;
 
-    log_info!("File {} has been deleted from Category: {}", name, category);
+    log_info!("File {} has been deleted from category: {}", name, category);
 
-    // Update category cache
-    let cache_path = main_path.join("cache").join(format!(
-        "{}_files.bin",
-        FileCache::hash_directory_path(&root_folder_path, &category)
-    ));
-    let mut cache =
-        FileCache::read_cache(&cache_path).map_err(|e| format!("Error reading cache: {}", e))?;
-
-    FileCache::remove_file_from_cache(&mut cache, &name);
-
-    // Update "All" category cache
-    let all_cache_path = main_path.join("cache").join(format!(
-        "{}_files.bin",
-        FileCache::hash_directory_path(&root_folder_path, "all")
-    ));
-    let mut all_cache = FileCache::read_cache(&all_cache_path)
-        .map_err(|e| format!("Error reading 'all' category cache: {}", e))?;
-
-    FileCache::remove_file_from_cache(&mut all_cache, &name);
-
-    // Write updated caches
-    FileCache::write_cache(&cache_path, &cache).map_err(|e| {
-        let error_msg = format!("Error writing updated cache: {}", e);
-        log_error!("{}", error_msg);
-        error_msg
-    })?;
-    FileCache::write_cache(&all_cache_path, &all_cache).map_err(|e| {
-        let error_msg = format!("Error writing updated 'all' category cache: {}", e);
-        log_error!("{}", error_msg);
-        error_msg
-    })?;
+    // Remove from cache
+    cache.remove_file(&root_folder_path, &category, &name)
+        .map_err(|e| format!("Error updating cache: {}", e))?;
 
     Ok(FileDeleteResponse {
         success: true,
@@ -189,106 +217,44 @@ pub async fn move_file_category(
     file_name: String,
 ) -> Result<MoveFileCategoryResponse, String> {
     let root_folder_path = get_config().folderPath;
+    let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
+    let cache = get_or_init_cache(main_path.join("cache"))
+        .map_err(|e| format!("Failed to get cache: {}", e))?;
 
     let old_path = root_folder_path.join(&old_category).join(&file_name);
     let new_path = root_folder_path.join(&new_category).join(&file_name);
 
     if !old_path.exists() {
-        log_error!("File {} does not exist", file_name);
-        return Err(format!("{} does not exist", file_name));
+        let error_msg = format!("File {} does not exist", file_name);
+        log_error!("{}", error_msg);
+        return Err(error_msg);
     }
 
+    // Ensure new category directory exists
     let new_category_dir = root_folder_path.join(&new_category);
     if !new_category_dir.exists() {
-        if let Err(e) = fs::create_dir_all(&new_category_dir) {
-            log_error!(
-                "Failed to create directory for new category '{}': {}",
-                new_category,
-                e
-            );
-            return Err(format!(
-                "Failed to create directory for new category '{}': {}",
-                new_category, e
-            ));
-        }
+        fs::create_dir_all(&new_category_dir).map_err(|e| {
+            let error_msg = format!("Failed to create directory: {}", e);
+            log_error!("{}", error_msg);
+            error_msg
+        })?;
     }
 
-    if let Err(e) = fs::rename(&old_path, &new_path) {
-        log_error!(
-            "Failed to move file from '{}' to '{}': {}",
-            old_path.display(),
-            new_path.display(),
-            e
-        );
-        return Err(format!(
-            "Failed to move file from '{}' to '{}': {}",
-            old_path.display(),
-            new_path.display(),
-            e
-        ));
-    }
-    let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
-
-    let old_cache_path = main_path.join("cache").join(format!(
-        "{}_files.bin",
-        FileCache::hash_directory_path(&root_folder_path, &old_category)
-    ));
-    let new_cache_path = main_path.join("cache").join(format!(
-        "{}_files.bin",
-        FileCache::hash_directory_path(&root_folder_path, &new_category)
-    ));
-
-    let mut old_cache = FileCache::read_cache(&old_cache_path).map_err(|e| {
-        let error_msg = format!("Error reading old cache: {}", e);
+    // Move the file
+    fs::rename(&old_path, &new_path).map_err(|e| {
+        let error_msg = format!("Failed to move file: {}", e);
         log_error!("{}", error_msg);
         error_msg
     })?;
 
-    if let Some(pos) = old_cache.iter().position(|f| f.name == file_name) {
-        old_cache.remove(pos);
-
-        // Get updated metadata for the file
-        let metadata = fs::metadata(&new_path).map_err(|e| {
-            let error_msg = format!("Error reading file metadata: {}", e);
-            log_error!("{}", error_msg);
-            error_msg
-        })?;
-
-        let updated_file_info = FileCache::create_file_info(
-            file_name.clone(),
-            new_category.clone(),
-            &new_path,
-            &metadata,
-        )
-        .map_err(|e| {
-            let error_msg = format!("Error creating updated file info: {}", e);
-            log_error!("{}", error_msg);
-            error_msg
-        })?;
-
-        let mut new_cache = FileCache::read_cache(&new_cache_path).map_err(|e| {
-            let error_msg = format!("Error reading new cache: {}", e);
-            log_error!("{}", error_msg);
-            error_msg
-        })?;
-
-        new_cache.push(updated_file_info);
-        FileCache::write_cache(&new_cache_path, &new_cache).map_err(|e| {
-            let error_msg = format!("Error writing new cache: {}", e);
-            log_error!("{}", error_msg);
-            error_msg
-        })?;
-    }
-
-    FileCache::write_cache(&old_cache_path, &old_cache).map_err(|e| {
-        let error_msg = format!("Error writing old cache: {}", e);
-        log_error!("{}", error_msg);
-        error_msg
-    })?;
+    // Update cache
+    cache.move_file(&root_folder_path, &old_category, &new_category, &file_name).await
+        .map_err(|e| format!("Error updating cache: {}", e))?;
 
     Ok(MoveFileCategoryResponse { success: true })
 }
 
+// Helper function to move files with fallback to copy+delete
 fn move_file_with_fallback(src: &str, dst: &PathBuf) -> io::Result<fs::Metadata> {
     match fs::rename(src, dst) {
         Ok(_) => fs::metadata(dst),
@@ -298,4 +264,59 @@ fn move_file_with_fallback(src: &str, dst: &PathBuf) -> io::Result<fs::Metadata>
             fs::metadata(dst)
         }
     }
+}
+
+#[tauri::command]
+pub async fn save_and_move_file(
+    file_name: String,
+    file_content: Vec<u8>,
+    category: String,
+) -> Result<FileMoveResponse, String> {
+    let root_folder_path = get_config().folderPath;
+    let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
+    let cache = get_or_init_cache(main_path.join("cache"))
+        .map_err(|e| format!("Failed to get cache: {}", e))?;
+
+    let category_path = root_folder_path.join(&category);
+
+    // Create category directory if it doesn't exist
+    fs::create_dir_all(&category_path).map_err(|e| {
+        let error_msg = format!("Error creating directory: {}", e);
+        log_error!("{}", error_msg);
+        error_msg
+    })?;
+
+    let target_path = category_path.join(&file_name);
+
+    // Write the file
+    fs::write(&target_path, file_content).map_err(|e| {
+        let error_msg = format!("Error writing file: {}", e);
+        log_error!("{}", error_msg);
+        error_msg
+    })?;
+
+    let stats = fs::metadata(&target_path).map_err(|e| {
+        let error_msg = format!("Error getting file metadata: {}", e);
+        log_error!("{}", error_msg);
+        error_msg
+    })?;
+
+    // Create file info and update cache
+    let file_info = cache.create_file_info(
+        file_name.clone(),
+        category.clone(),
+        &target_path,
+        &stats,
+        &root_folder_path,
+    ).map_err(|e| format!("Error creating file info: {}", e))?;
+
+    // Refresh category cache
+    cache.refresh_category(&root_folder_path, &category)
+        .await
+        .map_err(|e| format!("Error refreshing category cache: {}", e))?;
+
+    Ok(FileMoveResponse {
+        success: true,
+        file: file_info,
+    })
 }

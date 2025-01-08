@@ -1,4 +1,3 @@
-use crate::modules::files::synchronize_cache_with_filesystem;
 use crate::modules::logger::LOGGER;
 use crate::modules::pathutils::get_main_path;
 use crate::{log_error, log_info, log_pre};
@@ -9,6 +8,7 @@ use std::fs;
 use std::io::{self};
 use std::path::{Path, PathBuf};
 use std::sync::RwLock;
+use crate::modules::filehandler::initialize_cache;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
@@ -139,7 +139,7 @@ pub fn setup_folders() -> io::Result<()> {
         return Err(e);
     }
 
-    synchronize_cache_with_filesystem(root_folder_path).expect("Error");
+    initialize_cache().expect("Error");
     Ok(())
 }
 

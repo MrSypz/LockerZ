@@ -3,7 +3,6 @@ mod modules {
     pub mod config;
     pub mod filecache;
     pub mod filehandler;
-    pub mod files;
     pub mod imgoptimize;
     pub mod logger;
     pub mod pathutils;
@@ -16,8 +15,7 @@ use modules::{
     category::rename_category,
     config::get_settings, config::setup_folders,config::update_settings,
     db::init_db,
-    filehandler::delete_file,    filehandler::move_file, filehandler::move_file_category,
-    files::get_files,
+    filehandler::delete_file,filehandler::move_file, filehandler::move_file_category,filehandler::save_and_move_file,filehandler::get_files,
     imgoptimize::handle_optimize_image_request,
     logger::LOGGER,
     stats::get_stats
@@ -70,6 +68,7 @@ pub fn run() {
             move_file,
             delete_file,
             move_file_category,
+            save_and_move_file,
             get_files,
             get_stats
         ])
