@@ -87,25 +87,26 @@ export default function Locker() {
             });
         }
     }, [selectedCategory, t]);
+
     const filesCache = useRef<Map<string, { files: File[]; totalPages: number }>>(new Map());
 
     const fetchAllPages = useCallback(async () => {
         setIsLoading(true);
-
         try {
-            // First, fetch the total number of pages
             const data: FileResponse = await invoke('get_files', {
                 page: 1,
                 limit: imagesPerPage,
                 category: selectedCategory,
             });
-
+            if (data.total_files == 0) {
+                toast({title: "No images found", description: "Seem this category not have anyimage to load skip loading."});
+                return
+            }
             setTotalPages(data.total_pages);
 
-            // Pre-fetch all pages in parallel (using Promise.all)
-            const allPagesData = await Promise.all(
+            const allPagesData: FileResponse[] = await Promise.all(
                 Array.from({ length: data.total_pages }, (_, index) =>
-                    invoke('get_files', {
+                    invoke<FileResponse>('get_files', {
                         page: index + 1,
                         limit: imagesPerPage,
                         category: selectedCategory,
@@ -113,7 +114,6 @@ export default function Locker() {
                 )
             );
 
-            // Cache each page's data
             allPagesData.forEach((pageData, index) => {
                 const cacheKey = `${index + 1}-${imagesPerPage}-${selectedCategory}`;
                 filesCache.current.set(cacheKey, {
@@ -122,11 +122,9 @@ export default function Locker() {
                 });
             });
 
-            // Set the initial files for the first page
             setFiles(allPagesData[0].files);
         } catch (error) {
             console.error('Error fetching all pages:', error);
-            // Handle error (e.g., show toast notification)
         } finally {
             setIsLoading(false);
         }
@@ -135,7 +133,6 @@ export default function Locker() {
     const fetchPaginatedFiles = useCallback(async () => {
         const cacheKey = `${currentPage}-${imagesPerPage}-${selectedCategory}`;
 
-        // Check if the data is already cached
         if (filesCache.current.has(cacheKey)) {
             const cachedData = filesCache.current.get(cacheKey);
             setFiles(cachedData?.files || []);
@@ -143,7 +140,6 @@ export default function Locker() {
             return;
         }
 
-        // If not cached, fetch the page data
         setIsLoading(true);
         try {
             const data: FileResponse = await invoke('get_files', {
@@ -151,19 +147,18 @@ export default function Locker() {
                 limit: imagesPerPage,
                 category: selectedCategory,
             });
-
+            if (data.total_files == 0)
+                return
             // Store the fetched page data in cache
             filesCache.current.set(cacheKey, {
                 files: data.files,
                 totalPages: data.total_pages,
             });
 
-            // Update state with the fetched data
             setFiles(data.files);
             setTotalPages(data.total_pages);
         } catch (error) {
             console.error('Error fetching paginated files:', error);
-            // Handle error
         } finally {
             setIsLoading(false);
         }
@@ -191,7 +186,9 @@ export default function Locker() {
     const handleFileDrop = useCallback(async (droppedFiles?: string[]) => {
         let filesToProcess: (globalThis.File | string)[] = [];
 
+            // @ts-ignore
         if (droppedFiles?.length > 0) {
+            // @ts-ignore
             filesToProcess = droppedFiles;
         } else {
             try {
@@ -335,7 +332,7 @@ export default function Locker() {
             })
         }
         setMoveDialogOpen(false)
-        fetchAllFiles()
+        await fetchAllFiles()
     }
 
     const handlePageChange = (page: number) => {
