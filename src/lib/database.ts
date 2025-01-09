@@ -48,7 +48,7 @@ export async function getImageTags(imageId: number): Promise<string[]> {
 }
 
 // Function to search images by tags
-export async function searchImagesByTags(tags: string[]): Promise<DBImage[]> {
+export async function searchByTags(tags: string[]): Promise<DBImage[]> {
     try {
         return await invoke<DBImage[]>('search_images_by_tags', {tags});
     } catch (error) {
