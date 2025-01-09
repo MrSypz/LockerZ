@@ -78,7 +78,7 @@ export default function RootLayout({
         }
     }, [pathname, mounted, fetchLanguageSetting])
 
-    const fontClass = languages[currentLang]?.fontClass.className || notoSansMono.className;
+    const fontClass = languages[currentLang] ?.fontClass.className || notoSansMono.className;
 
     return (
         <html lang={currentLang} suppressHydrationWarning>
