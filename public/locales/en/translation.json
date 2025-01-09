@@ -75,6 +75,49 @@
     "confirm": "Confirm",
     "delete": "Delete"
   },
+  "tags": {
+    "dialog": {
+      "title": "Manage Tags",
+      "description": "Add, remove, or edit tags for this file."
+    },
+    "tabs": {
+      "selected": "Selected",
+      "available": "Available",
+      "new": "New"
+    },
+    "file_info": {
+      "filename": "Filename",
+      "filetype": "File Type",
+      "category": "Category",
+      "size": "Size",
+      "modified": "Modified",
+      "unknown": "Unknown"
+    },
+    "search_placeholder": "Search tags...",
+    "add_placeholder": "Enter new tag...",
+    "new_description": "Create a new tag and add it to this file.",
+    "selected_count": "{{count}} tags selected",
+    "no_available": "No available tags found",
+    "save_and_close": "Save and Close",
+    "success": {
+      "add": "Tag Added",
+      "add_desc": "Tag '{{tag}}' has been added successfully.",
+      "remove": "Tag Removed",
+      "remove_desc": "Tag '{{tag}}' has been removed successfully."
+    },
+    "error": {
+      "fetch": "Error Fetching Tags",
+      "fetch_desc": "Unable to fetch tags. Please try again.",
+      "fetch_all": "Error Fetching All Tags",
+      "fetch_all_desc": "Unable to fetch all tags. Please try again.",
+      "init": "Initialization Error",
+      "init_desc": "Failed to initialize tags. Please try again.",
+      "add": "Error Adding Tag",
+      "add_desc": "Unable to add the tag. Please try again.",
+      "remove": "Error Removing Tag",
+      "remove_desc": "Unable to remove the tag. Please try again."
+    }
+  },
   "locker": {
     "dialog": {
       "move": {
@@ -88,8 +131,18 @@
       "menu": {
         "viewpath": "Open in Explorer",
         "move": "Move to...",
-        "delete": "Delete"
+        "delete": "Delete",
+        "tags": "Tags"
       }
+    },
+    "tags": {
+      "dialog": {
+        "title": "Manage Tags",
+        "description": "Add or remove tags for this image"
+      },
+      "available": "Available Tags",
+      "add_placeholder": "Add new tag...",
+      "no_available": "No tags available"
     },
     "search": {
       "results": "Found {{count}} image(s)",
