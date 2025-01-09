@@ -8,7 +8,7 @@ import {
     ContextMenuItem,
     ContextMenuTrigger,
 } from "@/components/ui/context-menu"
-import {Trash2, FolderInput, FolderOpen} from 'lucide-react'
+import {Trash2, FolderInput, FolderOpen, Tag} from 'lucide-react'
 import {useTranslation} from "react-i18next";
 
 interface FileContextMenuProps {
@@ -20,9 +20,10 @@ interface FileContextMenuProps {
     onDeleteAction: (file: { name: string; category: string }) => void
     onMoveAction: (file: { name: string; category: string }) => void
     onViewAction: (file: { name: string; category: string }) => void
+    onTagAction: (file:{name:string; category: string}) => void
 }
 
-export function FileContextMenu({ children, file, onDeleteAction, onMoveAction,onViewAction }: FileContextMenuProps) {
+export function FileContextMenu({ children, file, onDeleteAction, onMoveAction,onViewAction,onTagAction }: FileContextMenuProps) {
     const { t } = useTranslation();
     return (
         <ContextMenu>
@@ -53,6 +54,13 @@ export function FileContextMenu({ children, file, onDeleteAction, onMoveAction,o
                         >
                             <FolderInput className="mr-2 h-4 w-4" />
                             {t('locker.dialog.menu.move')}
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                            onClick={() => onTagAction(file)}
+                            className="flex cursor-pointer items-center rounded-sm px-2 py-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-accent/50"
+                        >
+                            <Tag className="mr-2 h-4 w-4" />
+                            {t('locker.dialog.menu.tags')}
                         </ContextMenuItem>
                         <ContextMenuItem
                             onClick={() => onDeleteAction(file)}

@@ -23,6 +23,7 @@ import {File, FileResponse, Category} from '@/types/file'
 import {useTranslation} from "react-i18next";
 import {useSharedSettings} from "@/utils/SettingsContext";
 import {ALLOWED_FILE_TYPES, IMAGES_PER_PAGE_STORAGE_KEY, PAGE_STORAGE_KEY} from "@/lib/localstoragekey";
+import {TagManagerDialog} from "@/components/widget/TagManagerDialog";
 
 interface FileMoveResponse {
     success: boolean;
@@ -59,6 +60,11 @@ export default function Locker() {
     })
     const [rememberCategory, setRememberCategory] = useState(settings.rememberCategory)
 
+    const [tagManagerOpen, setTagManagerOpen] = useState(false);
+    const [selectedFileForTags, setSelectedFileForTags] = useState<File | null>(null);
+    const filesCache = useRef<Map<string, { files: File[]; totalPages: number }>>(new Map());
+
+
     const isRememberCategory = useCallback(() => {
         setRememberCategory(settings.rememberCategory);
         if (!settings.rememberCategory) {
@@ -88,7 +94,6 @@ export default function Locker() {
         }
     }, [selectedCategory, t]);
 
-    const filesCache = useRef<Map<string, { files: File[]; totalPages: number }>>(new Map());
 
     const fetchAllPages = useCallback(async () => {
         setIsLoading(true);
@@ -99,13 +104,16 @@ export default function Locker() {
                 category: selectedCategory,
             });
             if (data.total_files == 0) {
-                toast({title: "No images found", description: "Seem this category not have anyimage to load skip loading."});
+                toast({
+                    title: "No images found",
+                    description: "Seem this category not have anyimage to load skip loading."
+                });
                 return
             }
             setTotalPages(data.total_pages);
 
             const allPagesData: FileResponse[] = await Promise.all(
-                Array.from({ length: data.total_pages }, (_, index) =>
+                Array.from({length: data.total_pages}, (_, index) =>
                     invoke<FileResponse>('get_files', {
                         page: index + 1,
                         limit: imagesPerPage,
@@ -186,7 +194,7 @@ export default function Locker() {
     const handleFileDrop = useCallback(async (droppedFiles?: string[]) => {
         let filesToProcess: (globalThis.File | string)[] = [];
 
-            // @ts-ignore
+        // @ts-ignore
         if (droppedFiles?.length > 0) {
             // @ts-ignore
             filesToProcess = droppedFiles;
@@ -201,7 +209,11 @@ export default function Locker() {
                     }]
                 });
                 if (!selectedFiles?.length) {
-                    toast({title: "No images Selected", description: "No images were selected.", variant: "destructive"});
+                    toast({
+                        title: "No images Selected",
+                        description: "No images were selected.",
+                        variant: "destructive"
+                    });
                     return;
                 }
                 filesToProcess = selectedFiles;
@@ -266,7 +278,10 @@ export default function Locker() {
         }
 
         if (successCount) {
-            toast({title: t('toast.titleType.success'), description: `${successCount} file(s) moved to ${category} successfully`});
+            toast({
+                title: t('toast.titleType.success'),
+                description: `${successCount} file(s) moved to ${category} successfully`
+            });
         }
         if (failCount) {
             toast({
@@ -348,6 +363,11 @@ export default function Locker() {
         localStorage.setItem(PAGE_STORAGE_KEY, '1');
     };
 
+    const handleTagsAction = (file: File) => {
+        setSelectedFileForTags(file);
+        setTagManagerOpen(true);
+    };
+
     useEffect(() => {
         const savedPage = localStorage.getItem(PAGE_STORAGE_KEY);
         const savedImagesPerPage = localStorage.getItem(IMAGES_PER_PAGE_STORAGE_KEY);
@@ -423,10 +443,20 @@ export default function Locker() {
                                     setSelectedFile(file);
                                     setMoveDialogOpen(true);
                                 }}
+                                onTagAction={handleTagsAction}
                                 currentPage={currentPage}
                                 imagesPerPage={imagesPerPage}
                                 onPageChange={handlePageChange}
                                 onTotalPagesChange={setTotalPages}
+                            />
+
+                        )}
+                        {selectedFileForTags && (
+                            <TagManagerDialog file={selectedFileForTags} isOpen={tagManagerOpen} onClose={() => {
+                                setTagManagerOpen(false);
+                                setSelectedFileForTags(null);
+                                fetchAllFiles();
+                            }}
                             />
                         )}
                         <PaginationControls
