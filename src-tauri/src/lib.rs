@@ -14,7 +14,7 @@ use modules::{
     category::create_category, category::delete_category, category::get_categories,
     category::rename_category,
     config::get_settings, config::setup_folders,config::update_settings,
-    db::init_db,
+    db::init_db,db as Database,
     filehandler::delete_file,filehandler::move_file, filehandler::move_file_category,filehandler::save_and_move_file,filehandler::get_files,
     imgoptimize::handle_optimize_image_request,
     logger::LOGGER,
@@ -70,7 +70,14 @@ pub fn run() {
             move_file_category,
             save_and_move_file,
             get_files,
-            get_stats
+            get_stats,
+            Database::remove_image_tag, //Database
+            Database::get_all_tags,
+            Database::search_images_by_tags,
+            Database::get_image_tags,
+            Database::tag_image,
+            Database::add_tag,
+            Database::add_image
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -5,7 +5,7 @@ use std::fs::create_dir_all;
 use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Image {
+pub struct Image {
     id: i64,
     relative_path: String,
     category: String,
@@ -23,12 +23,16 @@ struct ImageTag {
     image_id: i64,
     tag_id: i64,
 }
-
-pub fn init_db() -> Result<Connection, String> {
+fn connect_db() -> Result<Connection, String> {
     let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
     let db_dir = main_path.join("database");
     create_dir_all(&db_dir).map_err(|e| format!("Failed to create directory: {}", e))?;
     let conn = Connection::open(db_dir.join("lockerz.db")).map_err(|e| e.to_string())?;
+    Ok(conn)
+}
+
+pub fn init_db() -> Result<Connection, String> {
+    let conn = connect_db()?;
 
     conn.execute(
         "
@@ -72,7 +76,9 @@ pub fn init_db() -> Result<Connection, String> {
 }
 
 #[tauri::command]
-pub fn add_image(path: PathBuf, category: String, conn: &Connection) -> Result<i64, String> {
+pub fn add_image(path: PathBuf, category: String) -> Result<i64, String> {
+    let conn = connect_db()?;
+    println!("Connected to database {:?}",conn);
     let filename = path
         .file_name()
         .and_then(|n| n.to_str())
@@ -87,14 +93,16 @@ pub fn add_image(path: PathBuf, category: String, conn: &Connection) -> Result<i
         "INSERT OR IGNORE INTO images (relative_path, category, filename) VALUES (?1, ?2, ?3)",
         [relative_path, &category, filename],
     )
-    .map_err(|e| e.to_string())?;
+        .map_err(|e| e.to_string())?;
 
     let id = conn.last_insert_rowid();
     Ok(id)
 }
 
 #[tauri::command]
-pub fn add_tag(name: String, conn: &Connection) -> Result<i64, String> {
+pub fn add_tag(name: String) -> Result<i64, String> {
+    let conn = connect_db()?;
+    println!("Connected to database {:?}",conn);
     conn.execute("INSERT OR IGNORE INTO tags (name) VALUES (?1)", [&name])
         .map_err(|e| e.to_string())?;
 
@@ -103,8 +111,8 @@ pub fn add_tag(name: String, conn: &Connection) -> Result<i64, String> {
 }
 
 #[tauri::command]
-pub fn tag_image(image_id: i64, tag_name: String, conn: &Connection) -> Result<(), String> {
-    // First ensure tag exists
+pub fn tag_image(image_id: i64, tag_name: String) -> Result<(), String> {
+    let conn = connect_db()?;
     conn.execute("INSERT OR IGNORE INTO tags (name) VALUES (?1)", [&tag_name])
         .map_err(|e| e.to_string())?;
 
@@ -113,13 +121,14 @@ pub fn tag_image(image_id: i64, tag_name: String, conn: &Connection) -> Result<(
          SELECT ?1, id FROM tags WHERE name = ?2",
         [&image_id.to_string(), &tag_name],
     )
-    .map_err(|e| e.to_string())?;
+        .map_err(|e| e.to_string())?;
 
     Ok(())
 }
 
 #[tauri::command]
-pub fn get_image_tags(image_id: i64, conn: &Connection) -> Result<Vec<String>, String> {
+pub fn get_image_tags(image_id: i64) -> Result<Vec<String>, String> {
+    let conn = connect_db()?;
     let mut stmt = conn
         .prepare(
             "SELECT t.name FROM tags t
@@ -138,7 +147,8 @@ pub fn get_image_tags(image_id: i64, conn: &Connection) -> Result<Vec<String>, S
 }
 
 #[tauri::command]
-pub fn search_images_by_tags(tags: Vec<String>, conn: &Connection) -> Result<Vec<Image>, String> {
+pub fn search_images_by_tags(tags: Vec<String>) -> Result<Vec<Image>, String> {
+    let conn = connect_db()?;
     let placeholders = vec!["?"; tags.len()].join(",");
     let query = format!(
         "SELECT DISTINCT i.* FROM images i
@@ -169,4 +179,32 @@ pub fn search_images_by_tags(tags: Vec<String>, conn: &Connection) -> Result<Vec
         .map_err(|e| e.to_string())?;
 
     Ok(images)
+}
+
+#[tauri::command]
+pub fn get_all_tags() -> Result<Vec<String>, String> {
+    let conn = connect_db()?;
+    let mut stmt = conn
+        .prepare("SELECT name FROM tags")
+        .map_err(|e| e.to_string())?;
+
+    let tags = stmt
+        .query_map([], |row| row.get(0))
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<String>, _>>()
+        .map_err(|e| e.to_string())?;
+
+    Ok(tags)
+}
+
+#[tauri::command]
+pub fn remove_image_tag(image_id: i64, tag_name: String) -> Result<(), String> {
+    let conn = connect_db()?;
+    conn.execute(
+        "DELETE FROM image_tags WHERE image_id = ? AND tag_id = (SELECT id FROM tags WHERE name = ?)",
+        [&image_id.to_string(), &tag_name],
+    )
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
 }
