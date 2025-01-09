@@ -1,17 +1,12 @@
 import React, {useState, useEffect} from 'react'
-import {Card, CardContent} from "@/components/ui/card"
-import {Button} from "@/components/ui/button"
-import {Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger} from "@/components/ui/drawer"
-import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs"
-import {Input} from "@/components/ui/input"
-import {FileContextMenu} from '@/components/widget/Context-menu'
 import {File} from '@/types/file'
 import {motion, AnimatePresence} from "framer-motion"
 import {useTranslation} from 'react-i18next'
-import {AlertCircle, ArrowDown, ArrowUp, ArrowUpDown, Clock, ClockArrowUp, FileIcon, Search, Text} from 'lucide-react'
+import {AlertCircle} from 'lucide-react'
 import {ImageViewer} from './Image-viewer';
-import {useSharedSettings} from "@/utils/SettingsContext";
-import {OptimizedImage} from "@/components/widget/ImageProcessor";
+import {FileCard} from "@/components/widget/FileCard";
+import {FileSearch} from "@/components/widget/FileSearch";
+import {FileSort} from "@/components/widget/FileSort";
 
 type SortCriteria = 'name' | 'date' | 'createat' | 'size';
 type SortOrder = 'asc' | 'desc';
@@ -67,6 +62,7 @@ interface FileGridProps {
     onViewFileAction: (file: File) => void
     onDeleteFileAction: (file: File) => void
     onMoveFileAction: (file: File) => void
+    onTagAction: (file: File) => void
     currentPage: number
     imagesPerPage: number
     onPageChange: (page: number) => void
@@ -79,6 +75,7 @@ export function FileGrid({
                              onViewFileAction,
                              onDeleteFileAction,
                              onMoveFileAction,
+                             onTagAction,
                              currentPage,
                              imagesPerPage,
                              onPageChange,
@@ -91,7 +88,6 @@ export function FileGrid({
     const [sortOrder, setSortOrder] = useState<SortOrder>(savedPreferences.order)
     const [searchTerm, setSearchTerm] = useState('')
     const {t} = useTranslation()
-    const [isOpen, setIsOpen] = useState(false)
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
     // Handle sort with persistence
@@ -105,7 +101,6 @@ export function FileGrid({
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.ctrlKey && event.code === 'Space') {
                 event.preventDefault();
-                setIsOpen(prevState => !prevState);
             }
         };
 
@@ -124,7 +119,6 @@ export function FileGrid({
             );
         }
 
-        // Always sort, even if there are no search results
         const sorted = [...filtered].sort((a, b) => {
             let comparison = 0;
             switch (sortCriteria) {
@@ -147,12 +141,10 @@ export function FileGrid({
         const totalFilteredPages = Math.ceil(sorted.length / imagesPerPage);
         onTotalPagesChange(totalFilteredPages);
 
-        // If current page is out of bounds, reset to page 1
         if (currentPage > totalFilteredPages && totalFilteredPages > 0) {
             onPageChange(1);
         }
 
-        // Calculate pagination slice
         const start = (currentPage - 1) * imagesPerPage;
         const end = start + imagesPerPage;
         setSortedFiles(sorted.slice(start, end));
@@ -161,7 +153,6 @@ export function FileGrid({
     const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newSearchTerm = event.target.value;
         setSearchTerm(newSearchTerm);
-        // Reset to first page when search changes
         if (currentPage !== 1) {
             onPageChange(1);
         }
@@ -178,131 +169,15 @@ export function FileGrid({
     return (
         <div className="space-y-4">
             <div className="flex items-center space-x-4">
-                <div className="relative bg-black/50 flex-grow">
-                    <Input
-                        type="text"
-                        placeholder={t('locker.search.placeholder')}
-                        value={searchTerm}
-                        onChange={handleSearch}
-                        className="pl-10"
-                    />
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
-                </div>
-                <Drawer open={isOpen} onOpenChange={setIsOpen}>
-                    <DrawerTrigger asChild>
-                        <Button variant="outline" size="lg">
-                            {t('category.image.sort.button')}
-                            <ArrowUpDown className="ml-2 h-5 w-5"/>
-                        </Button>
-                    </DrawerTrigger>
-                    <DrawerContent className="h-[40vh] max-h-[400px]">
-                        <DrawerHeader>
-                            <DrawerTitle>{t('category.image.sort.title')}</DrawerTitle>
-                        </DrawerHeader>
-                        <Tabs value={sortCriteria}
-                              onValueChange={(value) => setSortCriteria(value as 'name' | 'date' | 'size')}
-                              className="w-full p-2">
-                            <TabsList className="grid w-full grid-cols-4 mb-2">
-                                <TabsTrigger value="name" className="flex items-center justify-center">
-                                    <Text className="w-4 h-4 mr-2"/>
-                                    {t('category.image.sort.by-name')}
-                                </TabsTrigger>
-                                <TabsTrigger value="date" className="flex items-center justify-center">
-                                    <Clock className="w-4 h-4 mr-2"/>
-                                    {t('category.image.sort.by-date')}
-                                </TabsTrigger>
-                                <TabsTrigger value="createat" className="flex items-center justify-center">
-                                    <ClockArrowUp className="w-4 h-4 mr-2"/>
-                                    {t('category.image.sort.by-createat')}
-                                </TabsTrigger>
-                                <TabsTrigger value="size" className="flex items-center justify-center">
-                                    <FileIcon className="w-4 h-4 mr-2"/>
-                                    {t('category.image.sort.by-size')}
-                                </TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="name" className="mt-2">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Button
-                                        onClick={() => handleSort('name', 'asc')}
-                                        variant={sortCriteria === 'name' && sortOrder === 'asc' ? 'default' : 'outline'}
-                                        className="w-full justify-between py-1 px-2 text-sm"
-                                    >
-                                        {t('category.image.sort.ascending')}
-                                        <ArrowUp className="h-3 w-3"/>
-                                    </Button>
-                                    <Button
-                                        onClick={() => handleSort('name', 'desc')}
-                                        variant={sortCriteria === 'name' && sortOrder === 'desc' ? 'default' : 'outline'}
-                                        className="w-full justify-between py-1 px-2 text-sm"
-                                    >
-                                        {t('category.image.sort.descending')}
-                                        <ArrowDown className="h-3 w-3"/>
-                                    </Button>
-                                </div>
-                            </TabsContent>
-                            <TabsContent value="date" className="mt-2">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Button
-                                        onClick={() => handleSort('date', 'asc')}
-                                        variant={sortCriteria === 'date' && sortOrder === 'asc' ? 'default' : 'outline'}
-                                        className="w-full justify-between py-1 px-2 text-sm"
-                                    >
-                                        {t('category.image.sort.ascending')}
-                                        <ArrowUp className="h-3 w-3"/>
-                                    </Button>
-                                    <Button
-                                        onClick={() => handleSort('date', 'desc')}
-                                        variant={sortCriteria === 'date' && sortOrder === 'desc' ? 'default' : 'outline'}
-                                        className="w-full justify-between py-1 px-2 text-sm"
-                                    >
-                                        {t('category.image.sort.descending')}
-                                        <ArrowDown className="h-3 w-3"/>
-                                    </Button>
-                                </div>
-                            </TabsContent>
-                            <TabsContent value="createat" className="mt-2">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Button
-                                        onClick={() => handleSort('createat', 'asc')}
-                                        variant={sortCriteria === 'createat' && sortOrder === 'asc' ? 'default' : 'outline'}
-                                        className="w-full justify-between py-1 px-2 text-sm"
-                                    >
-                                        {t('category.image.sort.ascending')}
-                                        <ArrowUp className="h-3 w-3"/>
-                                    </Button>
-                                    <Button
-                                        onClick={() => handleSort('createat', 'desc')}
-                                        variant={sortCriteria === 'createat' && sortOrder === 'desc' ? 'default' : 'outline'}
-                                        className="w-full justify-between py-1 px-2 text-sm"
-                                    >
-                                        {t('category.image.sort.descending')}
-                                        <ArrowDown className="h-3 w-3"/>
-                                    </Button>
-                                </div>
-                            </TabsContent>
-                            <TabsContent value="size" className="mt-2">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Button
-                                        onClick={() => handleSort('size', 'asc')}
-                                        variant={sortCriteria === 'size' && sortOrder === 'asc' ? 'default' : 'outline'}
-                                        className="w-full justify-between py-1 px-2 text-sm"
-                                    >
-                                        {t('category.image.sort.ascending')}
-                                        <ArrowUp className="h-3 w-3"/>
-                                    </Button>
-                                    <Button
-                                        onClick={() => handleSort('size', 'desc')}
-                                        variant={sortCriteria === 'size' && sortOrder === 'desc' ? 'default' : 'outline'}
-                                        className="w-full justify-between py-1 px-2 text-sm"
-                                    >
-                                        {t('category.image.sort.descending')}
-                                        <ArrowDown className="h-3 w-3"/>
-                                    </Button>
-                                </div>
-                            </TabsContent>
-                        </Tabs>
-                    </DrawerContent>
-                </Drawer>
+                <FileSearch
+                    searchTerm={searchTerm}
+                    onSearchChange={handleSearch}
+                />
+                <FileSort
+                    sortCriteria={sortCriteria}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                />
             </div>
             {
                 searchTerm && (
@@ -331,6 +206,7 @@ export function FileGrid({
                                 onDelete={() => onDeleteFileAction(file)}
                                 onMove={() => onMoveFileAction(file)}
                                 onSelect={() => handleSelectImage(index)}
+                                onTag={() => onTagAction(file) }
                                 index={index}
                                 column={index % totalColumns}
                                 totalColumns={totalColumns}
@@ -354,86 +230,3 @@ export function FileGrid({
         </div>
     )
 }
-
-interface FileCardProps {
-    file: File
-    onDelete: () => void
-    onMove: () => void
-    onView: () => void
-    onSelect: () => void
-    index: number
-    column: number
-    totalColumns: number
-}
-
-function FileCard({file, onDelete, onMove, onView, onSelect, index, column, totalColumns}: FileCardProps) {
-    const {t} = useTranslation();
-    const {settings} = useSharedSettings();
-    const row = Math.floor(index / totalColumns);
-    const isDarkSquare = (row + column) % 2 === 0;
-    const offset = (column % 2 === 0 ? 1 : -1) * 12;
-
-    return (
-        <FileContextMenu
-            file={file}
-            onViewAction={onView}
-            onDeleteAction={onDelete}
-            onMoveAction={onMove}
-        >
-            <motion.div
-                layout="position"
-                animate={{
-                    y: offset,
-                }}
-                transition={{
-                    type: "spring",
-                    stiffness: 200,
-                    damping: 25,
-                    mass: 1,
-                }}
-                whileHover={{
-                    scale: 1.05,
-                    zIndex: 10,
-                    transition: { duration: 0.2 }
-                }}
-                className="relative"
-                style={{ zIndex: 1000 - index }}
-            >
-                <Card
-                    className={`overflow-hidden transition-all duration-200 ease-in-out  hover:ring-2 hover:ring-primary/50 cursor-pointer ${
-                        isDarkSquare
-                            ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-                    }`}
-                    onClick={onSelect}
-                >
-                    <CardContent className="p-0">
-                        <div className="relative aspect-[2/3] rounded-t-lg overflow-hidden">
-                            <OptimizedImage
-                                src={file.filepath}
-                                alt={file.name}
-                                width={settings.imageWidth}
-                                height={settings.imageHeight}
-                                quality={settings.imageQuality}
-                            />
-                        </div>
-                        <div
-                            className={`p-3 space-y-1.5 ${
-                                isDarkSquare
-                                    ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-                            }`}
-                        >
-                            <p className="text-sm font-medium truncate">{file.name}</p>
-                            <p className="text-xs opacity-80">{file.category}</p>
-                            <p className="text-xs italic truncate opacity-80">
-                                {file.tags?.length ? file.tags.join(', ') : t('category.tags-empty')}
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
-            </motion.div>
-        </FileContextMenu>
-    );
-}
-
