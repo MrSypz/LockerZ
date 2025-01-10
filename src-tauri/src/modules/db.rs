@@ -78,7 +78,7 @@ pub fn init_db() -> Result<Connection, String> {
 #[tauri::command]
 pub fn add_image(path: PathBuf, category: String) -> Result<i64, String> {
     let conn = connect_db()?;
-    println!("Connected to database {:?}",conn);
+    println!("add_image pass {:?}",conn);
     let filename = path
         .file_name()
         .and_then(|n| n.to_str())
@@ -102,7 +102,7 @@ pub fn add_image(path: PathBuf, category: String) -> Result<i64, String> {
 #[tauri::command]
 pub fn add_tag(name: String) -> Result<i64, String> {
     let conn = connect_db()?;
-    println!("Connected to database {:?}",conn);
+    println!("add_tag pass {:?}",conn);
     conn.execute("INSERT OR IGNORE INTO tags (name) VALUES (?1)", [&name])
         .map_err(|e| e.to_string())?;
 
@@ -113,6 +113,7 @@ pub fn add_tag(name: String) -> Result<i64, String> {
 #[tauri::command]
 pub fn tag_image(image_id: i64, tag_name: String) -> Result<(), String> {
     let conn = connect_db()?;
+    println!("tag_image pass {:?}",conn);
     conn.execute("INSERT OR IGNORE INTO tags (name) VALUES (?1)", [&tag_name])
         .map_err(|e| e.to_string())?;
 
@@ -129,6 +130,7 @@ pub fn tag_image(image_id: i64, tag_name: String) -> Result<(), String> {
 #[tauri::command]
 pub fn get_image_tags(image_id: i64) -> Result<Vec<String>, String> {
     let conn = connect_db()?;
+    println!("get_image_tags pass {:?}",conn);
     let mut stmt = conn
         .prepare(
             "SELECT t.name FROM tags t
@@ -149,6 +151,7 @@ pub fn get_image_tags(image_id: i64) -> Result<Vec<String>, String> {
 #[tauri::command]
 pub fn search_images_by_tags(tags: Vec<String>) -> Result<Vec<Image>, String> {
     let conn = connect_db()?;
+    println!("search_images_by_tags pass {:?}",conn);
     let placeholders = vec!["?"; tags.len()].join(",");
     let query = format!(
         "SELECT DISTINCT i.* FROM images i
@@ -184,6 +187,7 @@ pub fn search_images_by_tags(tags: Vec<String>) -> Result<Vec<Image>, String> {
 #[tauri::command]
 pub fn get_all_tags() -> Result<Vec<String>, String> {
     let conn = connect_db()?;
+    println!("get_all_tags pass {:?}",conn);
     let mut stmt = conn
         .prepare("SELECT name FROM tags")
         .map_err(|e| e.to_string())?;
@@ -200,6 +204,7 @@ pub fn get_all_tags() -> Result<Vec<String>, String> {
 #[tauri::command]
 pub fn remove_image_tag(image_id: i64, tag_name: String) -> Result<(), String> {
     let conn = connect_db()?;
+    println!("remove_image_tag pass {:?}",conn);
     conn.execute(
         "DELETE FROM image_tags WHERE image_id = ? AND tag_id = (SELECT id FROM tags WHERE name = ?)",
         [&image_id.to_string(), &tag_name],
