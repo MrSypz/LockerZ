@@ -213,3 +213,33 @@ pub fn remove_image_tag(image_id: i64, tag_name: String) -> Result<(), String> {
 
     Ok(())
 }
+#[tauri::command]
+pub fn get_image_id(path: PathBuf, category: String) -> Result<i64, String> {
+    let conn = connect_db()?;
+    println!("get_image_id pass {:?}", conn);
+
+    let filename = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or("Invalid filename")?;
+
+    let relative_path = path
+        .parent()
+        .and_then(|p| p.to_str())
+        .ok_or("Invalid path")?;
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT id FROM images
+             WHERE relative_path = ?1
+             AND category = ?2
+             AND filename = ?3"
+        )
+        .map_err(|e| e.to_string())?;
+
+    let image_id = stmt
+        .query_row([relative_path, &category, filename], |row| row.get(0))
+        .map_err(|e| e.to_string())?;
+
+    Ok(image_id)
+}

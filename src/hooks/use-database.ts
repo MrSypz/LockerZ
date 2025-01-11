@@ -25,7 +25,23 @@ export class DatabaseService {
             throw error;
         }
     }
-
+    /**
+     * Get image ID from the database using filepath and category
+     * @param path Path to the image
+     * @param category Category of the image
+     * @returns Promise with the image ID if found
+     */
+    async getImageId(path: string, category: string): Promise<number> {
+        try {
+            return await invoke<number>('get_image_id', {
+                path,
+                category,
+            });
+        } catch (error) {
+            console.error('Failed to get image ID:', error);
+            throw error;
+        }
+    }
     /**
      * Add a new tag to the database
      * @param name Name of the tag
