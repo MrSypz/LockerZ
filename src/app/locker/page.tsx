@@ -452,10 +452,13 @@ export default function Locker() {
 
                         )}
                         {selectedFileForTags && (
-                            <TagManagerDialog file={selectedFileForTags} isOpen={tagManagerOpen} onClose={() => {
-                                setTagManagerOpen(false);
-                                setSelectedFileForTags(null);
-                                fetchAllFiles();
+                            <TagManagerDialog
+                                file={selectedFileForTags}
+                                isOpen={tagManagerOpen}
+                                onCloseAction={() => {
+                                    setTagManagerOpen(false);
+                                    setSelectedFileForTags(null);
+                                    fetchAllFiles();
                             }}
                             />
                         )}
