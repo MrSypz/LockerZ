@@ -50,11 +50,7 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "opencv_world4100.dll",
-      "config",
-      "cache",
-      "log",
-      "database"
+      "opencv_world4100.dll"
     ]
   }
 }
