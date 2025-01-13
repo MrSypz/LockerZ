@@ -77,9 +77,9 @@ export function Dashboard() {
   };
 
   const statsItems = [
-    { icon: ImageIcon, label: t("dashboard.content.totalimg"), value: stats.total_images.toString(), color: "bg-blue-500" },
-    { icon: FolderOpen, label: t("dashboard.content.category"), value: stats.categories.toString(), color: "bg-green-500" },
-    { icon: HardDrive, label: t("dashboard.content.storageused"), value: formatBytes(stats.storage_used), color: "bg-purple-500" },
+    { icon: ImageIcon, label: t("dashboard.content.totalimg"), value: stats.total_images.toString()},
+    { icon: FolderOpen, label: t("dashboard.content.category"), value: stats.categories.toString()},
+    { icon: HardDrive, label: t("dashboard.content.storageused"), value: formatBytes(stats.storage_used)},
   ];
 
   return (
@@ -95,7 +95,7 @@ export function Dashboard() {
                 <Card key={stat.label} className="overflow-hidden transition-all hover:shadow-lg">
                   <CardContent className="p-6">
                     <div className="flex items-center space-x-4">
-                      <div className={`p-3 rounded-full ${stat.color}`}>
+                      <div className={`p-3 rounded-full`}>
                         <stat.icon size={24} className="text-white"/>
                       </div>
                       <div>
