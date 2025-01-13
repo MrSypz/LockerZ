@@ -21,6 +21,17 @@
     ]
   },
   {
+    "version": "0.4.1",
+    "date": "13-1-2025",
+    "sections": [
+      {
+        "title": "Bug Fixes",
+        "type": "bug-fix",
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold'>Bug Fixes</h3><div class='space-y-2'>• Fix: No Category show searching not found</div></div>"
+      }
+    ]
+  },
+  {
     "version": "0.4.0",
     "date": "13-1-2025",
     "sections": [
