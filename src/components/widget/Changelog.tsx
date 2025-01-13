@@ -6,7 +6,6 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Sparkles, Wrench, Zap, Gauge, Rocket, PencilLine, ImageIcon } from 'lucide-react'
 import { cn } from "@/lib/utils"
-import { ImageComparison } from "@/components/widget/Image-comparison"
 
 interface ChangelogSection {
     title: string
@@ -173,16 +172,6 @@ export function Changelog() {
                                                         {section.image && (
                                                             <div className="mt-4">
                                                                 <img src={section.image} alt={section.title} className="w-full h-auto rounded-md" />
-                                                            </div>
-                                                        )}
-                                                        {section.images && (
-                                                            <div className="mt-4">
-                                                                <ImageComparison
-                                                                    beforeSrc={section.images.before}
-                                                                    afterSrc={section.images.after}
-                                                                    beforeAlt={`${section.title} - Before`}
-                                                                    afterAlt={`${section.title} - After`}
-                                                                />
                                                             </div>
                                                         )}
                                                     </CardContent>
