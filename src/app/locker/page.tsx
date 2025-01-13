@@ -81,16 +81,16 @@ export default function Locker() {
             const data: FileResponse = await invoke('get_files', {
                 page: 1,
                 limit: -1,
-                category: selectedCategory, // Category filter
+                category: selectedCategory,
             });
-            setAllFiles(data.files);  // Store all files in state
+            setAllFiles(data.files);
         } catch (error) {
-            console.error('Error fetching all files:', error);
             toast({
                 title: t('toast.titleType.error'),
                 description: "Failed to fetch all files",
                 variant: "destructive",
             });
+            setAllFiles([]);
         }
     }, [selectedCategory, t]);
 
@@ -108,7 +108,9 @@ export default function Locker() {
                     title: "No images found",
                     description: "Seem this category not have anyimage to load skip loading."
                 });
-                return
+                setFiles([]); // Need to add this
+                setTotalPages(0); // Need to add this
+                return;
             }
             setTotalPages(data.total_pages);
 
@@ -143,8 +145,13 @@ export default function Locker() {
 
         if (filesCache.current.has(cacheKey)) {
             const cachedData = filesCache.current.get(cacheKey);
-            setFiles(cachedData?.files || []);
-            setTotalPages(cachedData?.totalPages || 0);
+            if (!cachedData?.files?.length) {
+                setFiles([]); // Just set empty array, FileGrid won't render due to the condition
+                setTotalPages(0);
+                return;
+            }
+            setFiles(cachedData.files);
+            setTotalPages(cachedData.totalPages);
             return;
         }
 
@@ -155,9 +162,14 @@ export default function Locker() {
                 limit: imagesPerPage,
                 category: selectedCategory,
             });
-            if (data.total_files == 0)
-                return
-            // Store the fetched page data in cache
+
+            if (data.total_files === 0) {
+                setFiles([]); // This will trigger the "no images" message
+                setTotalPages(0);
+                return;
+            }
+
+            // Only set cache and update files if we actually have files
             filesCache.current.set(cacheKey, {
                 files: data.files,
                 totalPages: data.total_pages,
@@ -167,6 +179,7 @@ export default function Locker() {
             setTotalPages(data.total_pages);
         } catch (error) {
             console.error('Error fetching paginated files:', error);
+            setFiles([]); // Error case also shows "no images" message
         } finally {
             setIsLoading(false);
         }
@@ -423,10 +436,12 @@ export default function Locker() {
                                 <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary"/>
                                 <p className="text-foreground font-medium">Loading images...</p>
                             </div>
-                        ) : files.length === 0 ? (
+                        ) : !files || files.length === 0 ? (  // Add null/undefined check
                             <div className="flex flex-col items-center justify-center h-64 mt-8">
                                 <AlertCircle className="w-12 h-12 text-muted-foreground mb-4"/>
-                                <p className="text-muted-foreground font-medium">No images found in this category</p>
+                                <p className="text-muted-foreground font-medium">
+                                    {t('categories.imageSelection.noImages')}
+                                </p>
                             </div>
                         ) : (
                             <FileGrid

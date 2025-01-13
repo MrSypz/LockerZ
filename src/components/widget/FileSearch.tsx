@@ -23,7 +23,6 @@ export function FileSearch({ searchTerm, onSearchChange, files }: FileSearchProp
     const [cursorPosition, setCursorPosition] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Get unique tags from all files
     const getAllTags = () => {
         const tags = new Set<string>();
         files.forEach(file => {
@@ -50,14 +49,12 @@ export function FileSearch({ searchTerm, onSearchChange, files }: FileSearchProp
 
         let newSuggestions: Suggestion[] = [];
 
-        // If word starts with #, suggest tags
         if (word.startsWith('#')) {
             const tagQuery = word.slice(1).toLowerCase();
             newSuggestions = getAllTags()
                 .filter(tag => tag.toLowerCase().includes(tagQuery))
                 .map(tag => ({type: 'tag' as const, value: tag}));
         }
-        // Otherwise suggest filenames
         else {
             const fileQuery = word.toLowerCase();
             newSuggestions = getAllFilenames()
@@ -78,7 +75,6 @@ export function FileSearch({ searchTerm, onSearchChange, files }: FileSearchProp
     const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
         setCursorPosition(e.currentTarget.selectionStart || 0);
 
-        // Close suggestions on Escape
         if (e.key === 'Escape') {
             setShowSuggestions(false);
         }
@@ -109,7 +105,6 @@ export function FileSearch({ searchTerm, onSearchChange, files }: FileSearchProp
     };
 
     const handleBlur = (e: React.FocusEvent) => {
-        // Check if the related target is within the suggestions list
         if (!e.relatedTarget || !e.relatedTarget.closest('.suggestions-list')) {
             setTimeout(() => setShowSuggestions(false), 200);
         }

@@ -124,6 +124,10 @@ export function FileGrid({
     }, []);
 
     useEffect(() => {
+        if (!searchTerm.trim()) {
+            setSortedFiles(files);
+            return;
+        }
         let filtered = allFiles;
         const { text, tags } = parseSearchInput(searchTerm);
 
@@ -257,14 +261,15 @@ export function FileGrid({
                                 totalColumns={totalColumns}
                             />
                         ))
-                    ) : (
+                    ) : searchTerm.trim() ? (
                         <div className="col-span-full flex flex-col items-center justify-center h-64 mt-8">
                             <AlertCircle className="w-12 h-12 text-muted-foreground mb-4"/>
                             <p className="text-muted-foreground font-medium">
                                 {t('locker.search.no_results', {searchTerm})}
                             </p>
                         </div>
-                    )}
+                    ) : null}
+                    {/*{Return null when there's no search, letting Locker handle the empty state}*/}
                 </AnimatePresence>
             </motion.div>
             {selectedImageIndex !== null && (
