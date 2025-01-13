@@ -11,6 +11,11 @@ import {FileSort} from "@/components/widget/FileSort";
 type SortCriteria = 'name' | 'date' | 'createat' | 'size';
 type SortOrder = 'asc' | 'desc';
 
+interface SearchTerms {
+    text: string;
+    tags: string[];
+}
+
 interface SortPreferences {
     criteria: SortCriteria;
     order: SortOrder;
@@ -26,6 +31,15 @@ const getSavedSortPreferences = (): SortPreferences => {
 
 const saveSortPreferences = (preferences: SortPreferences) => {
     localStorage.setItem('fileSortPreferences', JSON.stringify(preferences));
+};
+
+const parseSearchInput = (input: string): SearchTerms => {
+    const tags = input.match(/#\w+/g) || [];
+    const text = input.replace(/#\w+/g, '').trim();
+    return {
+        text,
+        tags: tags.map(tag => tag.slice(1).toLowerCase()) // Remove # and convert to lowercase
+    };
 };
 
 function useColumnCount() {
@@ -48,7 +62,7 @@ function useColumnCount() {
             }
         }
 
-        updateColumnCount() // Initial call
+        updateColumnCount()
         window.addEventListener('resize', updateColumnCount)
         return () => window.removeEventListener('resize', updateColumnCount)
     }, [])
@@ -90,7 +104,6 @@ export function FileGrid({
     const {t} = useTranslation()
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
-    // Handle sort with persistence
     const handleSort = (criteria: SortCriteria, order: SortOrder) => {
         setSortCriteria(criteria);
         setSortOrder(order);
@@ -112,11 +125,24 @@ export function FileGrid({
 
     useEffect(() => {
         let filtered = allFiles;
+        const { text, tags } = parseSearchInput(searchTerm);
 
-        if (searchTerm.trim()) {
-            filtered = allFiles.filter(file =>
-                file.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
+        if (text || tags.length > 0) {
+            filtered = allFiles.filter(file => {
+                const nameMatch = text ?
+                    file.name.toLowerCase().includes(text.toLowerCase()) :
+                    true;
+
+                const tagMatch = tags.length > 0 ?
+                    tags.every(searchTag =>
+                        file.tags?.some(fileTag =>
+                            fileTag.toLowerCase() === searchTag
+                        )
+                    ) :
+                    true;
+
+                return nameMatch && tagMatch;
+            });
         }
 
         const sorted = [...filtered].sort((a, b) => {
@@ -166,12 +192,35 @@ export function FileGrid({
         setSelectedImageIndex(null);
     };
 
+    const getSearchResultsText = () => {
+        const { text, tags } = parseSearchInput(searchTerm);
+        const filteredCount = allFiles.filter(file => {
+            const nameMatch = text ?
+                file.name.toLowerCase().includes(text.toLowerCase()) :
+                true;
+
+            const tagMatch = tags.length > 0 ?
+                tags.every(searchTag =>
+                    file.tags?.some(fileTag =>
+                        fileTag.toLowerCase() === searchTag
+                    )
+                ) :
+                true;
+
+            return nameMatch && tagMatch;
+        }).length;
+
+        return t('locker.search.results', { count: filteredCount });
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex items-center space-x-4">
                 <FileSearch
                     searchTerm={searchTerm}
                     onSearchChange={handleSearch}
+                    placeholder={t('locker.search.placeholder_with_tags')}
+                    files={allFiles}
                 />
                 <FileSort
                     sortCriteria={sortCriteria}
@@ -182,11 +231,7 @@ export function FileGrid({
             {
                 searchTerm && (
                     <div className="text-sm text-gray-500">
-                        {t('locker.search.results', {
-                            count: allFiles.filter(file =>
-                                file.name.toLowerCase().includes(searchTerm.toLowerCase())
-                            ).length
-                        })}
+                        {getSearchResultsText()}
                     </div>
                 )
             }
@@ -206,7 +251,7 @@ export function FileGrid({
                                 onDelete={() => onDeleteFileAction(file)}
                                 onMove={() => onMoveFileAction(file)}
                                 onSelect={() => handleSelectImage(index)}
-                                onTag={() => onTagAction(file) }
+                                onTag={() => onTagAction(file)}
                                 index={index}
                                 column={index % totalColumns}
                                 totalColumns={totalColumns}
@@ -215,7 +260,9 @@ export function FileGrid({
                     ) : (
                         <div className="col-span-full flex flex-col items-center justify-center h-64 mt-8">
                             <AlertCircle className="w-12 h-12 text-muted-foreground mb-4"/>
-                            <p className="text-muted-foreground font-medium">{t('locker.search.no_results', {searchTerm})}</p>
+                            <p className="text-muted-foreground font-medium">
+                                {t('locker.search.no_results', {searchTerm})}
+                            </p>
                         </div>
                     )}
                 </AnimatePresence>
