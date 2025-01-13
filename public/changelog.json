@@ -1,5 +1,31 @@
 [
   {
+    "version": "0.4.0",
+    "date": "13-1-2025",
+    "sections": [
+      {
+        "title": "Feature",
+        "type": "feature",
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold'>Major Features</h3><div class='space-y-2'>• Search Feature with Suggestions implemented<br/>• Complete Tags System overhaul:<div class='pl-4 mt-1'>• Tag searching functionality<br/>• Tag and Image suggestions<br/>• Visual Tag badges<br/>• Tag Manager improvements</div>• Enhanced image management with recycle bin functionality</div></div>"
+      },
+      {
+        "title": "Enhancement",
+        "type": "enhancement",
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold'>Interface Improvements</h3><div class='space-y-2'>• Animated and clickable Categories for better user interaction<br/>• Enhanced titlebar visibility and design<br/>• Improved screen layouts and spacing<br/>• Optimized database queries for tags<br/>• Automatic page refresh after dialog closure</div></div>"
+      },
+      {
+        "title": "Database",
+        "type": "database",
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold'>Database Changes</h3><div class='space-y-2'>• Optimized tag query performance<br/>• Improved database command structure<br/>• Enhanced data organization with separate tag management</div></div>"
+      },
+      {
+        "title": "Technical",
+        "type": "technical",
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold'>Technical Updates</h3><div class='space-y-2'>• Code organization improvements with separated content structure<br/>• Updated gitignore configurations<br/>• Debugging and performance optimizations</div></div>"
+      }
+    ]
+  },
+  {
     "version": "0.3.4 - beta",
     "date": "8-1-2025",
     "sections": [
