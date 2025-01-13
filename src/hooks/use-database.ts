@@ -63,7 +63,7 @@ export class DatabaseService {
      * @param imageId ID of the image
      * @param tagName Name of the tag
      */
-    async tagImage(imageId: number, tagName: string): Promise<void> {
+    async addTagImage(imageId: number, tagName: string): Promise<void> {
         try {
             await invoke<void>('tag_image', {
                 imageId,
@@ -86,7 +86,6 @@ export class DatabaseService {
                 imageId,
             });
         } catch (error) {
-            console.error('Failed to get image tags:', error);
             throw error;
         }
     }
@@ -102,7 +101,6 @@ export class DatabaseService {
                 tags,
             });
         } catch (error) {
-            console.error('Failed to search images by tags:', error);
             throw error;
         }
     }
@@ -115,7 +113,6 @@ export class DatabaseService {
         try {
             return await invoke<string[]>('get_all_tags');
         } catch (error) {
-            console.error('Failed to get all tags:', error);
             throw error;
         }
     }
@@ -132,7 +129,23 @@ export class DatabaseService {
                 tagName,
             });
         } catch (error) {
-            console.error('Failed to remove image tag:', error);
+            throw error;
+        }
+    }
+    async removeTag(tagName : string): Promise<void> {
+        try {
+            await invoke<string>('remove_tag', {name: tagName} )
+        } catch (error) {
+            throw error;
+        }
+    }
+    async editTag(oldName: string, newName: string): Promise<void> {
+        try {
+            await invoke<string>('edit_tag', {
+                oldName: oldName,
+                newName: newName
+            });
+        } catch (error) {
             throw error;
         }
     }

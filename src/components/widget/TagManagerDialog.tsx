@@ -33,10 +33,10 @@ import { TagItem } from "./TagItem"
 interface TagManagerDialogProps {
     file: File;
     isOpen: boolean;
-    onCloseAction: () => void;
+    onClose: () => void;
 }
 
-export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDialogProps) {
+export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProps) {
     const { t } = useTranslation();
     const db = new DatabaseService();
     const [availableTags, setAvailableTags] = useState<string[]>([]);
@@ -47,7 +47,6 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
     const [activeTab, setActiveTab] = useState<string>("selected");
     const { settings } = useSharedSettings();
     const [selectedAvailableTags, setSelectedAvailableTags] = useState<string[]>([]);
-
     const fetchImageTags = useCallback(async (id: number) => {
         try {
             const tags = await invoke<string[]>('get_image_tags', { imageId: id });
@@ -56,7 +55,7 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
             console.error('Failed to fetch image tags:', error);
             toast({
                 title: t('tags.error.fetch'),
-                description: t('tags.error.fetch_desc'),
+                description: String(error),
                 variant: "destructive",
             });
         }
@@ -67,10 +66,9 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
             const tags = await db.getAllTags();
             setAvailableTags(tags);
         } catch (error) {
-            console.error('Failed to fetch all tags:', error);
             toast({
                 title: t('tags.error.fetch_all'),
-                description: t('tags.error.fetch_all_desc'),
+                description: String(error),
                 variant: "destructive",
             });
         }
@@ -80,22 +78,15 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
         const initializeTags = async () => {
             if (!isOpen) return;
             try {
-                let imageId = await db.getImageId(file.filepath, file.category);
+                let id = await db.addImage(file.filepath, file.category);
+                setImageId(id);
 
-                if (!imageId) {
-                    imageId = await db.addImage(file.filepath, file.category);
-                    console.log("New image added with id:", imageId);
-                } else {
-                    console.log("Existing image found with id:", imageId);
-                }
-                setImageId(imageId);
-                await fetchImageTags(imageId);
+                await fetchImageTags(id);
                 await fetchAllTags();
             } catch (error) {
-                console.error('Failed to initialize tags:', error);
                 toast({
                     title: t('tags.error.init'),
-                    description: t('tags.error.init_desc'),
+                    description: String(error),
                     variant: "destructive",
                 });
             }
@@ -115,10 +106,9 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
                 description: t('tags.success.add_desc', { tag: newTag.trim() }),
             });
         } catch (error) {
-            console.error('Failed to add tag:', error);
             toast({
                 title: t('tags.error.add'),
-                description: t('tags.error.add_desc'),
+                description: String(error),
                 variant: "destructive",
             });
         }
@@ -129,17 +119,16 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
         if (!imageId) return;
 
         try {
-            await invoke('remove_image_tag', { imageId, tagName: tagToRemove });
+            await db.removeImageTag(imageId, tagToRemove);
             setSelectedTags(prev => prev.filter(tag => tag !== tagToRemove));
             toast({
                 title: t('tags.success.remove'),
                 description: t('tags.success.remove_desc', { tag: tagToRemove }),
             });
         } catch (error) {
-            console.error('Failed to remove tag:', error);
             toast({
                 title: t('tags.error.remove'),
-                description: t('tags.error.remove_desc'),
+                description: String(error),
                 variant: "destructive",
             });
         }
@@ -147,7 +136,7 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
 
     const handleRenameTag = async (oldTag: string, newTag: string) => {
         try {
-            await db.renameTag(oldTag, newTag);
+            await db.editTag(oldTag, newTag);
             setAvailableTags(prev => prev.map(tag => tag === oldTag ? newTag : tag));
             setSelectedTags(prev => prev.map(tag => tag === oldTag ? newTag : tag));
             toast({
@@ -155,10 +144,9 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
                 description: t('tags.success.rename_desc', { oldTag, newTag }),
             });
         } catch (error) {
-            console.error('Failed to rename tag:', error);
             toast({
                 title: t('tags.error.rename'),
-                description: t('tags.error.rename_desc'),
+                description: String(error),
                 variant: "destructive",
             });
         }
@@ -166,7 +154,7 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
 
     const handleDeleteTag = async (tagToDelete: string) => {
         try {
-            await db.deleteTag(tagToDelete);
+            await db.removeTag(tagToDelete);
             setAvailableTags(prev => prev.filter(tag => tag !== tagToDelete));
             setSelectedTags(prev => prev.filter(tag => tag !== tagToDelete));
             toast({
@@ -174,10 +162,9 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
                 description: t('tags.success.delete_desc', { tag: tagToDelete }),
             });
         } catch (error) {
-            console.error('Failed to delete tag:', error);
             toast({
                 title: t('tags.error.delete'),
-                description: t('tags.error.delete_desc'),
+                description: String(error),
                 variant: "destructive",
             });
         }
@@ -188,13 +175,12 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
             isSelected ? [...prev, tag] : prev.filter(t => t !== tag)
         );
     };
-
-    const handleAddSelectedTags = async () => {
+    const handleConfirmSelectedTags = async () => {
         if (!imageId) return;
 
         try {
             for (const tag of selectedAvailableTags) {
-                await db.tagImage(imageId, tag);
+                await db.addTagImage(imageId,  tag);
             }
             setSelectedTags(prev => [...new Set([...prev, ...selectedAvailableTags])]);
             setSelectedAvailableTags([]);
@@ -203,10 +189,9 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
                 description: t('tags.success.add_multiple_desc', { count: selectedAvailableTags.length }),
             });
         } catch (error) {
-            console.error('Failed to add selected tags:', error);
             toast({
                 title: t('tags.error.add_multiple'),
-                description: t('tags.error.add_multiple_desc'),
+                description: String(error),
                 variant: "destructive",
             });
         }
@@ -216,16 +201,7 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
         .filter(tag => !selectedTags.includes(tag) && tag.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
-        <Dialog open={isOpen} onOpenChange={() => {
-            setAvailableTags([]);
-            setSelectedTags([]);
-            setNewTag("");
-            setSearchTerm("");
-            setImageId(null);
-            setActiveTab("selected");
-            setSelectedAvailableTags([]);
-            onCloseAction();
-        }}>
+        <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[90vw] md:max-w-[900px] h-[90vh] max-h-[700px] flex flex-col p-0 gap-0">
                 <DialogHeader className="p-6 pb-2">
                     <DialogTitle>{t('tags.dialog.title')}</DialogTitle>
@@ -297,15 +273,14 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
                                         >
                                             <AnimatePresence initial={false}>
                                                 {selectedTags.map(tag => (
-                                                    <motion.div key={tag} layout>
-                                                        <TagItem
-                                                            tag={tag}
-                                                            onRemove={handleRemoveTag}
-                                                            onRename={handleRenameTag}
-                                                            onDelete={handleDeleteTag}
-                                                            isSelected={true}
-                                                        />
-                                                    </motion.div>
+                                                    <TagItem
+                                                        key={tag}
+                                                        tag={tag}
+                                                        onRemove={handleRemoveTag}
+                                                        onRename={handleRenameTag}
+                                                        onDelete={handleDeleteTag}
+                                                        isSelected={true}
+                                                    />
                                                 ))}
                                             </AnimatePresence>
                                         </motion.div>
@@ -347,17 +322,16 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
                                             {filteredAvailableTags.length > 0 ? (
                                                 <AnimatePresence initial={false}>
                                                     {filteredAvailableTags.map(tag => (
-                                                        <motion.div key={tag} layout>
-                                                            <TagItem
-                                                                tag={tag}
-                                                                onRemove={() => {}}
-                                                                onRename={handleRenameTag}
-                                                                onDelete={handleDeleteTag}
-                                                                isSelected={selectedAvailableTags.includes(tag)}
-                                                                onSelect={handleSelectAvailableTag}
-                                                                selectable={true}
-                                                            />
-                                                        </motion.div>
+                                                        <TagItem
+                                                            key={tag}
+                                                            tag={tag}
+                                                            onRemove={() => {}}
+                                                            onRename={handleRenameTag}
+                                                            onDelete={handleDeleteTag}
+                                                            isSelected={selectedAvailableTags.includes(tag)}
+                                                            onSelect={handleSelectAvailableTag}
+                                                            selectable={true}
+                                                        />
                                                     ))}
                                                 </AnimatePresence>
                                             ) : (
@@ -375,7 +349,7 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
                                     </ScrollArea>
                                     {selectedAvailableTags.length > 0 && (
                                         <div className="mt-4">
-                                            <Button onClick={handleAddSelectedTags} className="w-full">
+                                            <Button onClick={handleConfirmSelectedTags} className="w-full">
                                                 {t('tags.add_selected', { count: selectedAvailableTags.length })}
                                             </Button>
                                         </div>
@@ -387,16 +361,7 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
                 </div>
 
                 <DialogFooter className="p-6 pt-2">
-                    <Button onClick={() => {
-                        setAvailableTags([]);
-                        setSelectedTags([]);
-                        setNewTag("");
-                        setSearchTerm("");
-                        setImageId(null);
-                        setActiveTab("selected");
-                        setSelectedAvailableTags([]);
-                        onCloseAction();
-                    }} className="w-full">
+                    <Button onClick={onClose} className="w-full">
                         <Save className="mr-2 h-4 w-4"/>
                         {t('tags.save_and_close')}
                     </Button>
@@ -405,4 +370,3 @@ export function TagManagerDialog({ file, isOpen, onCloseAction  }: TagManagerDia
         </Dialog>
     );
 }
-

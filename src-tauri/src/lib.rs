@@ -78,7 +78,9 @@ pub fn run() {
             Database::tag_image,
             Database::add_tag,
             Database::add_image,
-            Database::get_image_id
+            Database::get_image_id,
+            Database::remove_tag,
+            Database::edit_tag,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -261,6 +261,62 @@ pub fn get_image_id(path: PathBuf, category: String) -> Result<i64, String> {
     Ok(image_id)
 }
 
+#[tauri::command]
+pub fn remove_tag(name: String) -> Result<(), String> {
+    let mut conn = connect_db()?;
+    println!("remove_tag called for tag: {}", name);
+
+    // Start a transaction to ensure atomicity
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+
+    // First delete from image_tags (not strictly necessary due to CASCADE, but explicit)
+    tx.execute(
+        "DELETE FROM image_tags WHERE tag_id = (SELECT id FROM tags WHERE name = ?1)",
+        [&name],
+    )
+        .map_err(|e| e.to_string())?;
+
+    // Then delete the tag itself
+    tx.execute(
+        "DELETE FROM tags WHERE name = ?1",
+        [&name],
+    )
+        .map_err(|e| e.to_string())?;
+
+    // Commit the transaction
+    tx.commit().map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn edit_tag(old_name: String, new_name: String) -> Result<(), String> {
+    let conn = connect_db()?;
+    println!("edit_tag called: {} -> {}", old_name, new_name);
+
+    // Check if the new name already exists
+    let mut stmt = conn
+        .prepare("SELECT COUNT(*) FROM tags WHERE name = ?1")
+        .map_err(|e| e.to_string())?;
+
+    let exists: i64 = stmt
+        .query_row([&new_name], |row| row.get(0))
+        .map_err(|e| e.to_string())?;
+
+    if exists > 0 {
+        return Err(format!("Tag '{}' already exists", new_name));
+    }
+
+    // Update the tag name
+    conn.execute(
+        "UPDATE tags SET name = ?1 WHERE name = ?2",
+        [&new_name, &old_name],
+    )
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
 pub fn get_batch_image_ids(file_paths: &[(PathBuf, String)]) -> Result<HashMap<PathBuf, i64>, String> {
     let conn = connect_db()?;
     let mut result = HashMap::new();
