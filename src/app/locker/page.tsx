@@ -24,6 +24,7 @@ import {useTranslation} from "react-i18next";
 import {useSharedSettings} from "@/utils/SettingsContext";
 import {ALLOWED_FILE_TYPES, IMAGES_PER_PAGE_STORAGE_KEY, PAGE_STORAGE_KEY} from "@/lib/localstoragekey";
 import {TagManagerDialog} from "@/components/widget/TagManagerDialog";
+import {CacheData} from "@/types/cache";
 
 interface FileMoveResponse {
     success: boolean;
@@ -62,15 +63,27 @@ export default function Locker() {
 
     const [tagManagerOpen, setTagManagerOpen] = useState(false);
     const [selectedFileForTags, setSelectedFileForTags] = useState<File | null>(null);
-    const filesCache = useRef<Map<string, { files: File[]; totalPages: number }>>(new Map());
+    const filesCache = useRef<Map<string, CacheData>>(new Map());
 
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
-    const isRememberCategory = useCallback(() => {
-        setRememberCategory(settings.rememberCategory);
-        if (!settings.rememberCategory) {
-            localStorage.removeItem('lastSelectedCategory');
+    const isCacheValid = (cacheData: CacheData | undefined) => {
+        if (!cacheData) return false;
+        const now = Date.now();
+        return (now - cacheData.timestamp) < CACHE_DURATION;
+    };
+
+// Modified resetState to be more selective
+    const resetState = useCallback((clearCache: boolean = false) => {
+        setFiles([]);
+        setAllFiles([]);
+        setTotalPages(0);
+        if (clearCache) {
+            filesCache.current.clear();
         }
-    }, [settings.rememberCategory]);
+    }, []);
+
+
 
     async function show_in_folder(path: string) {
         await invoke('show_in_folder', {path});
@@ -93,52 +106,6 @@ export default function Locker() {
             setAllFiles([]);
         }
     }, [selectedCategory, t]);
-
-
-    const fetchAllPages = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const data: FileResponse = await invoke('get_files', {
-                page: 1,
-                limit: imagesPerPage,
-                category: selectedCategory,
-            });
-            if (data.total_files == 0) {
-                toast({
-                    title: "No images found",
-                    description: "Seem this category not have anyimage to load skip loading."
-                });
-                setFiles([]); // Need to add this
-                setTotalPages(0); // Need to add this
-                return;
-            }
-            setTotalPages(data.total_pages);
-
-            const allPagesData: FileResponse[] = await Promise.all(
-                Array.from({length: data.total_pages}, (_, index) =>
-                    invoke<FileResponse>('get_files', {
-                        page: index + 1,
-                        limit: imagesPerPage,
-                        category: selectedCategory,
-                    })
-                )
-            );
-
-            allPagesData.forEach((pageData, index) => {
-                const cacheKey = `${index + 1}-${imagesPerPage}-${selectedCategory}`;
-                filesCache.current.set(cacheKey, {
-                    files: pageData.files,
-                    totalPages: pageData.total_pages,
-                });
-            });
-
-            setFiles(allPagesData[0].files);
-        } catch (error) {
-            console.error('Error fetching all pages:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [imagesPerPage, selectedCategory]);
 
     const fetchPaginatedFiles = useCallback(async () => {
         const cacheKey = `${currentPage}-${imagesPerPage}-${selectedCategory}`;
@@ -308,36 +275,34 @@ export default function Locker() {
 
     }, [selectedCategory, files, fetchAllFiles, t]);
 
-    const onCategoryChange = useCallback((value: string) => {
-        setSelectedCategory(value);
-        setCurrentPage(1);
-        localStorage.setItem(PAGE_STORAGE_KEY, '1'); // Reset page in localStorage
-        if (rememberCategory) {
-            localStorage.setItem('lastSelectedCategory', value);
-        }
-        fetchAllFiles().then(() => fetchPaginatedFiles().then(fetchAllPages));
-    }, [rememberCategory, fetchAllFiles, fetchPaginatedFiles]);
     const handleDelete = async (file: File) => {
         try {
             await invoke("delete_file", {
                 category: file.category,
                 name: file.name,
-            })
-            setFiles(prevFiles => prevFiles.filter(f => f.name !== file.name || f.category !== file.category))
+            });
+
+            Array.from(filesCache.current.keys()).forEach(key => {
+                if (key.includes(`-${file.category}`)) {
+                    filesCache.current.delete(key);
+                }
+            });
+
+            setFiles(prevFiles => prevFiles.filter(f => f.name !== file.name || f.category !== file.category));
             toast({
                 title: t('toast.titleType.success'),
                 description: `${file.name} deleted successfully`,
-            })
+            });
         } catch (error) {
             toast({
                 title: t('toast.titleType.error'),
                 description: `Failed to delete Image ${file.name}`,
                 variant: "destructive",
-            })
+            });
         }
-        setDeleteDialogOpen(false)
-        await fetchAllFiles()
-    }
+        setDeleteDialogOpen(false);
+        await fetchAllFiles();
+    };
 
     const handleMove = async (newCategory: string) => {
         if (!selectedFile) return
@@ -381,42 +346,104 @@ export default function Locker() {
         setTagManagerOpen(true);
     };
 
-    useEffect(() => {
-        const savedPage = localStorage.getItem(PAGE_STORAGE_KEY);
-        const savedImagesPerPage = localStorage.getItem(IMAGES_PER_PAGE_STORAGE_KEY);
-        if (savedPage) setCurrentPage(parseInt(savedPage, 10));
-        if (savedImagesPerPage) setImagesPerPage(parseInt(savedImagesPerPage, 10));
+    const onCategoryChange = useCallback(async (value: string) => {
+        setIsLoading(true);
+        setSelectedCategory(value);
+        setCurrentPage(1);
 
-        if (rememberCategory && selectedCategory) localStorage.setItem('lastSelectedCategory', selectedCategory);
+        // Update localStorage
+        localStorage.setItem(PAGE_STORAGE_KEY, '1');
+        if (rememberCategory) {
+            localStorage.setItem('lastSelectedCategory', value);
+        }
 
-        // Fetch categories, files, and pagination data only once
-        const loadData = async () => {
-            await fetchCategories(); // Fetch categories
-            if (rememberCategory) {
-                const lastCategory = localStorage.getItem('lastSelectedCategory');
-                if (lastCategory) {
-                    setSelectedCategory(lastCategory); // Set the last selected category
+        const cacheKey = `1-${imagesPerPage}-${value}`;
+        const cachedData = filesCache.current.get(cacheKey);
+
+        try {
+            // Check if we have valid cached data
+            if (isCacheValid(cachedData)) {
+                setFiles(cachedData.files);
+                setTotalPages(cachedData.totalPages);
+                if (cachedData.allFiles) {
+                    setAllFiles(cachedData.allFiles);
                 }
+                setIsLoading(false);
+                return;
             }
-            await fetchAllFiles(); // Fetch files
-            await fetchPaginatedFiles(); // Fetch paginated files
+
+            // No valid cache, fetch new data
+            const initialCheck: FileResponse = await invoke('get_files', {
+                page: 1,
+                limit: imagesPerPage,
+                category: value,
+            });
+
+            if (initialCheck.total_files === 0) {
+                resetState(false); // Don't clear cache
+                toast({
+                    title: "No images found",
+                    description: "This category does not contain any images."
+                });
+                return;
+            }
+
+            // If we have files, fetch all files data
+            const allFilesData: FileResponse = await invoke('get_files', {
+                page: 1,
+                limit: -1,
+                category: value,
+            });
+
+            // Update states
+            setAllFiles(allFilesData.files);
+            setFiles(initialCheck.files);
+            setTotalPages(initialCheck.total_pages);
+
+            // Update cache with timestamp
+            filesCache.current.set(cacheKey, {
+                files: initialCheck.files,
+                totalPages: initialCheck.total_pages,
+                timestamp: Date.now(),
+                allFiles: allFilesData.files
+            });
+
+        } catch (error) {
+            console.error('Error in category change:', error);
+            toast({
+                title: t('toast.titleType.error'),
+                description: "Failed to fetch category data",
+                variant: "destructive",
+            });
+            resetState(false); // Don't clear cache on error
+        } finally {
+            setIsLoading(false);
+        }
+    }, [imagesPerPage, rememberCategory, resetState, t]);
+
+    useEffect(() => {
+        const loadInitialData = async () => {
+            try {
+                await fetchCategories();
+
+                let initialCategory = 'all';
+                if (rememberCategory) {
+                    const lastCategory = localStorage.getItem('lastSelectedCategory');
+                    if (lastCategory) {
+                        initialCategory = lastCategory;
+                    }
+                }
+
+                await onCategoryChange(initialCategory);
+            } catch (error) {
+                console.error('Error loading initial data:', error);
+            }
         };
 
-        loadData(); // Call the async function only once
+        loadInitialData();
+    }, [fetchCategories, onCategoryChange, rememberCategory]);
 
-    }, [
-        selectedCategory,        // Dependency on selected category
-        currentPage,             // Dependency on current page
-        imagesPerPage,           // Dependency on images per page
-        rememberCategory,        // Dependency on remember category
-        isRememberCategory,      // Dependency on category remember setting
-        fetchCategories,         // Function dependencies
-        fetchAllFiles,           // Function dependencies
-        fetchPaginatedFiles,     // Function dependencies
-    ]);
-    useEffect(() => {
-        fetchAllPages();
-    }, [imagesPerPage, selectedCategory]);
+    console.log(filesCache)
 
     return (
         <div className="flex h-screen">
