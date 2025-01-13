@@ -23,7 +23,6 @@ import { OptimizedImage } from "@/components/widget/ImageProcessor"
 import { Plus, AlertCircle, Search, Save } from 'lucide-react'
 import { toast } from "@/hooks/use-toast"
 import { File } from "@/types/file"
-import { invoke } from '@tauri-apps/api/core'
 import { formatBytes } from "@/components/widget/Dashboard"
 import { useSharedSettings } from "@/utils/SettingsContext"
 import { DatabaseService } from "@/hooks/use-database"
