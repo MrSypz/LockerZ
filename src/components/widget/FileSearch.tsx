@@ -1,9 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { Input } from "@/components/ui/input";
-import { Search } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { Command, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { File } from '@/types/file';
+import React, {useRef, useState} from 'react';
+import {Input} from "@/components/ui/input";
+import {Search} from 'lucide-react';
+import {useTranslation} from 'react-i18next';
+import {Command, CommandEmpty, CommandGroup, CommandItem} from "@/components/ui/command";
+import {File} from '@/types/file';
 
 interface FileSearchProps {
     searchTerm: string;
@@ -53,18 +53,16 @@ export function FileSearch({ searchTerm, onSearchChange, files }: FileSearchProp
         // If word starts with #, suggest tags
         if (word.startsWith('#')) {
             const tagQuery = word.slice(1).toLowerCase();
-            const matchingTags = getAllTags()
+            newSuggestions = getAllTags()
                 .filter(tag => tag.toLowerCase().includes(tagQuery))
-                .map(tag => ({ type: 'tag' as const, value: tag }));
-            newSuggestions = matchingTags;
+                .map(tag => ({type: 'tag' as const, value: tag}));
         }
         // Otherwise suggest filenames
         else {
             const fileQuery = word.toLowerCase();
-            const matchingFiles = getAllFilenames()
+            newSuggestions = getAllFilenames()
                 .filter(name => name.toLowerCase().includes(fileQuery))
-                .map(name => ({ type: 'file' as const, value: name }));
-            newSuggestions = matchingFiles;
+                .map(name => ({type: 'file' as const, value: name}));
         }
 
         setSuggestions(newSuggestions);
