@@ -1,12 +1,22 @@
 [
   {
-    "version": "0.4.1",
-    "date": "13-1-2025",
+    "version": "0.4.2",
+    "date": "14-1-2025",
     "sections": [
       {
-        "title": "Bug Fixes",
+        "title": "Fixes",
         "type": "bug-fix",
-        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold'>Bug Fixes</h3><div class='space-y-2'>• Fix: No Category show searching not found</div></div>"
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-rose-500 dark:text-rose-400'>Bug Fixes</h3><div class='space-y-2'>• Fix: On empty category often load the latest image from category</div></div>"
+      },
+      {
+        "title": "Optimize",
+        "type": "performance",
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-amber-500 dark:text-amber-400'>Optimizations</h3><div class='space-y-2'>• Optimize: Better logic on cache handler</div></div>"
+      },
+      {
+        "title": "Features",
+        "type": "feature",
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-blue-500 dark:text-blue-400'>Removals</h3><div class='space-y-2'>• Remove: Removed colour chai</div></div>"
       }
     ]
   },
