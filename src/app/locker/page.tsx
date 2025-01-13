@@ -455,11 +455,13 @@ export default function Locker() {
                             <TagManagerDialog
                                 file={selectedFileForTags}
                                 isOpen={tagManagerOpen}
-                                onCloseAction={() => {
+                                onClose={async () => {
                                     setTagManagerOpen(false);
                                     setSelectedFileForTags(null);
-                                    fetchAllFiles();
-                            }}
+                                    filesCache.current.clear();
+                                    await fetchPaginatedFiles();
+                                    await fetchAllFiles();
+                                }}
                             />
                         )}
                         <PaginationControls
