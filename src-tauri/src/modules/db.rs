@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::modules::pathutils::get_main_path;
 use rusqlite::{Connection, Result, ToSql};
 use serde::{Deserialize, Serialize};
@@ -23,7 +24,7 @@ struct ImageTag {
     image_id: i64,
     tag_id: i64,
 }
-fn connect_db() -> Result<Connection, String> {
+pub fn connect_db() -> Result<Connection, String> {
     let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
     let db_dir = main_path.join("database");
     create_dir_all(&db_dir).map_err(|e| format!("Failed to create directory: {}", e))?;
@@ -78,7 +79,7 @@ pub fn init_db() -> Result<Connection, String> {
 #[tauri::command]
 pub fn add_image(path: PathBuf, category: String) -> Result<i64, String> {
     let conn = connect_db()?;
-    println!("add_image pass {:?}",conn);
+
     let filename = path
         .file_name()
         .and_then(|n| n.to_str())
@@ -89,14 +90,29 @@ pub fn add_image(path: PathBuf, category: String) -> Result<i64, String> {
         .and_then(|p| p.to_str())
         .ok_or("Invalid path")?;
 
-    conn.execute(
-        "INSERT OR IGNORE INTO images (relative_path, category, filename) VALUES (?1, ?2, ?3)",
-        [relative_path, &category, filename],
-    )
+    let mut stmt = conn
+        .prepare(
+            "SELECT id FROM images
+             WHERE relative_path = ?1
+             AND category = ?2
+             AND filename = ?3"
+        )
         .map_err(|e| e.to_string())?;
 
-    let id = conn.last_insert_rowid();
-    Ok(id)
+    match stmt.query_row([relative_path, &category, filename], |row| row.get::<_, i64>(0)) {
+        Ok(id) => {
+            Ok(id)
+        }
+        Err(_) => {
+            conn.execute(
+                "INSERT INTO images (relative_path, category, filename) VALUES (?1, ?2, ?3)",
+                [relative_path, &category, filename],
+            )
+                .map_err(|e| e.to_string())?;
+
+            Ok(conn.last_insert_rowid())
+        }
+    }
 }
 
 #[tauri::command]
@@ -147,6 +163,7 @@ pub fn get_image_tags(image_id: i64) -> Result<Vec<String>, String> {
 
     Ok(tags)
 }
+
 
 #[tauri::command]
 pub fn search_images_by_tags(tags: Vec<String>) -> Result<Vec<Image>, String> {
@@ -242,4 +259,57 @@ pub fn get_image_id(path: PathBuf, category: String) -> Result<i64, String> {
         .map_err(|e| e.to_string())?;
 
     Ok(image_id)
+}
+
+pub fn get_batch_image_ids(file_paths: &[(PathBuf, String)]) -> Result<HashMap<PathBuf, i64>, String> {
+    let conn = connect_db()?;
+    let mut result = HashMap::new();
+
+    let mut stmt = conn.prepare("
+        SELECT id FROM images
+        WHERE relative_path = ?1
+        AND category = ?2
+        AND filename = ?3
+    ").map_err(|e| e.to_string())?;
+
+    for (path, category) in file_paths {
+        let filename = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .ok_or("Invalid filename")?;
+
+        let relative_path = path
+            .parent()
+            .and_then(|p| p.to_str())
+            .ok_or("Invalid path")?;
+
+        if let Ok(id) = stmt.query_row([relative_path, category, filename], |row| row.get::<_, i64>(0)) {
+            result.insert(path.clone(), id);
+        }
+    }
+
+    Ok(result)
+}
+
+pub fn get_batch_image_tags(image_ids: &HashMap<PathBuf, i64>) -> Result<HashMap<i64, Vec<String>>, String> {
+    let conn = connect_db()?;
+    let mut result = HashMap::new();
+
+    let mut stmt = conn.prepare(
+        "SELECT t.name FROM tags t
+         JOIN image_tags it ON t.id = it.tag_id
+         WHERE it.image_id = ?1"
+    ).map_err(|e| e.to_string())?;
+
+    for id in image_ids.values() {
+        let tags = stmt
+            .query_map([id], |row| row.get(0))
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<String>, _>>()
+            .map_err(|e| e.to_string())?;
+
+        result.insert(*id, tags);
+    }
+
+    Ok(result)
 }

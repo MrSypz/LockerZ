@@ -18,6 +18,7 @@ pub struct FileInfo {
     pub last_modified: String,
     pub created_at: String,
     pub root_path: String,
+    pub tags: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone)]
@@ -231,6 +232,7 @@ impl FileCache {
                 .format("%Y-%m-%d %H:%M:%S")
                 .to_string(),
             root_path: root_path.to_string_lossy().to_string(),
+            tags: None,  // Initialize with None
         })
     }
 

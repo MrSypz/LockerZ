@@ -62,6 +62,8 @@ pub async fn get_files(
     limit: Option<i32>,
     category: Option<String>,
 ) -> Result<FileResponse, String> {
+    use crate::modules::db;
+
     let root_folder_path = get_config().folderPath;
     let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
     let cache = get_or_init_cache(main_path.join("cache"))
@@ -78,10 +80,32 @@ pub async fn get_files(
 
     // If cache is empty, rebuild it
     if cached_files.is_empty() {
-        // Refresh the category cache
         cached_files = cache.refresh_category(&root_folder_path, &category)
             .await
             .map_err(|e| format!("Error refreshing cache: {}", e))?;
+    }
+
+    // Batch process image IDs and tags
+    let file_paths: Vec<(PathBuf, String)> = cached_files
+        .iter()
+        .map(|file| (PathBuf::from(&file.filepath), file.category.clone()))
+        .collect();
+
+    // Get all image IDs in a single query
+    let image_ids = db::get_batch_image_ids(&file_paths)
+        .map_err(|e| format!("Error getting image IDs: {}", e))?;
+
+    // Get all tags in a single query
+    let tags_map = db::get_batch_image_tags(&image_ids)
+        .map_err(|e| format!("Error getting tags: {}", e))?;
+
+    // Associate tags with files
+    for file in &mut cached_files {
+        if let Some(image_id) = image_ids.get(&PathBuf::from(&file.filepath)) {
+            file.tags = Some(tags_map.get(image_id).cloned().unwrap_or_default());
+        } else {
+            file.tags = None;
+        }
     }
 
     let total_files = cached_files.len();
