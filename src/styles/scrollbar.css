@@ -1,0 +1,200 @@
+
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 6px;
+    border: 3px solid hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) hsl(var(--background));
+}
+.titlebar {
+    height: 40px;
+    user-select: none;
+    display: flex;
+    justify-content: flex-end;
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1000;
+    align-items: center;
+    padding-inline: 2px;
+    transition: margin-left 0.3s ease, width 0.3s ease;
+    overflow: hidden;
+}
+
+.titlebar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(5px);
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+}
+
+.titlebar:hover::before {
+    transform: translateY(0);
+}
+
+.titlebar-buttons {
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.titlebar:hover .titlebar-buttons {
+    opacity: 1;
+    visibility: visible;
+}
+
+.titlebar-expanded {
+    margin-left: 16rem; /* Sidebar width when expanded */
+    width: calc(100% - 16rem);
+}
+
+.titlebar-collapsed {
+    margin-left: 4rem; /* Sidebar width when collapsed */
+    width: calc(100% - 4rem);
+}
+
+/* Titlebar Buttons */
+.titlebar-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    margin-inline: 3px;
+    padding: 0;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.titlebar-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #3b3b3b;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.titlebar-button:hover::before {
+    opacity: 1;
+}
+
+.titlebar-button img {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) saturate(100%) invert(80%);
+    opacity: 0.8;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.titlebar-button:hover img {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+/* Focus Effect for Accessibility */
+.titlebar-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
+}
+
+/* Close Button Hover */
+#titlebar-close:hover::before {
+    background-color: #e06c75;
+}
+
+#titlebar-close img {
+    filter: brightness(0) saturate(100%) invert(40%);
+}
+
+.titlebar-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Active State for Clicked Button */
+.titlebar-button:active::before {
+    background-color: #555;
+}
+
+.titlebar-button:active img {
+    opacity: 0.9;
+    transform: scale(1.1);
+}
+
+/* Button Effects in Titlebar */
+.titlebar-button:last-child {
+    margin-right: 6px;
+}
+
+/* Add a small visible area to make it easier to hover */
+.titlebar::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: transparent;
+}
+
+body {
+    -ms-overflow-style: none;
+}
+
+@media (prefers-color-scheme: dark) {
+    ::-webkit-scrollbar-track {
+        background: hsl(var(--background));
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: hsl(var(--muted));
+        border-color: hsl(var(--background));
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: hsl(var(--muted-foreground));
+    }
+
+    * {
+        scrollbar-color: hsl(var(--muted)) hsl(var(--background));
+    }
+}
+
