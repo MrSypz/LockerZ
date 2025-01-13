@@ -30,20 +30,43 @@
     position: fixed;
     top: 0;
     right: 0;
+    left: 0;
     z-index: 1000;
     align-items: center;
     padding-inline: 2px;
     transition: margin-left 0.3s ease, width 0.3s ease;
+    overflow: hidden;
 }
+
+.titlebar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(5px);
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+}
+
+.titlebar:hover::before {
+    transform: translateY(0);
+}
+
 .titlebar-buttons {
     display: flex;
     gap: 8px;
-    opacity: 0; /* Initially hidden */
-    visibility: hidden; /* Hidden from layout */
+    opacity: 0;
+    visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
+    position: relative;
+    z-index: 1;
 }
+
 .titlebar:hover .titlebar-buttons {
-    opacity: 1; /* Make buttons visible */
+    opacity: 1;
     visibility: visible;
 }
 
@@ -69,20 +92,34 @@
     padding: 0;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.titlebar-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #3b3b3b;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.titlebar-button:hover::before {
+    opacity: 1;
 }
 
 .titlebar-button img {
     width: 16px;
     height: 16px;
-    filter: brightness(0) saturate(100%) invert(80%); /* Makes icons gray-white */
+    filter: brightness(0) saturate(100%) invert(80%);
     opacity: 0.8;
     transition: opacity 0.3s ease, transform 0.2s ease;
-}
-
-/* Hover Effect */
-.titlebar-button:hover {
-    background-color: #3b3b3b;
-    transform: scale(1.1);
+    position: relative;
+    z-index: 1;
 }
 
 .titlebar-button:hover img {
@@ -97,13 +134,12 @@
 }
 
 /* Close Button Hover */
-#titlebar-close:hover {
+#titlebar-close:hover::before {
     background-color: #e06c75;
-    transform: scale(1.1);
 }
 
 #titlebar-close img {
-    filter: brightness(0) saturate(100%) invert(40%); /* Slightly lighter */
+    filter: brightness(0) saturate(100%) invert(40%);
 }
 
 .titlebar-icon {
@@ -114,13 +150,13 @@
 }
 
 /* Active State for Clicked Button */
-.titlebar-button:active {
+.titlebar-button:active::before {
     background-color: #555;
-    transform: scale(1.05);
 }
 
 .titlebar-button:active img {
     opacity: 0.9;
+    transform: scale(1.1);
 }
 
 /* Button Effects in Titlebar */
@@ -128,6 +164,16 @@
     margin-right: 6px;
 }
 
+/* Add a small visible area to make it easier to hover */
+.titlebar::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: transparent;
+}
 
 body {
     -ms-overflow-style: none;
