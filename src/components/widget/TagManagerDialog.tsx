@@ -49,7 +49,7 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
     const [selectedAvailableTags, setSelectedAvailableTags] = useState<string[]>([]);
     const fetchImageTags = useCallback(async (id: number) => {
         try {
-            const tags = await invoke<string[]>('get_image_tags', { imageId: id });
+            const tags = await db.getImageTags(id);
             setSelectedTags(tags);
         } catch (error) {
             console.error('Failed to fetch image tags:', error);
@@ -331,6 +331,9 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
                                                             isSelected={selectedAvailableTags.includes(tag)}
                                                             onSelect={handleSelectAvailableTag}
                                                             selectable={true}
+                                                            imageheigh={settings.imageheigh}
+                                                            imagewidth={settings.imageWidth}
+                                                            imagequality={settings.imagequality}
                                                         />
                                                     ))}
                                                 </AnimatePresence>
