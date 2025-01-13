@@ -39,9 +39,9 @@ interface TagItemProps {
   isSelected?: boolean
   onSelect?: (tag: string, isSelected: boolean) => void
   selectable?: boolean
-  imagewidth: number
-  imageheigh: number
-  imagequality: number
+  imagewidth?: number
+  imageheigh?: number
+  imagequality?: number
 }
 
 const MotionBadge = motion(Badge)
