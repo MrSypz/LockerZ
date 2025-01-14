@@ -12,10 +12,6 @@ interface ChangelogSection {
     content: string
     type?: string
     image?: string
-    images?: {
-        before: string
-        after: string
-    }
 }
 
 interface ChangelogItem {

@@ -1,6 +1,27 @@
 [
   {
-    "version": "0.4.2",
+    "version": "0.4.3 - hotfix",
+    "date": "13-1-2025",
+    "sections": [
+      {
+        "title": "Features",
+        "type": "feature",
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-blue-500 dark:text-blue-400'>Features</h3><div class='space-y-2'>• Add: Client-side pagination system for better performance</div></div>"
+      },
+      {
+        "title": "Optimize",
+        "type": "performance",
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-amber-500 dark:text-amber-400'>Optimizations</h3><div class='space-y-2'>• Remove: Removed file caching system in favor of direct file management\n• Optimize: Improved page transitions by eliminating API calls\n• Optimize: Enhanced memory usage with single source of truth for file lists</div></div>"
+      },
+      {
+        "title": "Fixes",
+        "type": "bug-fix",
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-rose-500 dark:text-rose-400'>Bug Fixes</h3><div class='space-y-2'>• Fix: TagManagerDialog integration with pagination system\n• Fix: File list updates after tag modifications</div></div>"
+      }
+    ]
+  },
+  {
+    "version": "0.4.2 - hotfix",
     "date": "14-1-2025",
     "sections": [
       {
@@ -21,7 +42,7 @@
     ]
   },
   {
-    "version": "0.4.1",
+    "version": "0.4.1 - hotfix",
     "date": "13-1-2025",
     "sections": [
       {
