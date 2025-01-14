@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use std::fs::{self};
 use std::io;
 use std::path::{Path, PathBuf};
-use crate::modules::db;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FileMoveResponse {
@@ -216,10 +215,6 @@ pub async fn delete_file(category: String, name: String) -> Result<FileDeleteRes
 
     let file_path = root_folder_path.join(&category).join(&name);
 
-    // Delete from database before moving to trash
-    db::delete_image_from_db(file_path.clone(), category.clone())
-        .map_err(|e| format!("Failed to delete from database: {}", e))?;
-
     // Move to recycle bin instead of permanent deletion
     trash::delete(&file_path).map_err(|e| {
         let error_msg = format!("Error deleting file: {}", e);
@@ -275,10 +270,6 @@ pub async fn move_file_category(
         log_error!("{}", error_msg);
         error_msg
     })?;
-
-    // Update database
-    db::update_image_category(old_path, new_path, new_category.clone())
-        .map_err(|e| format!("Failed to update database: {}", e))?;
 
     // Update cache
     cache.move_file(&root_folder_path, &old_category, &new_category, &file_name).await
