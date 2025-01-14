@@ -38,7 +38,7 @@ const parseSearchInput = (input: string): SearchTerms => {
     const text = input.replace(/#\w+/g, '').trim();
     return {
         text,
-        tags: tags.map(tag => tag.slice(1).toLowerCase()) // Remove # and convert to lowercase
+        tags: tags.map(tag => tag.slice(1).toLowerCase())
     };
 };
 
@@ -124,15 +124,13 @@ export function FileGrid({
     }, []);
 
     useEffect(() => {
-        if (!searchTerm.trim()) {
-            setSortedFiles(files);
-            return;
-        }
-        let filtered = allFiles;
-        const { text, tags } = parseSearchInput(searchTerm);
+        // Always start with the full dataset (allFiles)
+        let filteredAndSortedFiles = [...allFiles];
 
-        if (text || tags.length > 0) {
-            filtered = allFiles.filter(file => {
+        // Apply search filtering if there's a search term
+        if (searchTerm.trim()) {
+            const { text, tags } = parseSearchInput(searchTerm);
+            filteredAndSortedFiles = filteredAndSortedFiles.filter(file => {
                 const nameMatch = text ?
                     file.name.toLowerCase().includes(text.toLowerCase()) :
                     true;
@@ -149,7 +147,8 @@ export function FileGrid({
             });
         }
 
-        const sorted = [...filtered].sort((a, b) => {
+        // Apply sorting to the entire dataset
+        filteredAndSortedFiles.sort((a, b) => {
             let comparison = 0;
             switch (sortCriteria) {
                 case 'name':
@@ -168,17 +167,19 @@ export function FileGrid({
             return sortOrder === 'asc' ? comparison : -comparison;
         });
 
-        const totalFilteredPages = Math.ceil(sorted.length / imagesPerPage);
+        // Handle pagination after sorting the entire dataset
+        const totalFilteredPages = Math.ceil(filteredAndSortedFiles.length / imagesPerPage);
         onTotalPagesChange(totalFilteredPages);
 
         if (currentPage > totalFilteredPages && totalFilteredPages > 0) {
             onPageChange(1);
         }
 
+        // Extract just the page we need to display
         const start = (currentPage - 1) * imagesPerPage;
         const end = start + imagesPerPage;
-        setSortedFiles(sorted.slice(start, end));
-    }, [allFiles, sortCriteria, sortOrder, searchTerm, currentPage, imagesPerPage]);
+        setSortedFiles(filteredAndSortedFiles.slice(start, end));
+    }, [files, allFiles, sortCriteria, sortOrder, searchTerm, currentPage, imagesPerPage]);
 
     const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newSearchTerm = event.target.value;
@@ -232,13 +233,11 @@ export function FileGrid({
                     onSort={handleSort}
                 />
             </div>
-            {
-                searchTerm && (
-                    <div className="text-sm text-gray-500">
-                        {getSearchResultsText()}
-                    </div>
-                )
-            }
+            {searchTerm && (
+                <div className="text-sm text-gray-500">
+                    {getSearchResultsText()}
+                </div>
+            )}
 
             <motion.div
                 className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 p-4 bg-background/50 backdrop-blur-sm rounded-lg border border-border"
@@ -269,7 +268,6 @@ export function FileGrid({
                             </p>
                         </div>
                     ) : null}
-                    {/*{Return null when there's no search, letting Locker handle the empty state}*/}
                 </AnimatePresence>
             </motion.div>
             {selectedImageIndex !== null && (

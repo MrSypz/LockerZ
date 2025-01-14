@@ -11,12 +11,12 @@
       {
         "title": "Optimize",
         "type": "performance",
-        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-amber-500 dark:text-amber-400'>Optimizations</h3><div class='space-y-2'>• Remove: Removed file caching system in favor of direct file management\n• Optimize: Improved page transitions by eliminating API calls\n• Optimize: Enhanced memory usage with single source of truth for file lists</div></div>"
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-amber-500 dark:text-amber-400'>Optimizations</h3><div class='space-y-2'>• Remove: Removed file caching system in favor of direct file management<br>• Optimize: Improved page transitions by eliminating API calls<br>• Optimize: Enhanced memory usage with single source of truth for file lists</div></div>"
       },
       {
         "title": "Fixes",
         "type": "bug-fix",
-        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-rose-500 dark:text-rose-400'>Bug Fixes</h3><div class='space-y-2'>• Fix: TagManagerDialog integration with pagination system\n• Fix: File list updates after tag modifications</div></div>"
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-rose-500 dark:text-rose-400'>Bug Fixes</h3><div class='space-y-2'>• Fix: TagManagerDialog integration with pagination system<br>• Fix: File list updates after tag modifications<br>• Fix: Sort functionality not working properly<br>• Fix: Inconsistent spacing using proper line breaks</div></div>"
       }
     ]
   },
@@ -37,7 +37,7 @@
       {
         "title": "Features",
         "type": "feature",
-        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-blue-500 dark:text-blue-400'>Removals</h3><div class='space-y-2'>• Remove: Removed colour chai</div></div>"
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-blue-500 dark:text-blue-400'>Removals</h3><div class='space-y-2'>• Remove: Removed colour</div></div>"
       }
     ]
   },
