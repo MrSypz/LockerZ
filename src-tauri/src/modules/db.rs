@@ -317,6 +317,61 @@ pub fn edit_tag(old_name: String, new_name: String) -> Result<(), String> {
     Ok(())
 }
 
+pub fn update_image_category(old_path: PathBuf, new_path: PathBuf, category: String) -> Result<(), String> {
+    let conn = connect_db()?;
+
+    let old_filename = old_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or("Invalid old filename")?;
+
+    let old_relative_path = old_path
+        .parent()
+        .and_then(|p| p.to_str())
+        .ok_or("Invalid old path")?;
+
+    let new_filename = new_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or("Invalid new filename")?;
+
+    let new_relative_path = new_path
+        .parent()
+        .and_then(|p| p.to_str())
+        .ok_or("Invalid new path")?;
+
+    conn.execute(
+        "UPDATE images SET relative_path = ?1, category = ?2, filename = ?3
+         WHERE relative_path = ?4 AND filename = ?5",
+        [new_relative_path, &category, new_filename, old_relative_path, old_filename],
+    )
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+pub fn delete_image_from_db(path: PathBuf, category: String) -> Result<(), String> {
+    let conn = connect_db()?;
+
+    let filename = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or("Invalid filename")?;
+
+    let relative_path = path
+        .parent()
+        .and_then(|p| p.to_str())
+        .ok_or("Invalid path")?;
+
+    conn.execute(
+        "DELETE FROM images WHERE relative_path = ?1 AND category = ?2 AND filename = ?3",
+        [relative_path, &category, filename],
+    )
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
 pub fn get_batch_image_ids(file_paths: &[(PathBuf, String)]) -> Result<HashMap<PathBuf, i64>, String> {
     let conn = connect_db()?;
     let mut result = HashMap::new();
