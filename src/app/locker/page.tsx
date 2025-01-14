@@ -59,7 +59,7 @@ export default function Locker() {
         const savedImagesPerPage = localStorage.getItem(IMAGES_PER_PAGE_STORAGE_KEY)
         return savedImagesPerPage ? parseInt(savedImagesPerPage, 10) : 10
     })
-    const [rememberCategory, setRememberCategory] = useState(settings.rememberCategory)
+    const [rememberCategory] = useState(settings.rememberCategory)
 
     const [tagManagerOpen, setTagManagerOpen] = useState(false);
     const [selectedFileForTags, setSelectedFileForTags] = useState<File | null>(null);
@@ -72,18 +72,71 @@ export default function Locker() {
         const now = Date.now();
         return (now - cacheData.timestamp) < CACHE_DURATION;
     };
-
-// Modified resetState to be more selective
-    const resetState = useCallback((clearCache: boolean = false) => {
-        setFiles([]);
-        setAllFiles([]);
-        setTotalPages(0);
-        if (clearCache) {
-            filesCache.current.clear();
-        }
+    const clearCategoryCache = useCallback((category: string) => {
+        Array.from(filesCache.current.keys()).forEach(key => {
+            if (key.includes(`-${category}`)) {
+                filesCache.current.delete(key);
+            }
+        });
     }, []);
 
+    const fetchCategoryData = async (
+        page: number,
+        limit: number,
+        category: string,
+        setLoadingState: boolean = true
+    ): Promise<FileResponse | null> => {
+        if (setLoadingState) setIsLoading(true);
+        try {
+            const data: FileResponse = await invoke('get_files', {
+                page,
+                limit,
+                category,
+            });
+            return data;
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            toast({
+                title: t('toast.titleType.error'),
+                description: "Failed to fetch data",
+                variant: "destructive",
+            });
+            return null;
+        } finally {
+            if (setLoadingState) setIsLoading(false);
+        }
+    };
 
+    const updateCacheAndState = (
+        data: FileResponse,
+        page: number,
+        limit: number,
+        category: string,
+        includeAllFiles?: File[]
+    ) => {
+        const cacheKey = `${page}-${limit}-${category}`;
+        filesCache.current.set(cacheKey, {
+            files: data.files,
+            totalPages: data.total_pages,
+            timestamp: Date.now(),
+            allFiles: includeAllFiles
+        });
+
+        setFiles(data.files);
+        setTotalPages(data.total_pages);
+        if (includeAllFiles) {
+            setAllFiles(includeAllFiles);
+        }
+    };
+    const handleEmptyData = () => {
+        setFiles([]);
+        setTotalPages(0);
+        setAllFiles([]);
+        toast({
+            title: "No images found",
+            description: "This category does not contain any images."
+        });
+    };
 
     async function show_in_folder(path: string) {
         await invoke('show_in_folder', {path});
@@ -328,18 +381,65 @@ export default function Locker() {
         await fetchAllFiles()
     }
 
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
-        localStorage.setItem(PAGE_STORAGE_KEY, page.toString());
-        fetchPaginatedFiles();
-    };
-
-    const handleImagesPerPageChange = (value: number) => {
+    const handleImagesPerPageChange = useCallback(async (value: number) => {
         setImagesPerPage(value);
         setCurrentPage(1);
+        clearCategoryCache(selectedCategory); // Clear cache for current category
         localStorage.setItem(IMAGES_PER_PAGE_STORAGE_KEY, value.toString());
         localStorage.setItem(PAGE_STORAGE_KEY, '1');
-    };
+
+        // Fetch fresh data
+        setIsLoading(true);
+        try {
+            const data: FileResponse = await invoke('get_files', {
+                page: 1,
+                limit: value,
+                category: selectedCategory,
+            });
+
+            if (data.total_files === 0) {
+                setFiles([]);
+                setTotalPages(0);
+                return;
+            }
+
+            setFiles(data.files);
+            setTotalPages(data.total_pages);
+
+            // Update cache with new data
+            const cacheKey = `1-${value}-${selectedCategory}`;
+            filesCache.current.set(cacheKey, {
+                files: data.files,
+                totalPages: data.total_pages,
+                timestamp: Date.now()
+            });
+        } catch (error) {
+            console.error('Error updating page size:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [selectedCategory, clearCategoryCache]);
+
+    const handlePageChange = useCallback(async (page: number) => {
+        setCurrentPage(page);
+        localStorage.setItem(PAGE_STORAGE_KEY, page.toString());
+
+        const cacheKey = `${page}-${imagesPerPage}-${selectedCategory}`;
+        const cachedData = filesCache.current.get(cacheKey);
+
+        if (isCacheValid(cachedData)) {
+            setFiles(cachedData.files);
+            return;
+        }
+
+        const data = await fetchCategoryData(page, imagesPerPage, selectedCategory);
+        if (!data || data.total_files === 0) {
+            handleEmptyData();
+            return;
+        }
+
+        updateCacheAndState(data, page, imagesPerPage, selectedCategory);
+    }, [selectedCategory, imagesPerPage]);
 
     const handleTagsAction = (file: File) => {
         setSelectedFileForTags(file);
@@ -360,66 +460,32 @@ export default function Locker() {
         const cacheKey = `1-${imagesPerPage}-${value}`;
         const cachedData = filesCache.current.get(cacheKey);
 
-        try {
-            // Check if we have valid cached data
-            if (isCacheValid(cachedData)) {
-                setFiles(cachedData.files);
-                setTotalPages(cachedData.totalPages);
-                if (cachedData.allFiles) {
-                    setAllFiles(cachedData.allFiles);
-                }
-                setIsLoading(false);
-                return;
+        if (isCacheValid(cachedData)) {
+            setFiles(cachedData.files);
+            setTotalPages(cachedData.totalPages);
+            if (cachedData.allFiles) {
+                setAllFiles(cachedData.allFiles);
             }
-
-            // No valid cache, fetch new data
-            const initialCheck: FileResponse = await invoke('get_files', {
-                page: 1,
-                limit: imagesPerPage,
-                category: value,
-            });
-
-            if (initialCheck.total_files === 0) {
-                resetState(false); // Don't clear cache
-                toast({
-                    title: "No images found",
-                    description: "This category does not contain any images."
-                });
-                return;
-            }
-
-            // If we have files, fetch all files data
-            const allFilesData: FileResponse = await invoke('get_files', {
-                page: 1,
-                limit: -1,
-                category: value,
-            });
-
-            // Update states
-            setAllFiles(allFilesData.files);
-            setFiles(initialCheck.files);
-            setTotalPages(initialCheck.total_pages);
-
-            // Update cache with timestamp
-            filesCache.current.set(cacheKey, {
-                files: initialCheck.files,
-                totalPages: initialCheck.total_pages,
-                timestamp: Date.now(),
-                allFiles: allFilesData.files
-            });
-
-        } catch (error) {
-            console.error('Error in category change:', error);
-            toast({
-                title: t('toast.titleType.error'),
-                description: "Failed to fetch category data",
-                variant: "destructive",
-            });
-            resetState(false); // Don't clear cache on error
-        } finally {
             setIsLoading(false);
+            return;
         }
-    }, [imagesPerPage, rememberCategory, resetState, t]);
+
+        // Fetch initial data
+        const initialData = await fetchCategoryData(1, imagesPerPage, value);
+        if (!initialData || initialData.total_files === 0) {
+            handleEmptyData();
+            setIsLoading(false);
+            return;
+        }
+
+        // Fetch all files if needed
+        const allFilesData = await fetchCategoryData(1, -1, value, false);
+        if (allFilesData) {
+            updateCacheAndState(initialData, 1, imagesPerPage, value, allFilesData.files);
+        }
+
+        setIsLoading(false);
+    }, [imagesPerPage, rememberCategory, t]);
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -442,8 +508,6 @@ export default function Locker() {
 
         loadInitialData();
     }, [fetchCategories, onCategoryChange, rememberCategory]);
-
-    console.log(filesCache)
 
     return (
         <div className="flex h-screen">
