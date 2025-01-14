@@ -4,7 +4,7 @@ import React, {useState, useEffect, useCallback, useRef} from 'react'
 import {toast} from "@/hooks/use-toast"
 import {Loader2, AlertCircle} from 'lucide-react'
 import {open} from '@tauri-apps/plugin-dialog'
-import {invoke} from "@tauri-apps/api/core";
+import {invoke} from "@tauri-apps/api/core"
 import {MoveDialog} from '@/components/widget/Move-dialog'
 import {
     AlertDialog,
@@ -20,11 +20,11 @@ import {FileGrid} from '@/components/widget/FileGrid'
 import {CategorySelector} from '@/components/widget/CategorySelector'
 import {PaginationControls} from '@/components/widget/PaginationControls'
 import {File, FileResponse, Category} from '@/types/file'
-import {useTranslation} from "react-i18next";
-import {useSharedSettings} from "@/utils/SettingsContext";
-import {ALLOWED_FILE_TYPES, IMAGES_PER_PAGE_STORAGE_KEY, PAGE_STORAGE_KEY} from "@/lib/localstoragekey";
-import {TagManagerDialog} from "@/components/widget/TagManagerDialog";
-import {CacheData} from "@/types/cache";
+import {useTranslation} from "react-i18next"
+import {useSharedSettings} from "@/utils/SettingsContext"
+import {ALLOWED_FILE_TYPES, IMAGES_PER_PAGE_STORAGE_KEY, PAGE_STORAGE_KEY} from "@/lib/localstoragekey"
+import {TagManagerDialog} from "@/components/widget/TagManagerDialog"
+import {CacheData} from "@/types/cache"
 
 interface FileMoveResponse {
     success: boolean;
@@ -50,7 +50,7 @@ export default function Locker() {
     });
     const [isLoading, setIsLoading] = useState(true)
     const [isCategoriesLoading, setIsCategoriesLoading] = useState(true)
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
     const [moveDialogOpen, setMoveDialogOpen] = useState(false)
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -61,88 +61,15 @@ export default function Locker() {
     })
     const [rememberCategory] = useState(settings.rememberCategory)
 
-    const [tagManagerOpen, setTagManagerOpen] = useState(false);
-    const [selectedFileForTags, setSelectedFileForTags] = useState<File | null>(null);
-    const filesCache = useRef<Map<string, CacheData>>(new Map());
-
-    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
-
-    const isCacheValid = (cacheData: CacheData | undefined) => {
-        if (!cacheData) return false;
-        const now = Date.now();
-        return (now - cacheData.timestamp) < CACHE_DURATION;
-    };
-    const clearCategoryCache = useCallback((category: string) => {
-        Array.from(filesCache.current.keys()).forEach(key => {
-            if (key.includes(`-${category}`)) {
-                filesCache.current.delete(key);
-            }
-        });
-    }, []);
-
-    const fetchCategoryData = async (
-        page: number,
-        limit: number,
-        category: string,
-        setLoadingState: boolean = true
-    ): Promise<FileResponse | null> => {
-        if (setLoadingState) setIsLoading(true);
-        try {
-            const data: FileResponse = await invoke('get_files', {
-                page,
-                limit,
-                category,
-            });
-            return data;
-        } catch (error) {
-            console.error('Error fetching data:', error);
-            toast({
-                title: t('toast.titleType.error'),
-                description: "Failed to fetch data",
-                variant: "destructive",
-            });
-            return null;
-        } finally {
-            if (setLoadingState) setIsLoading(false);
-        }
-    };
-
-    const updateCacheAndState = (
-        data: FileResponse,
-        page: number,
-        limit: number,
-        category: string,
-        includeAllFiles?: File[]
-    ) => {
-        const cacheKey = `${page}-${limit}-${category}`;
-        filesCache.current.set(cacheKey, {
-            files: data.files,
-            totalPages: data.total_pages,
-            timestamp: Date.now(),
-            allFiles: includeAllFiles
-        });
-
-        setFiles(data.files);
-        setTotalPages(data.total_pages);
-        if (includeAllFiles) {
-            setAllFiles(includeAllFiles);
-        }
-    };
-    const handleEmptyData = () => {
-        setFiles([]);
-        setTotalPages(0);
-        setAllFiles([]);
-        toast({
-            title: "No images found",
-            description: "This category does not contain any images."
-        });
-    };
+    const [tagManagerOpen, setTagManagerOpen] = useState(false)
+    const [selectedFileForTags, setSelectedFileForTags] = useState<File | null>(null)
 
     async function show_in_folder(path: string) {
         await invoke('show_in_folder', {path});
     }
 
     const fetchAllFiles = useCallback(async () => {
+        setIsLoading(true)
         try {
             const data: FileResponse = await invoke('get_files', {
                 page: 1,
@@ -150,6 +77,14 @@ export default function Locker() {
                 category: selectedCategory,
             });
             setAllFiles(data.files);
+
+            // Calculate initial page files
+            const startIndex = 0;
+            const endIndex = Math.min(imagesPerPage, data.files.length);
+            setFiles(data.files.slice(startIndex, endIndex));
+
+            // Calculate total pages
+            setTotalPages(Math.ceil(data.files.length / imagesPerPage));
         } catch (error) {
             toast({
                 title: t('toast.titleType.error'),
@@ -157,53 +92,12 @@ export default function Locker() {
                 variant: "destructive",
             });
             setAllFiles([]);
-        }
-    }, [selectedCategory, t]);
-
-    const fetchPaginatedFiles = useCallback(async () => {
-        const cacheKey = `${currentPage}-${imagesPerPage}-${selectedCategory}`;
-
-        if (filesCache.current.has(cacheKey)) {
-            const cachedData = filesCache.current.get(cacheKey);
-            if (!cachedData?.files?.length) {
-                setFiles([]); // Just set empty array, FileGrid won't render due to the condition
-                setTotalPages(0);
-                return;
-            }
-            setFiles(cachedData.files);
-            setTotalPages(cachedData.totalPages);
-            return;
-        }
-
-        setIsLoading(true);
-        try {
-            const data: FileResponse = await invoke('get_files', {
-                page: currentPage,
-                limit: imagesPerPage,
-                category: selectedCategory,
-            });
-
-            if (data.total_files === 0) {
-                setFiles([]); // This will trigger the "no images" message
-                setTotalPages(0);
-                return;
-            }
-
-            // Only set cache and update files if we actually have files
-            filesCache.current.set(cacheKey, {
-                files: data.files,
-                totalPages: data.total_pages,
-            });
-
-            setFiles(data.files);
-            setTotalPages(data.total_pages);
-        } catch (error) {
-            console.error('Error fetching paginated files:', error);
-            setFiles([]); // Error case also shows "no images" message
+            setFiles([]);
+            setTotalPages(0);
         } finally {
             setIsLoading(false);
         }
-    }, [currentPage, imagesPerPage, selectedCategory]);
+    }, [selectedCategory, imagesPerPage, t]);
 
     const fetchCategories = useCallback(async () => {
         setIsCategoriesLoading(true)
@@ -227,9 +121,7 @@ export default function Locker() {
     const handleFileDrop = useCallback(async (droppedFiles?: string[]) => {
         let filesToProcess: (globalThis.File | string)[] = [];
 
-        // @ts-ignore
         if (droppedFiles?.length > 0) {
-            // @ts-ignore
             filesToProcess = droppedFiles;
         } else {
             try {
@@ -325,7 +217,6 @@ export default function Locker() {
         }
 
         await fetchAllFiles();
-
     }, [selectedCategory, files, fetchAllFiles, t]);
 
     const handleDelete = async (file: File) => {
@@ -335,13 +226,9 @@ export default function Locker() {
                 name: file.name,
             });
 
-            Array.from(filesCache.current.keys()).forEach(key => {
-                if (key.includes(`-${file.category}`)) {
-                    filesCache.current.delete(key);
-                }
-            });
-
             setFiles(prevFiles => prevFiles.filter(f => f.name !== file.name || f.category !== file.category));
+            setAllFiles(prevFiles => prevFiles.filter(f => f.name !== file.name || f.category !== file.category));
+
             toast({
                 title: t('toast.titleType.success'),
                 description: `${file.name} deleted successfully`,
@@ -354,7 +241,6 @@ export default function Locker() {
             });
         }
         setDeleteDialogOpen(false);
-        await fetchAllFiles();
     };
 
     const handleMove = async (newCategory: string) => {
@@ -381,65 +267,30 @@ export default function Locker() {
         await fetchAllFiles()
     }
 
-    const handleImagesPerPageChange = useCallback(async (value: number) => {
+    const handleImagesPerPageChange = useCallback((value: number) => {
         setImagesPerPage(value);
         setCurrentPage(1);
-        clearCategoryCache(selectedCategory); // Clear cache for current category
         localStorage.setItem(IMAGES_PER_PAGE_STORAGE_KEY, value.toString());
         localStorage.setItem(PAGE_STORAGE_KEY, '1');
 
-        // Fetch fresh data
-        setIsLoading(true);
-        try {
-            const data: FileResponse = await invoke('get_files', {
-                page: 1,
-                limit: value,
-                category: selectedCategory,
-            });
+        // Update displayed files based on new page size
+        const startIndex = 0;
+        const endIndex = Math.min(value, allFiles.length);
+        setFiles(allFiles.slice(startIndex, endIndex));
+        setTotalPages(Math.ceil(allFiles.length / value));
+    }, [allFiles]);
 
-            if (data.total_files === 0) {
-                setFiles([]);
-                setTotalPages(0);
-                return;
-            }
-
-            setFiles(data.files);
-            setTotalPages(data.total_pages);
-
-            // Update cache with new data
-            const cacheKey = `1-${value}-${selectedCategory}`;
-            filesCache.current.set(cacheKey, {
-                files: data.files,
-                totalPages: data.total_pages,
-                timestamp: Date.now()
-            });
-        } catch (error) {
-            console.error('Error updating page size:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [selectedCategory, clearCategoryCache]);
-
-    const handlePageChange = useCallback(async (page: number) => {
+    const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page);
         localStorage.setItem(PAGE_STORAGE_KEY, page.toString());
 
-        const cacheKey = `${page}-${imagesPerPage}-${selectedCategory}`;
-        const cachedData = filesCache.current.get(cacheKey);
+        // Calculate new page boundaries
+        const startIndex = (page - 1) * imagesPerPage;
+        const endIndex = Math.min(startIndex + imagesPerPage, allFiles.length);
 
-        if (isCacheValid(cachedData)) {
-            setFiles(cachedData.files);
-            return;
-        }
-
-        const data = await fetchCategoryData(page, imagesPerPage, selectedCategory);
-        if (!data || data.total_files === 0) {
-            handleEmptyData();
-            return;
-        }
-
-        updateCacheAndState(data, page, imagesPerPage, selectedCategory);
-    }, [selectedCategory, imagesPerPage]);
+        // Update displayed files
+        setFiles(allFiles.slice(startIndex, endIndex));
+    }, [allFiles, imagesPerPage]);
 
     const handleTagsAction = (file: File) => {
         setSelectedFileForTags(file);
@@ -451,40 +302,40 @@ export default function Locker() {
         setSelectedCategory(value);
         setCurrentPage(1);
 
-        // Update localStorage
         localStorage.setItem(PAGE_STORAGE_KEY, '1');
         if (rememberCategory) {
             localStorage.setItem('lastSelectedCategory', value);
         }
 
-        const cacheKey = `1-${imagesPerPage}-${value}`;
-        const cachedData = filesCache.current.get(cacheKey);
+        try {
+            const data: FileResponse = await invoke('get_files', {
+                page: 1,
+                limit: -1,
+                category: value,
+            });
 
-        if (isCacheValid(cachedData)) {
-            setFiles(cachedData.files);
-            setTotalPages(cachedData.totalPages);
-            if (cachedData.allFiles) {
-                setAllFiles(cachedData.allFiles);
-            }
+            setAllFiles(data.files);
+
+            // Set initial page of files
+            const startIndex = 0;
+            const endIndex = Math.min(imagesPerPage, data.files.length);
+            setFiles(data.files.slice(startIndex, endIndex));
+
+            // Calculate total pages
+            setTotalPages(Math.ceil(data.files.length / imagesPerPage));
+        } catch (error) {
+            console.error('Error changing category:', error);
+            setAllFiles([]);
+            setFiles([]);
+            setTotalPages(0);
+            toast({
+                title: t('toast.titleType.error'),
+                description: "Failed to fetch files for category",
+                variant: "destructive",
+            });
+        } finally {
             setIsLoading(false);
-            return;
         }
-
-        // Fetch initial data
-        const initialData = await fetchCategoryData(1, imagesPerPage, value);
-        if (!initialData || initialData.total_files === 0) {
-            handleEmptyData();
-            setIsLoading(false);
-            return;
-        }
-
-        // Fetch all files if needed
-        const allFilesData = await fetchCategoryData(1, -1, value, false);
-        if (allFilesData) {
-            updateCacheAndState(initialData, 1, imagesPerPage, value, allFilesData.files);
-        }
-
-        setIsLoading(false);
     }, [imagesPerPage, rememberCategory, t]);
 
     useEffect(() => {
@@ -527,7 +378,7 @@ export default function Locker() {
                                 <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary"/>
                                 <p className="text-foreground font-medium">Loading images...</p>
                             </div>
-                        ) : !files || files.length === 0 ? (  // Add null/undefined check
+                        ) : !files || files.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-64 mt-8">
                                 <AlertCircle className="w-12 h-12 text-muted-foreground mb-4"/>
                                 <p className="text-muted-foreground font-medium">
@@ -564,8 +415,6 @@ export default function Locker() {
                                 onClose={async () => {
                                     setTagManagerOpen(false);
                                     setSelectedFileForTags(null);
-                                    filesCache.current.clear();
-                                    await fetchPaginatedFiles();
                                     await fetchAllFiles();
                                 }}
                             />
