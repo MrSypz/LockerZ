@@ -6,6 +6,10 @@ export interface Image {
     category: string;
     filename: string;
 }
+export interface TagInfo {
+    name: string;
+    is_category: boolean;
+}
 
 export class DatabaseService {
     /**

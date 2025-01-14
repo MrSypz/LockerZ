@@ -35,11 +35,6 @@ export function FileSearch({ searchTerm, onSearchChange, files }: FileSearchProp
         return Array.from(new Set(files.map(file => file.category?.toLowerCase()).filter(Boolean)));
     };
 
-    // Get unique filenames
-    const getAllFilenames = () => {
-        return Array.from(new Set(files.map(file => file.name)));
-    };
-
     const getCurrentWord = (value: string, position: number) => {
         const words = value.slice(0, position).split(/\s+/);
         return words[words.length - 1] || '';
@@ -64,7 +59,6 @@ export function FileSearch({ searchTerm, onSearchChange, files }: FileSearchProp
                     display: `#${tag}`
                 }));
         } else if (word.startsWith('@')) {
-            // Category suggestions
             const catQuery = word.slice(1).toLowerCase();
             newSuggestions = getAllCategories()
                 .filter(cat => cat.includes(catQuery))

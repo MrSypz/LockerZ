@@ -25,7 +25,7 @@ import { toast } from "@/hooks/use-toast"
 import { File } from "@/types/file"
 import { formatBytes } from "@/components/widget/Dashboard"
 import { useSharedSettings } from "@/utils/SettingsContext"
-import { DatabaseService } from "@/hooks/use-database"
+import {DatabaseService, TagInfo} from "@/hooks/use-database"
 import { Separator } from "@/components/ui/separator"
 import { TagItem } from "./TagItem"
 
@@ -38,14 +38,14 @@ interface TagManagerDialogProps {
 export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProps) {
     const { t } = useTranslation();
     const db = new DatabaseService();
-    const [availableTags, setAvailableTags] = useState<string[]>([]);
-    const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [availableTags, setAvailableTags] = useState<TagInfo[]>([]);
+    const [selectedTags, setSelectedTags] = useState<TagInfo[]>([]);
+    const [selectedAvailableTags, setSelectedAvailableTags] = useState<TagInfo[]>([]);
     const [newTag, setNewTag] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
     const [imageId, setImageId] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<string>("selected");
     const { settings } = useSharedSettings();
-    const [selectedAvailableTags, setSelectedAvailableTags] = useState<string[]>([]);
     const fetchImageTags = useCallback(async (id: number) => {
         try {
             const tags = await db.getImageTags(id);
@@ -98,7 +98,7 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
         if (!newTag.trim()) return;
         try {
             await db.addTag(newTag.trim())
-            setAvailableTags(prev => [...prev, newTag.trim()]);
+            setAvailableTags(prev => [...prev, { name: newTag.trim(), is_category: false }]);
             setNewTag("");
             toast({
                 title: t('tags.success.add'),
@@ -119,7 +119,7 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
 
         try {
             await db.removeImageTag(imageId, tagToRemove);
-            setSelectedTags(prev => prev.filter(tag => tag !== tagToRemove));
+            setSelectedTags(prev => prev.filter(tag => tag.name !== tagToRemove));
             toast({
                 title: t('tags.success.remove'),
                 description: t('tags.success.remove_desc', { tag: tagToRemove }),
@@ -132,12 +132,15 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
             });
         }
     };
-
     const handleRenameTag = async (oldTag: string, newTag: string) => {
         try {
             await db.editTag(oldTag, newTag);
-            setAvailableTags(prev => prev.map(tag => tag === oldTag ? newTag : tag));
-            setSelectedTags(prev => prev.map(tag => tag === oldTag ? newTag : tag));
+            setAvailableTags(prev => prev.map(tag =>
+                tag.name === oldTag ? { ...tag, name: newTag } : tag
+            ));
+            setSelectedTags(prev => prev.map(tag =>
+                tag.name === oldTag ? { ...tag, name: newTag } : tag
+            ));
             toast({
                 title: t('tags.success.rename'),
                 description: t('tags.success.rename_desc', { oldTag, newTag }),
@@ -151,11 +154,12 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
         }
     };
 
+
     const handleDeleteTag = async (tagToDelete: string) => {
         try {
             await db.removeTag(tagToDelete);
-            setAvailableTags(prev => prev.filter(tag => tag !== tagToDelete));
-            setSelectedTags(prev => prev.filter(tag => tag !== tagToDelete));
+            setAvailableTags(prev => prev.filter(tag => tag.name !== tagToDelete));
+            setSelectedTags(prev => prev.filter(tag => tag.name !== tagToDelete));
             toast({
                 title: t('tags.success.delete'),
                 description: t('tags.success.delete_desc', { tag: tagToDelete }),
@@ -169,9 +173,14 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
         }
     };
 
-    const handleSelectAvailableTag = (tag: string, isSelected: boolean) => {
+    const handleSelectAvailableTag = (tagName: string, isSelected: boolean) => {
+        const tagInfo = availableTags.find(t => t.name === tagName);
+        if (!tagInfo) return;
+
         setSelectedAvailableTags(prev =>
-            isSelected ? [...prev, tag] : prev.filter(t => t !== tag)
+            isSelected
+                ? [...prev, tagInfo]
+                : prev.filter(t => t.name !== tagName)
         );
     };
     const handleConfirmSelectedTags = async () => {
@@ -179,7 +188,7 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
 
         try {
             for (const tag of selectedAvailableTags) {
-                await db.addTagImage(imageId,  tag);
+                await db.addTagImage(imageId, tag.name);
             }
             setSelectedTags(prev => [...new Set([...prev, ...selectedAvailableTags])]);
             setSelectedAvailableTags([]);
@@ -197,15 +206,18 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
     };
 
     const filteredAvailableTags = availableTags
-        .filter(tag => !selectedTags.includes(tag) && tag.toLowerCase().includes(searchTerm.toLowerCase()));
+        .filter(tag =>
+            !selectedTags.some(st => st.name === tag.name) &&
+            tag.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[90vw] md:max-w-[900px] h-[90vh] max-h-[700px] flex flex-col p-0 gap-0">
+            <DialogContent className="w-[90vw] max-w-[1400px] h-[90vh] max-h-[1000px] flex flex-col p-0 gap-0 overflow-hidden">
                 <DialogHeader className="p-6 pb-2">
                     <DialogTitle>{t('tags.dialog.title')}</DialogTitle>
                     <DialogDescription>
-                        {t('tags.dialog.description')}
+                        {t('tags.dialog.description')}tags
                     </DialogDescription>
                 </DialogHeader>
 
@@ -218,13 +230,15 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <OptimizedImage
-                                    src={file.filepath}
-                                    alt={file.name}
-                                    width={settings.imageWidth}
-                                    height={settings.imageHeight}
-                                    quality={settings.imageQuality}
-                                />
+                                <div className="relative w-full h-full">
+                                    <OptimizedImage
+                                        src={file.filepath}
+                                        alt={file.name}
+                                        width={settings.imageWidth}
+                                        height={settings.imageheigh}
+                                        quality={settings.imagequality}
+                                    />
+                                </div>
                             </motion.div>
                             <motion.div
                                 className="space-y-2 text-xs"
@@ -273,7 +287,7 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
                                             <AnimatePresence initial={false}>
                                                 {selectedTags.map(tag => (
                                                     <TagItem
-                                                        key={tag}
+                                                        key={tag.name}
                                                         tag={tag}
                                                         onRemove={handleRemoveTag}
                                                         onRename={handleRenameTag}
@@ -289,17 +303,20 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
                                     </div>
                                 </TabsContent>
                                 <TabsContent value="available" className="flex-grow flex flex-col p-2">
+                                    <h1 className="text-2xl ml-6 mb-4">Create Tags</h1> {/* Title */}
                                     <div className="flex items-center space-x-2 mb-4">
                                         <Input
                                             value={newTag}
                                             onChange={(e) => setNewTag(e.target.value)}
                                             placeholder={t('tags.add_placeholder')}
-                                            onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
                                         />
                                         <Button size="sm" onClick={handleAddTag}>
                                             <Plus className="h-4 w-4"/>
                                         </Button>
                                     </div>
+                                    <Separator className="my-4" />
+                                    <h1 className="text-2xl ml-6 mb-4">Search Tags</h1> {/* Title */}
                                     <div className="relative mb-2">
                                         <Search
                                             className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
@@ -322,7 +339,7 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
                                                 <AnimatePresence initial={false}>
                                                     {filteredAvailableTags.map(tag => (
                                                         <TagItem
-                                                            key={tag}
+                                                            key={tag.name}
                                                             tag={tag}
                                                             onRemove={() => {}}
                                                             onRename={handleRenameTag}

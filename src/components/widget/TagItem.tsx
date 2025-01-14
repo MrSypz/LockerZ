@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
-import { Check, Pencil, Trash2, AlertTriangle } from 'lucide-react'
+import {Check, Pencil, Trash2, AlertTriangle, TagIcon} from 'lucide-react'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -29,10 +29,10 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { OptimizedImage } from "@/components/widget/ImageProcessor"
-import { DatabaseService, Image } from "@/hooks/use-database"
+import {DatabaseService, Image, TagInfo} from "@/hooks/use-database"
 
 interface TagItemProps {
-  tag: string
+  tag: TagInfo;  // Change from string to TagInfo
   onRemove: (tag: string) => void
   onRename: (oldTag: string, newTag: string) => void
   onDelete: (tag: string) => void
@@ -59,7 +59,7 @@ export function TagItem({
                           imagequality
                         }: TagItemProps) {
   const [isEditing, setIsEditing] = useState(false)
-  const [newTagName, setNewTagName] = useState(tag)
+  const [newTagName, setNewTagName] = useState(tag.name);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [taggedImages, setTaggedImages] = useState<Image[]>([])
   const db = new DatabaseService()
@@ -68,37 +68,52 @@ export function TagItem({
     const fetchImagesWithTag = async () => {
       if (showDeleteDialog) {
         try {
-          const images = await db.searchImagesByTags([tag])
-          setTaggedImages(images)
+          const images = await db.searchImagesByTags([tag.name]);
+          setTaggedImages(images);
         } catch (error) {
-          console.error('Failed to fetch images with tag:', error)
+          console.error('Failed to fetch images with tag:', error);
         }
       }
-    }
+    };
 
-    fetchImagesWithTag()
-  }, [showDeleteDialog, tag])
+    fetchImagesWithTag();
+  }, [showDeleteDialog, tag.name]);
 
   const handleRename = () => {
-    if (newTagName.trim() && newTagName !== tag) {
-      onRename(tag, newTagName.trim())
+    if (newTagName.trim() && newTagName !== tag.name) {
+      onRename(tag.name, newTagName.trim());
     }
-    setIsEditing(false)
-  }
+    setIsEditing(false);
+  };
 
   const handleDeleteConfirm = () => {
-    onDelete(tag)
-    setShowDeleteDialog(false)
-  }
+    onDelete(tag.name);
+    setShowDeleteDialog(false);
+  };
 
   const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (selectable && onSelect) {
-      onSelect(tag, !isSelected)
+      onSelect(tag.name, !isSelected);
     } else if (!selectable) {
-      onRemove(tag)
+      onRemove(tag.name);
     }
-  }
+  };
+
+  // Determine badge variant based on tag type
+  const getBadgeVariant = () => {
+    if (isSelected) return "default";
+    if (tag.is_category) return "secondary";
+    return "outline";
+  };
+
+  // Get badge styles based on tag type
+  const getBadgeStyles = () => {
+    if (tag.is_category) {
+      return "bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg shadow-md transition-colors";
+    }
+    return "";
+  };
 
   return (
       <>
@@ -112,32 +127,40 @@ export function TagItem({
                 transition={{ duration: 0.2 }}
             >
               <MotionBadge
-                  variant={isSelected ? "default" : "secondary"}
+                  variant={getBadgeVariant()}
                   className={`
                 cursor-pointer group py-1 px-2 flex items-center justify-between w-full
                 transition-all duration-200 ease-in-out
                 ${isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-primary/20'}
+                ${getBadgeStyles()}
               `}
                   onClick={handleClick}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
               >
-                <span className="truncate flex-grow" title={tag}>{tag}</span>
-                {isSelected && (
-                    <Check className="h-4 w-4 ml-2 flex-shrink-0" />
-                )}
+                <span className="truncate flex-grow flex items-center" title={tag.name}>
+              {tag.is_category}
+                  {tag.name}
+            </span>
+                <TagIcon className="h-4 w-4 mr-1 flex-shrink-0" />
+                {isSelected && <Check className="h-4 w-4 ml-2 flex-shrink-0" />}
               </MotionBadge>
             </motion.div>
           </ContextMenuTrigger>
+
           <ContextMenuContent>
-            <ContextMenuItem onSelect={() => setIsEditing(true)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Rename
-            </ContextMenuItem>
-            <ContextMenuItem onSelect={() => setShowDeleteDialog(true)}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </ContextMenuItem>
+            {!tag.is_category && (
+                <ContextMenuItem onSelect={() => setIsEditing(true)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Rename
+                </ContextMenuItem>
+            )}
+            {!tag.is_category && (
+                <ContextMenuItem onSelect={() => setShowDeleteDialog(true)}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </ContextMenuItem>
+            )}
           </ContextMenuContent>
         </ContextMenu>
 
@@ -147,7 +170,7 @@ export function TagItem({
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                Delete Tag "{tag}"
+                Delete Tag "{tag.name}"
               </AlertDialogTitle>
               <div className="mt-4">
                 <AlertDialogDescription asChild>
@@ -166,8 +189,8 @@ export function TagItem({
                                     <OptimizedImage
                                         src={image.relative_path +"\\" +  image.filename}
                                         alt={`Image with tag ${tag}`}
-                                        width={imagewidth}
-                                        height={imageheigh}
+                                        width={imagewidth ?? 400}
+                                        height={imageheigh ?? 560}
                                         quality={imagequality}
                                     />
                                   </div>
@@ -203,7 +226,7 @@ export function TagItem({
             <SheetHeader>
               <SheetTitle>Rename Tag</SheetTitle>
               <SheetDescription>
-                Enter a new name for the tag "{tag}".
+                Enter a new name for the tag "{tag.name}".
               </SheetDescription>
             </SheetHeader>
             <div className="grid gap-4 py-4">

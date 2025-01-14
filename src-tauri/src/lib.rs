@@ -22,6 +22,7 @@ use modules::{
 };
 use tauri::Manager;
 use window_vibrancy::apply_acrylic;
+use crate::modules::db::{create_category_tags, migrate_database};
 
 #[tauri::command]
 fn show_in_folder(path: String) {
@@ -40,6 +41,12 @@ pub fn run() {
     let _ = setup_folders();
     let _ = init_db();
     log_pre!("Application started");
+    if let Err(e) = migrate_database() {
+        log_error!("Database migration failed: {}", e);
+    }
+    if let Err(e) = create_category_tags() {
+        log_error!("Failed to create category tags: {}", e);
+    }
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
