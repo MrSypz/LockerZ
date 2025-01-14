@@ -12,10 +12,10 @@ interface FileSearchProps {
 }
 
 interface Suggestion {
-    type: 'file' | 'tag';
+    type: 'file' | 'tag' | 'category' ;
     value: string;
+    display: string;
 }
-
 export function FileSearch({ searchTerm, onSearchChange, files }: FileSearchProps) {
     const { t } = useTranslation();
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -29,6 +29,10 @@ export function FileSearch({ searchTerm, onSearchChange, files }: FileSearchProp
             file.tags?.forEach(tag => tags.add(tag.toLowerCase()));
         });
         return Array.from(tags);
+    };
+
+    const getAllCategories = () => {
+        return Array.from(new Set(files.map(file => file.category?.toLowerCase()).filter(Boolean)));
     };
 
     // Get unique filenames
@@ -50,16 +54,35 @@ export function FileSearch({ searchTerm, onSearchChange, files }: FileSearchProp
         let newSuggestions: Suggestion[] = [];
 
         if (word.startsWith('#')) {
+            // Tag suggestions
             const tagQuery = word.slice(1).toLowerCase();
             newSuggestions = getAllTags()
-                .filter(tag => tag.toLowerCase().includes(tagQuery))
-                .map(tag => ({type: 'tag' as const, value: tag}));
-        }
-        else {
+                .filter(tag => tag.includes(tagQuery))
+                .map(tag => ({
+                    type: 'tag',
+                    value: tag,
+                    display: `#${tag}`
+                }));
+        } else if (word.startsWith('@')) {
+            // Category suggestions
+            const catQuery = word.slice(1).toLowerCase();
+            newSuggestions = getAllCategories()
+                .filter(cat => cat.includes(catQuery))
+                .map(cat => ({
+                    type: 'category',
+                    value: cat,
+                    display: `@${cat}`
+                }));
+        } else {
+            // File name suggestions
             const fileQuery = word.toLowerCase();
-            newSuggestions = getAllFilenames()
-                .filter(name => name.toLowerCase().includes(fileQuery))
-                .map(name => ({type: 'file' as const, value: name}));
+            newSuggestions = files
+                .filter(file => file.name.toLowerCase().includes(fileQuery))
+                .map(file => ({
+                    type: 'file',
+                    value: file.name,
+                    display: file.name
+                }));
         }
 
         setSuggestions(newSuggestions);
@@ -125,7 +148,7 @@ export function FileSearch({ searchTerm, onSearchChange, files }: FileSearchProp
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
 
             {showSuggestions && (
-                <div className="absolute w-full mt-1 z-50 bg-background border rounded-md shadow-lg suggestions-list">
+                <div className="absolute w-full mt-1 z-50 bg-background border rounded-md shadow-lg">
                     <Command className="rounded-lg border shadow-md">
                         <CommandEmpty className="py-2 px-4 text-sm text-gray-500">
                             {t('locker.search.no_suggestions')}
@@ -135,11 +158,12 @@ export function FileSearch({ searchTerm, onSearchChange, files }: FileSearchProp
                                 <CommandItem
                                     key={`${suggestion.type}-${suggestion.value}-${index}`}
                                     onSelect={() => handleSuggestionClick(suggestion)}
-                                    className="cursor-pointer px-4 py-2 hover:bg-accent"
+                                    className={`cursor-pointer px-4 py-2 hover:bg-accent ${
+                                        suggestion.type === 'tag' ? 'text-blue-500' :
+                                            suggestion.type === 'category' ? 'text-green-500' : ''
+                                    }`}
                                 >
-                                    <span className={suggestion.type === 'tag' ? 'text-blue-500' : ''}>
-                                        {suggestion.type === 'tag' ? `#${suggestion.value}` : suggestion.value}
-                                    </span>
+                                    {suggestion.display}
                                 </CommandItem>
                             ))}
                         </CommandGroup>

@@ -34,11 +34,12 @@ const saveSortPreferences = (preferences: SortPreferences) => {
 };
 
 const parseSearchInput = (input: string): SearchTerms => {
-    const tags = input.match(/#\w+/g) || [];
-    const text = input.replace(/#\w+/g, '').trim();
+    const tags = input.match(/#[\w-]+/g) || [];
+    const text = input.replace(/#[\w-]+/g, '').trim();
+    const processedTags = tags.map(tag => tag.slice(1).toLowerCase());
     return {
         text,
-        tags: tags.map(tag => tag.slice(1).toLowerCase())
+        tags: processedTags
     };
 };
 
@@ -124,10 +125,8 @@ export function FileGrid({
     }, []);
 
     useEffect(() => {
-        // Always start with the full dataset (allFiles)
         let filteredAndSortedFiles = [...allFiles];
 
-        // Apply search filtering if there's a search term
         if (searchTerm.trim()) {
             const { text, tags } = parseSearchInput(searchTerm);
             filteredAndSortedFiles = filteredAndSortedFiles.filter(file => {
@@ -147,7 +146,6 @@ export function FileGrid({
             });
         }
 
-        // Apply sorting to the entire dataset
         filteredAndSortedFiles.sort((a, b) => {
             let comparison = 0;
             switch (sortCriteria) {
@@ -167,7 +165,6 @@ export function FileGrid({
             return sortOrder === 'asc' ? comparison : -comparison;
         });
 
-        // Handle pagination after sorting the entire dataset
         const totalFilteredPages = Math.ceil(filteredAndSortedFiles.length / imagesPerPage);
         onTotalPagesChange(totalFilteredPages);
 
@@ -175,7 +172,6 @@ export function FileGrid({
             onPageChange(1);
         }
 
-        // Extract just the page we need to display
         const start = (currentPage - 1) * imagesPerPage;
         const end = start + imagesPerPage;
         setSortedFiles(filteredAndSortedFiles.slice(start, end));

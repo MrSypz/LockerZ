@@ -41,6 +41,7 @@
       "hover": "Drag & drop files or click to select"
     },
     "search": "Search category...",
+    "notFound": "Not found the result",
     "allCategories": "All Categories",
     "tags-empty": "No tags"
   },
@@ -143,7 +144,7 @@
     },
     "search": {
       "results": "Found {{count}} image(s)",
-      "placeholder": "Search files and #tags...",
+      "placeholder":  "Search by name, #tag, @category",
       "no_results": "No results found for \"{{searchTerm}}\".",
       "no_suggestions" : "No suggestions found"
     },
