@@ -14,6 +14,7 @@ import {invoke} from "@tauri-apps/api/core";
 // @ts-ignore
 import { WebviewWindow } from "@tauri-apps/api/window"
 import {languages} from "@/lib/lang";
+import UploadProgress from "@/components/widget/ProgressInfo";
 
 interface Settings {
     folderPath: string;
@@ -118,6 +119,7 @@ export default function RootLayout({
                             <main className="flex-1 overflow-auto">
                                 {mounted ? children : null}
                             </main>
+                            <UploadProgress />
                             <Toaster/>
                         </div>
                     </div>
