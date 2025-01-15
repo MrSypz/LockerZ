@@ -168,9 +168,14 @@ export function FileGrid({
                     file.name.toLowerCase().includes(text.toLowerCase()) :
                     true;
 
-                // Tag match - support spaces in tags
+                // If no tags or categories are specified, only use text match
+                if (!tags.length && !categories.length) {
+                    return nameMatch;
+                }
+
+                // Tag match - ALL specified tags must match (AND logic)
                 const tagMatch = tags.length > 0 ?
-                    tags.some(searchTag => {
+                    tags.every(searchTag => {
                         const normalizedSearchTag = searchTag.toLowerCase().trim();
                         return file.tags?.some(fileTag =>
                             fileTag.name.toLowerCase().trim() === normalizedSearchTag
@@ -178,15 +183,16 @@ export function FileGrid({
                     }) :
                     true;
 
-                // Category match - support spaces in categories
+                // Category match - ALL specified categories must match (AND logic)
                 const categoryMatch = categories.length > 0 ?
-                    categories.some(cat => {
+                    categories.every(cat => {
                         const normalizedCat = cat.toLowerCase().trim();
                         const normalizedFileCat = file.category?.toLowerCase().trim();
                         return normalizedFileCat === normalizedCat;
                     }) :
                     true;
 
+                // Return items that match ALL conditions (text AND tags AND categories)
                 return nameMatch && tagMatch && categoryMatch;
             });
         }
@@ -240,36 +246,42 @@ export function FileGrid({
     const getSearchResultsText = () => {
         const { text, tags, categories } = parseSearchInput(searchTerm);
         const filteredCount = allFiles.filter(file => {
-            // Name/text match
+            // Text match
             const nameMatch = text ?
                 file.name.toLowerCase().includes(text.toLowerCase()) :
                 true;
 
-            // Tag match - using AND logic (every tag must match)
-            const tagMatch = tags.length > 0 ?
-                tags.every(searchTag =>
-                    file.tags?.some(fileTag =>
-                        fileTag.name.toLowerCase() === searchTag
-                    )
-                ) :
-                true;
+            // If no tags or categories are specified, only use text match
+            if (!tags.length && !categories.length) {
+                return nameMatch;
+            }
 
-            // Category match - using OR logic (any category can match)
-            const categoryMatch = categories.length > 0 ?
-                categories.some(cat => {
-                    if (cat === '') {
-                        // Show all files that have any category
-                        return file.category != null && file.category !== '';
-                    }
-                    return file.category?.toLowerCase() === cat;
+            // Tag match - ALL specified tags must match (AND logic)
+            const tagMatch = tags.length > 0 ?
+                tags.every(searchTag => {
+                    const normalizedSearchTag = searchTag.toLowerCase().trim();
+                    return file.tags?.some(fileTag =>
+                        fileTag.name.toLowerCase().trim() === normalizedSearchTag
+                    );
                 }) :
                 true;
 
+            // Category match - ALL specified categories must match (AND logic)
+            const categoryMatch = categories.length > 0 ?
+                categories.every(cat => {
+                    const normalizedCat = cat.toLowerCase().trim();
+                    const normalizedFileCat = file.category?.toLowerCase().trim();
+                    return normalizedFileCat === normalizedCat;
+                }) :
+                true;
+
+            // Return items that match ALL conditions
             return nameMatch && tagMatch && categoryMatch;
         }).length;
 
         return t('locker.search.results', { count: filteredCount });
     };
+
     return (
         <div className="space-y-4">
             <div className="flex items-center space-x-4">
