@@ -1,11 +1,11 @@
-import { useTranslation } from "react-i18next";
-import { useSharedSettings } from "@/utils/SettingsContext";
-import { FileContextMenu } from "@/components/widget/Context-menu";
-import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { OptimizedImage } from "@/components/widget/ImageProcessor";
-import { File } from "@/types/file";
+import {useTranslation} from "react-i18next";
+import {useSharedSettings} from "@/utils/SettingsContext";
+import {FileContextMenu} from "@/components/widget/Context-menu";
+import {motion} from "framer-motion";
+import {Card, CardContent} from "@/components/ui/card";
+import {Badge} from "@/components/ui/badge";
+import {OptimizedImage} from "@/components/widget/ImageProcessor";
+import {File} from "@/types/file";
 import {Plus, Tag} from "lucide-react";
 
 interface FileCardProps {
@@ -20,9 +20,19 @@ interface FileCardProps {
     totalColumns: number
 }
 
-export function FileCard({file, onDelete, onMove, onView, onTag, onSelect, index, column, totalColumns}: FileCardProps) {
-    const { t } = useTranslation();
-    const { settings } = useSharedSettings();
+export function FileCard({
+                             file,
+                             onDelete,
+                             onMove,
+                             onView,
+                             onTag,
+                             onSelect,
+                             index,
+                             column,
+                             totalColumns
+                         }: FileCardProps) {
+    const {t} = useTranslation();
+    const {settings} = useSharedSettings();
     const row = Math.floor(index / totalColumns);
     const isDarkSquare = (row + column) % 2 === 0;
     const offset = (column % 2 === 0 ? 1 : -1) * 12;
@@ -53,10 +63,10 @@ export function FileCard({file, onDelete, onMove, onView, onTag, onSelect, index
                 whileHover={{
                     scale: 1.05,
                     zIndex: 10,
-                    transition: { duration: 0.2 }
+                    transition: {duration: 0.2}
                 }}
                 className="relative"
-                style={{ zIndex: 1000 - index }}
+                style={{zIndex: 1000 - index}}
             >
                 <Card
                     className={`overflow-hidden transition-all duration-200 ease-in-out hover:ring-2 hover:ring-primary/50 cursor-pointer ${
@@ -94,15 +104,19 @@ export function FileCard({file, onDelete, onMove, onView, onTag, onSelect, index
                                                 <Badge
                                                     key={index}
                                                     variant="secondary"
-                                                    className="text-xs px-1.5 py-0 bg-primary/10 text-primary"
+                                                    className={`text-xs px-1.5 py-0 transition-colors ${
+                                                        tag.is_category
+                                                            ? "bg-blue-500 text-white dark:bg-blue-600 hover:bg-blue-500 dark:hover:bg-blue-600"
+                                                            : "bg-primary/10 text-primary hover:bg-primary/10"
+                                                    }`}
                                                 >
-                                                    {tag}
+                                                    {tag.name}
                                                 </Badge>
                                             ))}
                                             {remainingTags > 0 && (
                                                 <Badge
                                                     variant="secondary"
-                                                    className="text-xs px-1.5 py-0 bg-muted text-muted-foreground"
+                                                    className="text-xs px-1.5 py-0 bg-muted text-muted-foreground cursor-help hover:bg-muted hover:text-muted-foreground"
                                                 >
                                                     <Plus className="w-3 h-3 mr-0.5"/>
                                                     {remainingTags}
