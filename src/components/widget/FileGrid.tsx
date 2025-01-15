@@ -1,80 +1,66 @@
-import React, {useState, useEffect} from 'react'
-import {File} from '@/types/file'
-import {motion, AnimatePresence} from "framer-motion"
-import {useTranslation} from 'react-i18next'
-import {AlertCircle} from 'lucide-react'
-import {ImageViewer} from './Image-viewer';
-import {FileCard} from "@/components/widget/FileCard";
-import {FileSearch} from "@/components/widget/FileSearch";
-import {FileSort} from "@/components/widget/FileSort";
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import { File } from '@/types/file'
+import { motion, AnimatePresence } from "framer-motion"
+import { useTranslation } from 'react-i18next'
+import { AlertCircle } from 'lucide-react'
+import { ImageViewer } from './Image-viewer'
+import { FileCard } from "@/components/widget/FileCard"
+import { FileSearch } from "@/components/widget/FileSearch"
+import { FileSort } from "@/components/widget/FileSort"
 
-type SortCriteria = 'name' | 'date' | 'createat' | 'size';
-type SortOrder = 'asc' | 'desc';
+type SortCriteria = 'name' | 'date' | 'createat' | 'size'
+type SortOrder = 'asc' | 'desc'
 
 interface SearchTerms {
-    text: string;
-    tags: string[];
+    text: string
+    tags: string[]
     categories: string[]
 }
 
 interface SortPreferences {
-    criteria: SortCriteria;
-    order: SortOrder;
+    criteria: SortCriteria
+    order: SortOrder
 }
 
+// Moved outside component to avoid recreation
 const getSavedSortPreferences = (): SortPreferences => {
-    const saved = localStorage.getItem('fileSortPreferences');
-    if (saved) {
-        return JSON.parse(saved);
+    try {
+        const saved = localStorage.getItem('fileSortPreferences')
+        return saved ? JSON.parse(saved) : { criteria: 'name', order: 'asc' }
+    } catch {
+        return { criteria: 'name', order: 'asc' }
     }
-    return { criteria: 'name', order: 'asc' };
-};
-
-const saveSortPreferences = (preferences: SortPreferences) => {
-    localStorage.setItem('fileSortPreferences', JSON.stringify(preferences));
-};
+}
 
 const parseSearchInput = (input: string): SearchTerms => {
-    const tags: string[] = [];
-    const categories: string[] = [];
-    let remainingText = input;
+    const tags: string[] = []
+    const categories: string[] = []
+    let remainingText = input
 
-    // Extract tags with spaces (#tag with space)
-    const tagRegex = /#([^#@]+?)(?=\s*[#@]|$)/g;
-    let tagMatch;
-    while ((tagMatch = tagRegex.exec(input)) !== null) {
-        const tagText = tagMatch[1].trim();
-        if (tagText) {
-            tags.push(tagText);
+    // Optimized regex to capture both tags and categories in one pass
+    const regex = /([#@])([^#@]+?)(?=\s*[#@]|$)/g
+    let match
+
+    while ((match = regex.exec(input)) !== null) {
+        const [fullMatch, prefix, content] = match
+        const trimmedContent = content.trim()
+
+        if (trimmedContent) {
+            if (prefix === '#') {
+                tags.push(trimmedContent.toLowerCase())
+            } else {
+                categories.push(trimmedContent.toLowerCase())
+            }
         }
-        // Remove the matched tag from remaining text
-        remainingText = remainingText.replace(tagMatch[0], '');
+        remainingText = remainingText.replace(fullMatch, '')
     }
-
-    // Extract categories with spaces (@category with space)
-    const categoryRegex = /@([^#@]+?)(?=\s*[#@]|$)/g;
-    let categoryMatch;
-    while ((categoryMatch = categoryRegex.exec(input)) !== null) {
-        const categoryText = categoryMatch[1].trim();
-        if (categoryText) {
-            categories.push(categoryText);
-        }
-        // Remove the matched category from remaining text
-        remainingText = remainingText.replace(categoryMatch[0], '');
-    }
-
-    // Clean up the remaining text
-    const text = remainingText
-        .replace(/#/g, '')  // Remove any leftover # symbols
-        .replace(/@/g, '')  // Remove any leftover @ symbols
-        .trim();
 
     return {
-        text,
-        tags: tags.map(tag => tag.toLowerCase()),
-        categories: categories.map(cat => cat.toLowerCase())
-    };
-};
+        text: remainingText.replace(/[#@]/g, '').trim(),
+        tags,
+        categories
+    }
+}
 
 function useColumnCount() {
     const [columnCount, setColumnCount] = useState(5)
@@ -130,157 +116,122 @@ export function FileGrid({
                              onTotalPagesChange
                          }: FileGridProps) {
     const totalColumns = useColumnCount()
-    const [sortedFiles, setSortedFiles] = useState(files)
-    const savedPreferences = getSavedSortPreferences();
+    const { t } = useTranslation()
+    const savedPreferences = useMemo(() => getSavedSortPreferences(), [])
+
     const [sortCriteria, setSortCriteria] = useState<SortCriteria>(savedPreferences.criteria)
     const [sortOrder, setSortOrder] = useState<SortOrder>(savedPreferences.order)
     const [searchTerm, setSearchTerm] = useState('')
-    const {t} = useTranslation()
-    const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+    const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
 
-    const handleSort = (criteria: SortCriteria, order: SortOrder) => {
-        setSortCriteria(criteria);
-        setSortOrder(order);
-        saveSortPreferences({ criteria, order });
-    }
+    const handleSort = useCallback((criteria: SortCriteria, order: SortOrder) => {
+        setSortCriteria(criteria)
+        setSortOrder(order)
+        localStorage.setItem('fileSortPreferences', JSON.stringify({ criteria, order }))
+    }, [])
 
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.ctrlKey && event.code === 'Space') {
-                event.preventDefault();
-            }
-        };
+    const handleSearch = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        const newSearchTerm = event.target.value
+        setSearchTerm(newSearchTerm)
+        if (currentPage !== 1) {
+            onPageChange(1)
+        }
+    }, [currentPage, onPageChange])
 
-        window.addEventListener('keydown', handleKeyDown);
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, []);
+    const handleSelectImage = useCallback((index: number) => {
+        setSelectedImageIndex(index)
+    }, [])
 
-    useEffect(() => {
-        let filteredAndSortedFiles = [...allFiles];
+    const handleCloseViewer = useCallback(() => {
+        setSelectedImageIndex(null)
+    }, [])
 
-        if (searchTerm.trim()) {
-            const { text, tags, categories } = parseSearchInput(searchTerm);
-            filteredAndSortedFiles = filteredAndSortedFiles.filter(file => {
+    // Memoize search terms parsing
+    const searchTerms = useMemo(() =>
+            searchTerm.trim() ? parseSearchInput(searchTerm) : null
+        , [searchTerm])
+
+    // Memoize filtered and sorted files
+    const sortedFiles = useMemo(() => {
+        let filteredFiles = allFiles
+
+        if (searchTerms) {
+            const { text, tags, categories } = searchTerms
+            filteredFiles = filteredFiles.filter(file => {
                 // Text match
                 const nameMatch = text ?
                     file.name.toLowerCase().includes(text.toLowerCase()) :
-                    true;
+                    true
 
-                // If no tags or categories are specified, only use text match
+                // If no tags or categories specified, only use text match
                 if (!tags.length && !categories.length) {
-                    return nameMatch;
+                    return nameMatch
                 }
 
-                // Tag match - ALL specified tags must match (AND logic)
-                const tagMatch = tags.length > 0 ?
-                    tags.every(searchTag => {
-                        const normalizedSearchTag = searchTag.toLowerCase().trim();
-                        return file.tags?.some(fileTag =>
-                            fileTag.name.toLowerCase().trim() === normalizedSearchTag
-                        );
-                    }) :
-                    true;
+                // Combined tag and category matches
+                const termMatches = [...tags, ...categories].every(term => {
+                    const matchesTag = file.tags?.some(fileTag =>
+                        fileTag.name.toLowerCase() === term
+                    )
+                    const matchesCategory = file.category?.toLowerCase() === term
 
-                // Category match - ALL specified categories must match (AND logic)
-                const categoryMatch = categories.length > 0 ?
-                    categories.every(cat => {
-                        const normalizedCat = cat.toLowerCase().trim();
-                        const normalizedFileCat = file.category?.toLowerCase().trim();
-                        return normalizedFileCat === normalizedCat;
-                    }) :
-                    true;
+                    return matchesTag || matchesCategory
+                })
 
-                // Return items that match ALL conditions (text AND tags AND categories)
-                return nameMatch && tagMatch && categoryMatch;
-            });
+                return nameMatch && termMatches
+            })
         }
 
-        filteredAndSortedFiles.sort((a, b) => {
-            let comparison = 0;
+        // Sort files
+        return filteredFiles.sort((a, b) => {
+            let comparison = 0
             switch (sortCriteria) {
                 case 'name':
-                    comparison = a.name.localeCompare(b.name);
-                    break;
+                    comparison = a.name.localeCompare(b.name)
+                    break
                 case 'date':
-                    comparison = new Date(a.last_modified).getTime() - new Date(b.last_modified).getTime();
-                    break;
+                    comparison = new Date(a.last_modified).getTime() - new Date(b.last_modified).getTime()
+                    break
                 case 'createat':
-                    comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-                    break;
+                    comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                    break
                 case 'size':
-                    comparison = a.size - b.size;
-                    break;
+                    comparison = a.size - b.size
+                    break
             }
-            return sortOrder === 'asc' ? comparison : -comparison;
-        });
+            return sortOrder === 'asc' ? comparison : -comparison
+        })
+    }, [allFiles, searchTerms, sortCriteria, sortOrder])
 
-        const totalFilteredPages = Math.ceil(filteredAndSortedFiles.length / imagesPerPage);
-        onTotalPagesChange(totalFilteredPages);
+    // Calculate pagination
+    const paginatedFiles = useMemo(() => {
+        const start = (currentPage - 1) * imagesPerPage
+        return sortedFiles.slice(start, start + imagesPerPage)
+    }, [sortedFiles, currentPage, imagesPerPage])
 
-        if (currentPage > totalFilteredPages && totalFilteredPages > 0) onPageChange(1);
+    // Update total pages when filtered results change
+    useEffect(() => {
+        const totalPages = Math.ceil(sortedFiles.length / imagesPerPage)
+        onTotalPagesChange(totalPages)
 
-
-        const start = (currentPage - 1) * imagesPerPage;
-        const end = start + imagesPerPage;
-        setSortedFiles(filteredAndSortedFiles.slice(start, end));
-    }, [files, allFiles, sortCriteria, sortOrder, searchTerm, currentPage, imagesPerPage]);
-
-    const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const newSearchTerm = event.target.value;
-        setSearchTerm(newSearchTerm);
-        if (currentPage !== 1) {
-            onPageChange(1);
+        if (currentPage > totalPages && totalPages > 0) {
+            onPageChange(1)
         }
-    };
+    }, [sortedFiles.length, imagesPerPage, currentPage, onTotalPagesChange, onPageChange])
 
-    const handleSelectImage = (index: number) => {
-        setSelectedImageIndex(index);
-    };
-
-    const handleCloseViewer = () => {
-        setSelectedImageIndex(null);
-    };
-
-    const getSearchResultsText = () => {
-        const { text, tags, categories } = parseSearchInput(searchTerm);
-        const filteredCount = allFiles.filter(file => {
-            // Text match
-            const nameMatch = text ?
-                file.name.toLowerCase().includes(text.toLowerCase()) :
-                true;
-
-            // If no tags or categories are specified, only use text match
-            if (!tags.length && !categories.length) {
-                return nameMatch;
+    // Keyboard event listener
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.code === 'Space') {
+                event.preventDefault()
             }
+        }
 
-            // Tag match - ALL specified tags must match (AND logic)
-            const tagMatch = tags.length > 0 ?
-                tags.every(searchTag => {
-                    const normalizedSearchTag = searchTag.toLowerCase().trim();
-                    return file.tags?.some(fileTag =>
-                        fileTag.name.toLowerCase().trim() === normalizedSearchTag
-                    );
-                }) :
-                true;
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [])
 
-            // Category match - ALL specified categories must match (AND logic)
-            const categoryMatch = categories.length > 0 ?
-                categories.every(cat => {
-                    const normalizedCat = cat.toLowerCase().trim();
-                    const normalizedFileCat = file.category?.toLowerCase().trim();
-                    return normalizedFileCat === normalizedCat;
-                }) :
-                true;
-
-            // Return items that match ALL conditions
-            return nameMatch && tagMatch && categoryMatch;
-        }).length;
-
-        return t('locker.search.results', { count: filteredCount });
-    };
+    const searchResultCount = searchTerm ? sortedFiles.length : allFiles.length
 
     return (
         <div className="space-y-4">
@@ -297,9 +248,10 @@ export function FileGrid({
                     onSort={handleSort}
                 />
             </div>
+
             {searchTerm && (
                 <div className="text-sm text-gray-500">
-                    {getSearchResultsText()}
+                    {t('locker.search.results', { count: searchResultCount })}
                 </div>
             )}
 
@@ -309,8 +261,8 @@ export function FileGrid({
                 key={`${sortCriteria}-${sortOrder}`}
             >
                 <AnimatePresence>
-                    {sortedFiles.length > 0 ? (
-                        sortedFiles.map((file, index) => (
+                    {paginatedFiles.length > 0 ? (
+                        paginatedFiles.map((file, index) => (
                             <FileCard
                                 key={`${file.category}-${file.name}`}
                                 file={file}
@@ -334,9 +286,10 @@ export function FileGrid({
                     ) : null}
                 </AnimatePresence>
             </motion.div>
+
             {selectedImageIndex !== null && (
                 <ImageViewer
-                    files={sortedFiles}
+                    files={paginatedFiles}
                     initialIndex={selectedImageIndex}
                     onClose={handleCloseViewer}
                 />
