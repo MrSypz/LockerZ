@@ -24,7 +24,6 @@ import {useTranslation} from "react-i18next"
 import {useSharedSettings} from "@/utils/SettingsContext"
 import {ALLOWED_FILE_TYPES, IMAGES_PER_PAGE_STORAGE_KEY, PAGE_STORAGE_KEY} from "@/lib/localstoragekey"
 import {TagManagerDialog} from "@/components/widget/TagManagerDialog"
-import {CacheData} from "@/types/cache"
 
 interface FileMoveResponse {
     success: boolean;
