@@ -109,7 +109,9 @@
     "newTagLabel": "New Tag Name",
     "newDescription": "Create a new tag and add it to this file.",
     "recentlyCreated": "Recently Created Tags",
-    "addToImage": "Add to Image",
+    "addToImage": "Add to Image"
+  },
+  "tags": {
     "success": {
       "add": "Tag Added",
       "add_desc": "Tag '{{tag}}' has been added successfully.",
