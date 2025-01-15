@@ -2,10 +2,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {Home, FolderOpen, Image, Settings, Menu, Info, Code} from 'lucide-react'
+import {Home, FolderOpen, Image, Settings, Menu, Info} from 'lucide-react'
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { ModeToggle } from "@/components/widget/Mode-toggle"
 import { getVersion } from "@tauri-apps/api/app"
 import { useTranslation } from 'react-i18next'
 
@@ -93,7 +92,6 @@ export function Sidebar() {
           </ul>
         </nav>
         <div className="mt-auto pt-4 space-y-2">
-          {/* Disable Light Mode <ModeToggle collapsed={isCollapsed}/>*/}
           <div className={cn(
               "text-xs text-muted-foreground",
               isCollapsed ? "text-center" : "px-2"
