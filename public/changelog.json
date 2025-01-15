@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.4.4",
+    "date": "15/01/2025",
+    "sections": [
+      {
+        "title": "Quality of Life",
+        "type": "preview",
+        "content": "<div class='space-y-4'><br><h3 class='text-lg font-semibold text-foreground'>Quality of Life</h3><br><div class='space-y-2'><br> • Tag Dialog<br>• the search now accept multi key<br>• Visual on Tag Categories<br>• Category auto initalize tag<br>• Uploading Progress<br>• Database update when moving file and delete<br>• the Search Feature<br></div><br></div>"
+      },
+      {
+        "title": "Features",
+        "type": "feature",
+        "content": "<div class='space-y-4'><br><h3 class='text-lg font-semibold text-blue-500 dark:text-blue-400'>Features</h3><br><div class='space-y-2'><br> • backend file handler<br></div><br></div>"
+      }
+    ]
+  },
+  {
     "version": "0.4.3 - hotfix",
     "date": "13-1-2025",
     "sections": [
