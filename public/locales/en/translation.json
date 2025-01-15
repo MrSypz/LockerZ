@@ -77,19 +77,28 @@
     "confirm": "Confirm",
     "delete": "Delete"
   },
-  "tags": {
-    "add_selected": "Apply Selected Tags ({{count}})",
-    "dialog": {
-      "title": "Manage Tags",
-      "description": "Add, remove, or edit tags for this file."
-    },
+  "tagManager": {
+    "title": "Manage Tags",
+    "description": "Add, remove, or edit tags for this file.",
+    "imageInfo": "Image Information",
+    "createTitle": "Create New Tag",
+    "addPlaceholder": "Enter new tag name",
+    "addButton": "Add Tag",
+    "searchTitle": "Search Tags",
+    "searchPlaceholder": "Search tags...",
+    "noAvailable": "No available tags found",
+    "selectedCount": "{{count}} tags selected",
+    "addSelected": "Apply Selected Tags ({{count}})",
+    "selectedTab": "Selected Tags",
+    "availableTab": "Available  Tags",
+    "createTab": "Create  Tags",
     "tabs": {
       "selected": "Selected",
       "available": "Available",
-      "new": "New"
+      "create": "New"
     },
-    "file_info": {
-      "filename": "Filename",
+    "fileInfo": {
+      "name": "Filename",
       "filetype": "File Type",
       "category": "Category",
       "size": "Size",
@@ -97,12 +106,10 @@
       "createat": "Created At",
       "unknown": "Unknown"
     },
-    "search_placeholder": "Search tags...",
-    "add_placeholder": "Enter new tag...",
-    "new_description": "Create a new tag and add it to this file.",
-    "selected_count": "{{count}} tags selected",
-    "no_available": "No available tags found",
-    "save_and_close": "Save and Close",
+    "newTagLabel": "New Tag Name",
+    "newDescription": "Create a new tag and add it to this file.",
+    "recentlyCreated": "Recently Created Tags",
+    "addToImage": "Add to Image",
     "success": {
       "add": "Tag Added",
       "add_desc": "Tag '{{tag}}' has been added successfully.",

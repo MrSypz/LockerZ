@@ -16,18 +16,32 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { motion, AnimatePresence } from "framer-motion"
 import {
     Card,
-    CardContent
+    CardContent,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { OptimizedImage } from "@/components/widget/ImageProcessor"
-import { Plus, AlertCircle, Search, Save } from 'lucide-react'
+import {
+    Plus,
+    AlertCircle,
+    Search,
+    ImageIcon,
+    Tag,
+    FolderIcon,
+    ScaleIcon,
+    CalendarIcon,
+    FileIcon
+} from 'lucide-react'
 import { toast } from "@/hooks/use-toast"
 import { File } from "@/types/file"
 import { formatBytes } from "@/components/widget/Dashboard"
 import { useSharedSettings } from "@/utils/SettingsContext"
-import {DatabaseService, TagInfo} from "@/hooks/use-database"
-import { Separator } from "@/components/ui/separator"
+import { DatabaseService, TagInfo } from "@/hooks/use-database"
 import { TagItem } from "./TagItem"
+import { Separator } from "@/components/ui/separator"
+import {Label} from "@radix-ui/react-menu";
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip";
 
 interface TagManagerDialogProps {
     file: File;
@@ -46,6 +60,7 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
     const [imageId, setImageId] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<string>("selected");
     const { settings } = useSharedSettings();
+
     const fetchImageTags = useCallback(async (id: number) => {
         try {
             const tags = await db.getImageTags(id);
@@ -79,7 +94,6 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
             try {
                 let id = await db.addImage(file.filepath, file.category);
                 setImageId(id);
-
                 await fetchImageTags(id);
                 await fetchAllTags();
             } catch (error) {
@@ -116,7 +130,6 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
 
     const handleRemoveTag = async (tagToRemove: string) => {
         if (!imageId) return;
-
         try {
             await db.removeImageTag(imageId, tagToRemove);
             setSelectedTags(prev => prev.filter(tag => tag.name !== tagToRemove));
@@ -132,6 +145,7 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
             });
         }
     };
+
     const handleRenameTag = async (oldTag: string, newTag: string) => {
         try {
             await db.editTag(oldTag, newTag);
@@ -154,7 +168,6 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
         }
     };
 
-
     const handleDeleteTag = async (tagToDelete: string) => {
         try {
             await db.removeTag(tagToDelete);
@@ -176,16 +189,15 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
     const handleSelectAvailableTag = (tagName: string, isSelected: boolean) => {
         const tagInfo = availableTags.find(t => t.name === tagName);
         if (!tagInfo) return;
-
         setSelectedAvailableTags(prev =>
             isSelected
                 ? [...prev, tagInfo]
                 : prev.filter(t => t.name !== tagName)
         );
     };
+
     const handleConfirmSelectedTags = async () => {
         if (!imageId) return;
-
         try {
             for (const tag of selectedAvailableTags) {
                 await db.addTagImage(imageId, tag.name);
@@ -215,68 +227,85 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="w-[90vw] max-w-[1400px] h-[90vh] max-h-[1000px] flex flex-col p-0 gap-0 overflow-hidden">
                 <DialogHeader className="p-6 pb-2">
-                    <DialogTitle>{t('tags.dialog.title')}</DialogTitle>
-                    <DialogDescription>
-                        {t('tags.dialog.description')}tags
+                    <DialogTitle className="text-2xl font-bold">{t('tagManager.title')}</DialogTitle>
+                    <DialogDescription className="text-muted-foreground">
+                        {t('tagManager.description')}
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex-grow flex flex-col md:flex-row overflow-hidden p-6 pt-2 pb-0">
-                    <Card className="md:w-1/3 mb-4 md:mb-0 md:mr-4 flex flex-col">
-                        <CardContent className="flex-grow p-4 flex flex-col justify-between">
+                <div className="flex-grow flex flex-col md:flex-row overflow-hidden p-6 pt-2 pb-0 gap-6">
+                    <Card className="md:w-1/3 flex flex-col">
+                        <CardHeader>
+                            <CardTitle className="text-lg font-semibold">{t('tagManager.imageInfo')}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex-grow flex flex-col justify-between">
                             <motion.div
-                                className="relative aspect-square rounded-lg overflow-hidden mb-4"
+                                className="relative aspect-square rounded-lg overflow-hidden mb-4 shadow-md"
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <div className="relative w-full h-full">
-                                    <OptimizedImage
-                                        src={file.filepath}
-                                        alt={file.name}
-                                        width={settings.imageWidth}
-                                        height={settings.imageheigh}
-                                        quality={settings.imagequality}
-                                    />
-                                </div>
+                                <OptimizedImage
+                                    src={file.filepath}
+                                    alt={file.name}
+                                    width={settings.imageWidth}
+                                    height={settings.imageheigh}
+                                    quality={settings.imagequality}
+                                />
                             </motion.div>
                             <motion.div
-                                className="space-y-2 text-xs"
+                                className="space-y-2 text-sm"
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.3, delay: 0.1 }}
                             >
-                                <p className="text-muted-foreground truncate font-medium" title={file.name}>
-                                    {file.name}
-                                </p>
-                                <p className="text-muted-foreground truncate" title={file.name.split('.').pop() || ''}>
-                                    {t('tags.file_info.filetype')}: {file.name.split('.').pop() || t('tags.file_info.unknown')}
-                                </p>
-                                <p className="text-muted-foreground truncate"
-                                   title={t('tags.file_info.category') + ': ' + file.category}>
-                                    {t('tags.file_info.category')}: {file.category}
-                                </p>
-                                <p className="text-muted-foreground">
-                                    {t('tags.file_info.size')}: {formatBytes(file.size)}
-                                </p>
-                                <p className="text-muted-foreground">
-                                    {t('tags.file_info.modified')}: {new Date(file.last_modified).toLocaleString()}
-                                </p>
-                                <p className="text-muted-foreground">
-                                    {t('tags.file_info.createat')}: {new Date(file.created_at).toLocaleString()}
-                                </p>
+                                <InfoItem icon={ImageIcon} label="tagManager.fileInfo.name" value={file.name} />
+                                <InfoItem
+                                    icon={FileIcon}
+                                    label="tagManager.fileInfo.filetype"
+                                    value={file.name.split('.').pop() || t('tagManager.fileInfo.unknown')}
+                                />
+                                <InfoItem
+                                    icon={FolderIcon}
+                                    label="tagManager.fileInfo.category"
+                                    value={file.category}
+                                />
+                                <InfoItem
+                                    icon={ScaleIcon}
+                                    label="tagManager.fileInfo.size"
+                                    value={formatBytes(file.size)}
+                                />
+                                <InfoItem
+                                    icon={CalendarIcon}
+                                    label="tagManager.fileInfo.modified"
+                                    value={new Date(file.last_modified).toLocaleString()}
+                                />
+                                <InfoItem
+                                    icon={CalendarIcon}
+                                    label="tagManager.fileInfo.createat"
+                                    value={new Date(file.created_at).toLocaleString()}
+                                />
                             </motion.div>
                         </CardContent>
                     </Card>
 
+                    <Separator orientation="vertical" className="hidden md:block" />
+
                     <div className="flex-grow flex flex-col">
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col">
-                            <TabsList className="w-full grid grid-cols-2 mb-4">
-                                <TabsTrigger value="selected">{t('tags.tabs.selected')}</TabsTrigger>
-                                <TabsTrigger value="available">{t('tags.tabs.available')}</TabsTrigger>
+                            <TabsList className="w-full grid grid-cols-3 mb-4">
+                                <TabsTrigger value="selected" className="py-2 px-4 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                                    {t('tagManager.selectedTab')}
+                                </TabsTrigger>
+                                <TabsTrigger value="available" className="py-2 px-4 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                                    {t('tagManager.availableTab')}
+                                </TabsTrigger>
+                                <TabsTrigger value="create" className="py-2 px-4 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                                    {t('tagManager.createTab')}
+                                </TabsTrigger>
                             </TabsList>
-                            <div className="flex-grow flex flex-col overflow-hidden border rounded-lg">
-                                <TabsContent value="selected" className="flex-grow flex flex-col p-2">
+                            <Card className="flex-grow flex flex-col overflow-hidden">
+                                <TabsContent value="selected" className="flex-grow flex flex-col p-4">
                                     <ScrollArea className="flex-grow">
                                         <motion.div
                                             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2"
@@ -298,36 +327,23 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
                                             </AnimatePresence>
                                         </motion.div>
                                     </ScrollArea>
-                                    <div className="p-2 border-t bg-muted mt-2">
-                                        <p className="text-sm text-muted-foreground">{t('tags.selected_count', { count: selectedTags.length })}</p>
+                                    <div className="p-2 bg-muted rounded-md mt-4">
+                                        <p className="text-sm font-medium">{t('tagManager.selectedCount', { count: selectedTags.length })}</p>
                                     </div>
                                 </TabsContent>
-                                <TabsContent value="available" className="flex-grow flex flex-col p-2">
-                                    <h1 className="text-2xl ml-6 mb-4">Create Tags</h1> {/* Title */}
-                                    <div className="flex items-center space-x-2 mb-4">
-                                        <Input
-                                            value={newTag}
-                                            onChange={(e) => setNewTag(e.target.value)}
-                                            placeholder={t('tags.add_placeholder')}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                                        />
-                                        <Button size="sm" onClick={handleAddTag}>
-                                            <Plus className="h-4 w-4"/>
-                                        </Button>
+                                <TabsContent value="available" className="flex-grow flex flex-col p-4">
+                                    <div className="mb-4">
+                                        <h3 className="text-lg font-semibold mb-2">{t('tagManager.searchTitle')}</h3>
+                                        <div className="relative">
+                                            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                className="pl-8"
+                                                placeholder={t('tagManager.searchPlaceholder')}
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                        </div>
                                     </div>
-                                    <Separator className="my-4" />
-                                    <h1 className="text-2xl ml-6 mb-4">Search Tags</h1> {/* Title */}
-                                    <div className="relative mb-2">
-                                        <Search
-                                            className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
-                                        <Input
-                                            className="pl-8"
-                                            placeholder={t('tags.search_placeholder')}
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                        />
-                                    </div>
-                                    <Separator className="my-4" />
                                     <ScrollArea className="flex-grow">
                                         <motion.div
                                             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2"
@@ -361,7 +377,7 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
                                                     transition={{duration: 0.3}}
                                                 >
                                                     <AlertCircle className="h-8 w-8 mb-2"/>
-                                                    <p className="text-sm text-center">{t('tags.no_available')}</p>
+                                                    <div className="text-sm text-center">{t('tagManager.noAvailable')}</div>
                                                 </motion.div>
                                             )}
                                         </motion.div>
@@ -369,23 +385,88 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
                                     {selectedAvailableTags.length > 0 && (
                                         <div className="mt-4">
                                             <Button onClick={handleConfirmSelectedTags} className="w-full">
-                                                {t('tags.add_selected', { count: selectedAvailableTags.length })}
+                                                {t('tagManager.addSelected', { count: selectedAvailableTags.length })}
                                             </Button>
                                         </div>
                                     )}
                                 </TabsContent>
-                            </div>
+                                <TabsContent value="create" className="flex-grow flex flex-col p-4">
+                                    <div className="space-y-4">
+                                        <h3 className="text-lg font-semibold">{t('tagManager.createTitle')}</h3>
+                                        <form onSubmit={(e) => { e.preventDefault(); handleAddTag(); }} className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="newTag">{t('tagManager.newTagLabel')}</Label>
+                                                <Input
+                                                    id="newTag"
+                                                    value={newTag}
+                                                    onChange={(e) => setNewTag(e.target.value)}
+                                                    placeholder={t('tagManager.addPlaceholder')}
+                                                />
+                                            </div>
+                                            <Button type="submit" className="w-full">
+                                                <Plus className="h-4 w-4 mr-2" />
+                                                {t('tagManager.addButton')}
+                                            </Button>
+                                        </form>
+                                        <Separator />
+                                        <div className="space-y-2">
+                                            <h4 className="font-medium">{t('tagManager.recentlyCreated')}</h4>
+                                            <ScrollArea className="h-[200px]">
+                                                <div className="space-y-2">
+                                                    {availableTags.slice(-5).reverse().map(tag => (
+                                                        <div key={tag.name} className="flex items-center justify-between">
+                                                            <span className="flex items-center">
+                                                                <Tag className="h-4 w-4 mr-2" />
+                                                                {tag.name}
+                                                            </span>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleSelectAvailableTag(tag.name, true)}
+                                                            >
+                                                                {t('tagManager.addToImage')}
+                                                            </Button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </ScrollArea>
+                                        </div>
+                                    </div>
+                                </TabsContent>
+                            </Card>
                         </Tabs>
                     </div>
                 </div>
 
                 <DialogFooter className="p-6 pt-2">
-                    <Button onClick={onClose} className="w-full">
-                        <Save className="mr-2 h-4 w-4"/>
-                        {t('tags.save_and_close')}
-                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+    );
+}
+
+interface InfoItemProps {
+    icon: React.ElementType;
+    label: string;
+    value: string;
+}
+
+function InfoItem({ icon: Icon, label, value }: InfoItemProps) {
+    const { t } = useTranslation();
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors">
+                        <Icon className="h-5 w-5 text-primary" />
+                        <span className="font-medium text-sm">{t(label)}:</span>
+                        <span className="text-sm text-muted-foreground truncate flex-1">{value}</span>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>{value}</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
     );
 }

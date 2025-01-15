@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
-import {Check, Pencil, Trash2, AlertTriangle, TagIcon} from 'lucide-react'
+import { Check, Pencil, Trash2, AlertTriangle, TagIcon, FolderIcon } from 'lucide-react'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -32,7 +32,7 @@ import { OptimizedImage } from "@/components/widget/ImageProcessor"
 import {DatabaseService, Image, TagInfo} from "@/hooks/use-database"
 
 interface TagItemProps {
-  tag: TagInfo;  // Change from string to TagInfo
+  tag: TagInfo;
   onRemove: (tag: string) => void
   onRename: (oldTag: string, newTag: string) => void
   onDelete: (tag: string) => void
@@ -100,17 +100,15 @@ export function TagItem({
     }
   };
 
-  // Determine badge variant based on tag type
   const getBadgeVariant = () => {
     if (isSelected) return "default";
     if (tag.is_category) return "secondary";
     return "outline";
   };
 
-  // Get badge styles based on tag type
   const getBadgeStyles = () => {
     if (tag.is_category) {
-      return "bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg shadow-md transition-colors";
+      return "bg-blue-500 hover:bg-blue-600 text-white";
     }
     return "";
   };
@@ -129,20 +127,19 @@ export function TagItem({
               <MotionBadge
                   variant={getBadgeVariant()}
                   className={`
-                cursor-pointer group py-1 px-2 flex items-center justify-between w-full
-                transition-all duration-200 ease-in-out
-                ${isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-primary/20'}
+                cursor-pointer group py-2 px-3 flex items-center justify-between w-full
+                transition-all duration-200 ease-in-out rounded-md
+                ${isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-primary/10'}
                 ${getBadgeStyles()}
               `}
                   onClick={handleClick}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
               >
-                <span className="truncate flex-grow flex items-center" title={tag.name}>
-              {tag.is_category}
-                  {tag.name}
-            </span>
-                <TagIcon className="h-4 w-4 mr-1 flex-shrink-0" />
+              <span className="truncate flex-grow flex items-center" title={tag.name}>
+                {tag.is_category ? <FolderIcon className="h-4 w-4 mr-2 flex-shrink-0" /> : <TagIcon className="h-4 w-4 mr-2 flex-shrink-0" />}
+                {tag.name}
+              </span>
                 {isSelected && <Check className="h-4 w-4 ml-2 flex-shrink-0" />}
               </MotionBadge>
             </motion.div>
@@ -164,7 +161,6 @@ export function TagItem({
           </ContextMenuContent>
         </ContextMenu>
 
-        {/* Delete Confirmation Dialog */}
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -172,41 +168,40 @@ export function TagItem({
                 <AlertTriangle className="h-5 w-5 text-yellow-500" />
                 Delete Tag "{tag.name}"
               </AlertDialogTitle>
-              <div className="mt-4">
-                <AlertDialogDescription asChild>
-                  <div>
+              <AlertDialogDescription asChild>
+                <div>
+                  <div className="text-sm text-muted-foreground">
                     Are you sure you want to delete this tag? This action cannot be undone.
-
-                    {taggedImages.length > 0 && (
-                        <div className="mt-4">
-                          <div className="font-medium mb-2">
-                            This tag is used in {taggedImages.length} images:
-                          </div>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                            {taggedImages.slice(0, 4).map((image) => (
-                                <div key={image.id} className="relative w-full pt-[100%]">
-                                  <div className="absolute inset-0">
-                                    <OptimizedImage
-                                        src={image.relative_path +"\\" +  image.filename}
-                                        alt={`Image with tag ${tag}`}
-                                        width={imagewidth ?? 400}
-                                        height={imageheigh ?? 560}
-                                        quality={imagequality}
-                                    />
-                                  </div>
-                                </div>
-                            ))}
-                          </div>
-                          {taggedImages.length > 4 && (
-                              <div className="text-sm text-muted-foreground mt-2">
-                                And {taggedImages.length - 4} more...
-                              </div>
-                          )}
-                        </div>
-                    )}
                   </div>
-                </AlertDialogDescription>
-              </div>
+                  {taggedImages.length > 0 && (
+                      <div className="mt-4">
+                        <div className="font-medium mb-2">
+                          This tag is used in {taggedImages.length} images:
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {taggedImages.slice(0, 4).map((image) => (
+                              <div key={image.id} className="relative w-full pt-[100%]">
+                                <div className="absolute inset-0">
+                                  <OptimizedImage
+                                      src={image.relative_path + "\\" + image.filename}
+                                      alt={`Image with tag ${tag.name}`}
+                                      width={imagewidth ?? 400}
+                                      height={imageheigh ?? 560}
+                                      quality={imagequality}
+                                  />
+                                </div>
+                              </div>
+                          ))}
+                        </div>
+                        {taggedImages.length > 4 && (
+                            <div className="text-sm text-muted-foreground mt-2">
+                              And {taggedImages.length - 4} more...
+                            </div>
+                        )}
+                      </div>
+                  )}
+                </div>
+              </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -220,7 +215,6 @@ export function TagItem({
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Rename Sheet */}
         <Sheet open={isEditing} onOpenChange={setIsEditing}>
           <SheetContent>
             <SheetHeader>
@@ -229,27 +223,25 @@ export function TagItem({
                 Enter a new name for the tag "{tag.name}".
               </SheetDescription>
             </SheetHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="newTagName" className="text-right">
-                  New Name
-                </Label>
+            <form onSubmit={(e) => { e.preventDefault(); handleRename(); }} className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="newTagName">New Name</Label>
                 <Input
                     id="newTagName"
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
-                    className="col-span-3"
                 />
               </div>
-            </div>
-            <div className="flex flex-col gap-4 mt-4">
-              <Button onClick={handleRename}>Save</Button>
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
-                Cancel
-              </Button>
-            </div>
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Save</Button>
+              </div>
+            </form>
           </SheetContent>
         </Sheet>
       </>
   )
 }
+
