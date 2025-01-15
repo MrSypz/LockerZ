@@ -16,7 +16,7 @@ pub struct Image {
     filename: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TagInfo {
     name: String,
     is_category: bool,
@@ -404,21 +404,26 @@ pub fn get_batch_image_ids(file_paths: &[(PathBuf, String)]) -> Result<HashMap<P
     Ok(result)
 }
 
-pub fn get_batch_image_tags(image_ids: &HashMap<PathBuf, i64>) -> Result<HashMap<i64, Vec<String>>, String> {
+pub fn get_batch_image_tags(image_ids: &HashMap<PathBuf, i64>) -> Result<HashMap<i64, Vec<TagInfo>>, String> {
     let conn = connect_db()?;
     let mut result = HashMap::new();
 
     let mut stmt = conn.prepare(
-        "SELECT t.name FROM tags t
+        "SELECT t.name, t.is_category FROM tags t
          JOIN image_tags it ON t.id = it.tag_id
          WHERE it.image_id = ?1"
     ).map_err(|e| e.to_string())?;
 
     for id in image_ids.values() {
         let tags = stmt
-            .query_map([id], |row| row.get(0))
+            .query_map([id], |row| {
+                Ok(TagInfo {
+                    name: row.get(0)?,
+                    is_category: row.get(1)?,
+                })
+            })
             .map_err(|e| e.to_string())?
-            .collect::<Result<Vec<String>, _>>()
+            .collect::<Result<Vec<TagInfo>, _>>()
             .map_err(|e| e.to_string())?;
 
         result.insert(*id, tags);

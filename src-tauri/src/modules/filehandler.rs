@@ -7,7 +7,6 @@ use std::fs::{self};
 use std::io;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use futures::StreamExt;
 use tauri::{AppHandle, Emitter};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -113,7 +112,7 @@ pub async fn get_files(
     // Associate tags with files
     for file in &mut cached_files {
         if let Some(image_id) = image_ids.get(&PathBuf::from(&file.filepath)) {
-            file.tags = Some(tags_map.get(image_id).cloned().unwrap_or_default());
+            file.tags = Some((&tags_map.get(image_id)).cloned().unwrap_or_default());
         } else {
             file.tags = None;
         }

@@ -8,6 +8,7 @@ use std::fs::{self, File};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use crate::modules::db::TagInfo;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FileInfo {
@@ -18,7 +19,7 @@ pub struct FileInfo {
     pub last_modified: String,
     pub created_at: String,
     pub root_path: String,
-    pub tags: Option<Vec<String>>,
+    pub tags: Option<Vec<TagInfo>>,
 }
 
 #[derive(Debug, Clone)]
