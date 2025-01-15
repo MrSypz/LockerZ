@@ -14,6 +14,7 @@ type SortOrder = 'asc' | 'desc';
 interface SearchTerms {
     text: string;
     tags: string[];
+    categories: string[]
 }
 
 interface SortPreferences {
@@ -34,12 +35,44 @@ const saveSortPreferences = (preferences: SortPreferences) => {
 };
 
 const parseSearchInput = (input: string): SearchTerms => {
-    const tags = input.match(/#[\w-]+/g) || [];
-    const text = input.replace(/#[\w-]+/g, '').trim();
-    const processedTags = tags.map(tag => tag.slice(1).toLowerCase());
+    const tags: string[] = [];
+    const categories: string[] = [];
+    let remainingText = input;
+
+    // Extract tags with spaces (#tag with space)
+    const tagRegex = /#([^#@]+?)(?=\s*[#@]|$)/g;
+    let tagMatch;
+    while ((tagMatch = tagRegex.exec(input)) !== null) {
+        const tagText = tagMatch[1].trim();
+        if (tagText) {
+            tags.push(tagText);
+        }
+        // Remove the matched tag from remaining text
+        remainingText = remainingText.replace(tagMatch[0], '');
+    }
+
+    // Extract categories with spaces (@category with space)
+    const categoryRegex = /@([^#@]+?)(?=\s*[#@]|$)/g;
+    let categoryMatch;
+    while ((categoryMatch = categoryRegex.exec(input)) !== null) {
+        const categoryText = categoryMatch[1].trim();
+        if (categoryText) {
+            categories.push(categoryText);
+        }
+        // Remove the matched category from remaining text
+        remainingText = remainingText.replace(categoryMatch[0], '');
+    }
+
+    // Clean up the remaining text
+    const text = remainingText
+        .replace(/#/g, '')  // Remove any leftover # symbols
+        .replace(/@/g, '')  // Remove any leftover @ symbols
+        .trim();
+
     return {
         text,
-        tags: processedTags
+        tags: tags.map(tag => tag.toLowerCase()),
+        categories: categories.map(cat => cat.toLowerCase())
     };
 };
 
@@ -128,21 +161,33 @@ export function FileGrid({
         let filteredAndSortedFiles = [...allFiles];
 
         if (searchTerm.trim()) {
-            const { text, tags } = parseSearchInput(searchTerm);
+            const { text, tags, categories } = parseSearchInput(searchTerm);
             filteredAndSortedFiles = filteredAndSortedFiles.filter(file => {
+                // Text match
                 const nameMatch = text ?
                     file.name.toLowerCase().includes(text.toLowerCase()) :
                     true;
 
+                // Tag match - support spaces in tags
                 const tagMatch = tags.length > 0 ?
-                    tags.every(searchTag =>
-                        file.tags?.some(fileTag =>
-                            fileTag.toLowerCase() === searchTag
-                        )
-                    ) :
+                    tags.some(searchTag => {
+                        const normalizedSearchTag = searchTag.toLowerCase().trim();
+                        return file.tags?.some(fileTag =>
+                            fileTag.name.toLowerCase().trim() === normalizedSearchTag
+                        );
+                    }) :
                     true;
 
-                return nameMatch && tagMatch;
+                // Category match - support spaces in categories
+                const categoryMatch = categories.length > 0 ?
+                    categories.some(cat => {
+                        const normalizedCat = cat.toLowerCase().trim();
+                        const normalizedFileCat = file.category?.toLowerCase().trim();
+                        return normalizedFileCat === normalizedCat;
+                    }) :
+                    true;
+
+                return nameMatch && tagMatch && categoryMatch;
             });
         }
 
@@ -168,9 +213,8 @@ export function FileGrid({
         const totalFilteredPages = Math.ceil(filteredAndSortedFiles.length / imagesPerPage);
         onTotalPagesChange(totalFilteredPages);
 
-        if (currentPage > totalFilteredPages && totalFilteredPages > 0) {
-            onPageChange(1);
-        }
+        if (currentPage > totalFilteredPages && totalFilteredPages > 0) onPageChange(1);
+
 
         const start = (currentPage - 1) * imagesPerPage;
         const end = start + imagesPerPage;
@@ -194,26 +238,38 @@ export function FileGrid({
     };
 
     const getSearchResultsText = () => {
-        const { text, tags } = parseSearchInput(searchTerm);
+        const { text, tags, categories } = parseSearchInput(searchTerm);
         const filteredCount = allFiles.filter(file => {
+            // Name/text match
             const nameMatch = text ?
                 file.name.toLowerCase().includes(text.toLowerCase()) :
                 true;
 
+            // Tag match - using AND logic (every tag must match)
             const tagMatch = tags.length > 0 ?
                 tags.every(searchTag =>
                     file.tags?.some(fileTag =>
-                        fileTag.toLowerCase() === searchTag
+                        fileTag.name.toLowerCase() === searchTag
                     )
                 ) :
                 true;
 
-            return nameMatch && tagMatch;
+            // Category match - using OR logic (any category can match)
+            const categoryMatch = categories.length > 0 ?
+                categories.some(cat => {
+                    if (cat === '') {
+                        // Show all files that have any category
+                        return file.category != null && file.category !== '';
+                    }
+                    return file.category?.toLowerCase() === cat;
+                }) :
+                true;
+
+            return nameMatch && tagMatch && categoryMatch;
         }).length;
 
         return t('locker.search.results', { count: filteredCount });
     };
-
     return (
         <div className="space-y-4">
             <div className="flex items-center space-x-4">
