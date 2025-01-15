@@ -6,12 +6,12 @@
       {
         "title": "Quality of Life",
         "type": "preview",
-        "content": "<div class='space-y-4'><br><h3 class='text-lg font-semibold text-foreground'>Quality of Life</h3><br><div class='space-y-2'><br> • Tag Dialog<br>• the search now accept multi key<br>• Visual on Tag Categories<br>• Category auto initalize tag<br>• Uploading Progress<br>• Database update when moving file and delete<br>• the Search Feature<br></div><br></div>"
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-foreground'>Quality of Life</h3><div class='space-y-2'> • Tag Dialog<br>• the search now accept multi key<br>• Visual on Tag Categories<br>• Category auto initalize tag<br>• Uploading Progress<br>• Database update when moving file and delete<br>• the Search Feature</div></div>"
       },
       {
         "title": "Features",
         "type": "feature",
-        "content": "<div class='space-y-4'><br><h3 class='text-lg font-semibold text-blue-500 dark:text-blue-400'>Features</h3><br><div class='space-y-2'><br> • backend file handler<br></div><br></div>"
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-blue-500 dark:text-blue-400'>Features</h3><div class='space-y-2'> • backend file handler</div></div>"
       }
     ]
   },
