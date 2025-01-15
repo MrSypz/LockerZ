@@ -1,9 +1,11 @@
+import {TagInfo} from "@/hooks/use-database";
+
 export interface File {
     name: string;
     category: string;
     filepath: string;
     size: number;
-    tags?: string[];
+    tags?: TagInfo[];
     last_modified: string;
     created_at: string;
 }
