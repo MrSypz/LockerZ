@@ -273,6 +273,10 @@ pub async fn move_file(
         .await
         .map_err(|e| format!("Error refreshing category cache: {}", e))?;
 
+    cache.update_all_category(&root_folder_path)
+        .await
+        .map_err(|e| format!("Error updating all category cache: {}", e))?;
+
     Ok(FileMoveResponse {
         success: true,
         file: file_info,
@@ -346,6 +350,10 @@ pub async fn move_file_category(
     // Update cache
     cache.move_file(&root_folder_path, &old_category, &new_category, &file_name).await
         .map_err(|e| format!("Error updating cache: {}", e))?;
+
+    cache.update_all_category(&root_folder_path)
+        .await
+        .map_err(|e| format!("Error updating all category cache: {}", e))?;
 
     Ok(MoveFileCategoryResponse { success: true })
 }
@@ -444,6 +452,10 @@ pub async fn save_and_move_file(
     cache.refresh_category(&root_folder_path, &category)
         .await
         .map_err(|e| format!("Error refreshing category cache: {}", e))?;
+
+    cache.update_all_category(&root_folder_path)
+        .await
+        .map_err(|e| format!("Error updating all category cache: {}", e))?;
 
     Ok(FileMoveResponse {
         success: true,

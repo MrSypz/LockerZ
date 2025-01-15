@@ -303,6 +303,87 @@ impl FileCache {
         // Refresh new category to include the moved file
         self.refresh_category(root_path, new_category).await?;
 
+        // Update the 'all' category cache
+        let mut all_files = Vec::new();
+
+        // Read all subdirectories to rebuild 'all' cache
+        for entry in fs::read_dir(root_path)? {
+            let entry = entry?;
+            if entry.path().is_dir() {
+                let category_name = entry.file_name().to_string_lossy().to_string();
+                let category_path = root_path.join(&category_name);
+
+                for file_entry in fs::read_dir(&category_path)? {
+                    let file_entry = file_entry?;
+                    if file_entry.path().is_file() {
+                        let metadata = file_entry.metadata()?;
+                        let file_info = self.create_file_info(
+                            file_entry.file_name().to_string_lossy().to_string(),
+                            category_name.clone(),
+                            &file_entry.path(),
+                            &metadata,
+                            root_path,
+                        )?;
+                        all_files.push(file_info);
+                    }
+                }
+            }
+        }
+
+        // Update 'all' category in memory cache
+        let all_cache_key = self.generate_cache_key(root_path, "all");
+        {
+            let mut cache = self.cache.lock().unwrap();
+            cache.insert(all_cache_key, CacheEntry {
+                files: all_files.clone(),
+                last_modified: Local::now(),
+            });
+        }
+
+        // Write updated 'all' category to disk
+        self.write_cache(root_path, "all", &all_files)?;
+
+        Ok(())
+    }
+    pub async fn update_all_category(&self, root_path: &Path) -> io::Result<()> {
+        let mut all_files = Vec::new();
+
+        for entry in fs::read_dir(root_path)? {
+            let entry = entry?;
+            if entry.path().is_dir() {
+                let category_name = entry.file_name().to_string_lossy().to_string();
+                let category_path = root_path.join(&category_name);
+
+                for file_entry in fs::read_dir(&category_path)? {
+                    let file_entry = file_entry?;
+                    if file_entry.path().is_file() {
+                        let metadata = file_entry.metadata()?;
+                        let file_info = self.create_file_info(
+                            file_entry.file_name().to_string_lossy().to_string(),
+                            category_name.clone(),
+                            &file_entry.path(),
+                            &metadata,
+                            root_path,
+                        )?;
+                        all_files.push(file_info);
+                    }
+                }
+            }
+        }
+
+        // Update memory cache for 'all' category
+        let cache_key = self.generate_cache_key(root_path, "all");
+        {
+            let mut cache = self.cache.lock().unwrap();
+            cache.insert(cache_key, CacheEntry {
+                files: all_files.clone(),
+                last_modified: Local::now(),
+            });
+        }
+
+        // Update disk cache
+        self.write_cache(root_path, "all", &all_files)?;
+
         Ok(())
     }
 
