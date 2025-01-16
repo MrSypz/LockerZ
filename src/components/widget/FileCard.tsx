@@ -6,7 +6,8 @@ import {Card, CardContent} from "@/components/ui/card";
 import {Badge} from "@/components/ui/badge";
 import {OptimizedImage} from "@/components/widget/ImageProcessor";
 import {File} from "@/types/file";
-import {Plus, Tag} from "lucide-react";
+import { Plus, Tag } from 'lucide-react';
+import {useState} from "react";
 
 interface FileCardProps {
     file: File
@@ -31,6 +32,7 @@ export function FileCard({
                              column,
                              totalColumns
                          }: FileCardProps) {
+    const [isPressed, setIsPressed] = useState(false);
     const {t} = useTranslation();
     const {settings} = useSharedSettings();
     const row = Math.floor(index / totalColumns);
@@ -53,6 +55,7 @@ export function FileCard({
                 layout="position"
                 animate={{
                     y: offset,
+                    scale: isPressed ? 0.98 : 1,
                 }}
                 transition={{
                     type: "spring",
@@ -67,23 +70,43 @@ export function FileCard({
                 }}
                 className="relative"
                 style={{zIndex: 1000 - index}}
+                onMouseDown={() => setIsPressed(true)}
+                onMouseUp={() => setIsPressed(false)}
+                onMouseLeave={() => setIsPressed(false)}
             >
                 <Card
-                    className={`overflow-hidden transition-all duration-200 ease-in-out hover:ring-2 hover:ring-primary/50 cursor-pointer ${
-                        isDarkSquare
-                            ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-                    }`}
-                    onClick={onSelect}
+                    className={`
+                        overflow-hidden 
+                        transition-all duration-200 ease-in-out 
+                        hover:ring-2 hover:ring-primary/50 
+                        cursor-pointer 
+                        ${isDarkSquare
+                        ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                    }
+                        ${isPressed ? 'brightness-95 shadow-inner' : 'shadow-sm'}
+                    `}
+                    onDoubleClick={(e) => {
+                        e.preventDefault();
+                        setIsPressed(false);
+                        onSelect();
+                    }}
                 >
                     <CardContent className="p-0">
-                        <div className="relative aspect-[2/3] rounded-t-lg overflow-hidden">
+                        <div className="relative aspect-[2/3] rounded-t-lg overflow-hidden transition-all duration-200">
                             <OptimizedImage
                                 src={file.filepath}
                                 alt={file.name}
                                 width={settings.imageWidth}
                                 height={settings.imageHeight}
                                 quality={settings.imageQuality}
+                            />
+                            <div
+                                className={`
+                                    absolute inset-0 bg-black/0
+                                    transition-all duration-200
+                                    ${isPressed ? 'bg-black/20' : ''}
+                                `}
                             />
                         </div>
                         <div
