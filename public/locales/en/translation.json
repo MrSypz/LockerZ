@@ -64,6 +64,7 @@
     "page": {
       "head": "Categories",
       "createcat": "Create Category",
+      "search": "Search Category",
       "dialog": {
         "title": "Create New Category",
         "desc": "Enter a name for the new category",

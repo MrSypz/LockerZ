@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.4.5",
+    "date": "16/01/2025",
+    "sections": [
+      {
+        "title": "Fixes",
+        "type": "fix",
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-foreground'>Fixes</h3><div class='space-y-2'> • category all are not update until restart program</div></div>"
+      },
+      {
+        "title": "Quality of Life",
+        "type": "preview",
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-blue-500 dark:text-blue-400'>Features</h3><div class='space-y-2'> • Optimize search and improvement key combine</div></div>"
+      }
+    ]
+  },
+  {
     "version": "0.4.4",
     "date": "15/01/2025",
     "sections": [

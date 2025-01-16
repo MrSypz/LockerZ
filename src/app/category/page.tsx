@@ -25,7 +25,7 @@ import {
     DialogTrigger
 } from "@/components/ui/dialog"
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover"
-import {Pencil, FolderPlus, FolderOpen} from 'lucide-react'
+import {Pencil, FolderPlus, FolderOpen, Search} from 'lucide-react'
 import {toast} from "@/hooks/use-toast"
 import {useTranslation} from "react-i18next"
 import {invoke} from '@tauri-apps/api/core'
@@ -111,6 +111,7 @@ function EditCategoryPopover({category, onRename, onDelete}: EditCategoryPopover
 
 export default function Category() {
     const [categories, setCategories] = useState<Category[]>([])
+    const [searchQuery, setSearchQuery] = useState('')
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
     const [newCategory, setNewCategory] = useState('')
     const {t} = useTranslation()
@@ -132,6 +133,9 @@ export default function Category() {
             });
         }
     };
+    const filteredCategories = categories.filter(category =>
+        category.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     const handleRename = async (oldName: string, newName: string) => {
         try {
@@ -250,15 +254,30 @@ export default function Category() {
                             </DialogContent>
                         </Dialog>
                     </div>
-                    {categories.length === 0 ? (
+                    <div className="mb-6 flex items-center space-x-2">
+                        <div className="relative flex-1 max-w-sm">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder={t('categories.page.search')}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-8"
+                            />
+                        </div>
+                    </div>
+
+                    {filteredCategories.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
                             <FolderOpen className="h-24 w-24 text-muted-foreground mb-4"/>
-                            <p className="text-xl text-muted-foreground">No categories found. Create a new category to
-                                get started.</p>
+                            <p className="text-xl text-muted-foreground">
+                                {categories.length === 0
+                                    ? "No categories found. Create a new category to get started."
+                                    : "No categories match your search."}
+                            </p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {categories.map((category) => (
+                            {filteredCategories.map((category) => (
                                 <Card key={category.name} className="overflow-hidden">
                                     <CardContent className="p-4">
                                         <div className="flex items-center justify-between">
@@ -273,7 +292,7 @@ export default function Category() {
                                         </div>
                                         <div className="mt-2 space-y-1">
                                             <p className="text-sm text-muted-foreground">{category.file_count} files</p>
-                                            <p className="text-sm text-muted-foreground">Size: {(formatBytes(category.size))}</p>
+                                            <p className="text-sm text-muted-foreground">Size: {formatBytes(category.size)}</p>
                                         </div>
                                     </CardContent>
                                 </Card>
