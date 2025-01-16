@@ -91,7 +91,6 @@ function useColumnCount() {
 }
 
 interface FileGridProps {
-    files: File[]
     allFiles: File[]
     onViewFileAction: (file: File) => void
     onDeleteFileAction: (file: File) => void
@@ -104,7 +103,6 @@ interface FileGridProps {
 }
 
 export function FileGrid({
-                             files,
                              allFiles,
                              onViewFileAction,
                              onDeleteFileAction,
