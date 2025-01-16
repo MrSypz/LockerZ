@@ -6,7 +6,7 @@
       {
         "title": "Fixes",
         "type": "fix",
-        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-foreground'>Fixes</h3><div class='space-y-2'> • category all are not update until restart program</div></div>"
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-foreground'>Fixes</h3><div class='space-y-2'> • category all are not update until restart program</div><div class='space-y-2'> • Change behavior from click to double click</div></div>"
       },
       {
         "title": "Quality of Life",
