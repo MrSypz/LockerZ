@@ -386,7 +386,6 @@ export default function Locker() {
                             </div>
                         ) : (
                             <FileGrid
-                                files={files}
                                 allFiles={allFiles}
                                 onViewFileAction={async (file) => {
                                     await show_in_folder(file.filepath);
