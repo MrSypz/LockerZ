@@ -141,12 +141,10 @@ export function FileGrid({
         setSelectedImageIndex(null)
     }, [])
 
-    // Memoize search terms parsing
     const searchTerms = useMemo(() =>
             searchTerm.trim() ? parseSearchInput(searchTerm) : null
         , [searchTerm])
 
-    // Memoize filtered and sorted files
     const sortedFiles = useMemo(() => {
         let filteredFiles = allFiles
 
@@ -195,13 +193,11 @@ export function FileGrid({
         })
     }, [allFiles, searchTerms, sortState]) // Added sortState as dependency
 
-    // Calculate pagination
     const paginatedFiles = useMemo(() => {
         const start = (currentPage - 1) * imagesPerPage
         return sortedFiles.slice(start, start + imagesPerPage)
     }, [sortedFiles, currentPage, imagesPerPage])
 
-    // Update total pages when filtered results change
     useEffect(() => {
         const totalPages = Math.ceil(sortedFiles.length / imagesPerPage)
         onTotalPagesChange(totalPages)

@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.4.6",
+    "date": "26/01/2025",
+    "sections": [
+      {
+        "title": "Fixes",
+        "type": "fix",
+        "content": "<div class='space-y-4'><h3 class='text-lg font-semibold text-foreground'>Fixes</h3><div class='space-y-2'> • Sorting are now update when change user need to refresh to make it update</div></div>"
+      }
+    ]
+  },
+  {
     "version": "0.4.5",
     "date": "16/01/2025",
     "sections": [
