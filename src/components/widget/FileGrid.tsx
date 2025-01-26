@@ -115,16 +115,13 @@ export function FileGrid({
                          }: FileGridProps) {
     const totalColumns = useColumnCount()
     const { t } = useTranslation()
-    const savedPreferences = useMemo(() => getSavedSortPreferences(), [])
 
-    const [sortCriteria, setSortCriteria] = useState<SortCriteria>(savedPreferences.criteria)
-    const [sortOrder, setSortOrder] = useState<SortOrder>(savedPreferences.order)
+    const [sortState, setSortState] = useState(() => getSavedSortPreferences())
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
 
     const handleSort = useCallback((criteria: SortCriteria, order: SortOrder) => {
-        setSortCriteria(criteria)
-        setSortOrder(order)
+        setSortState({ criteria, order })
         localStorage.setItem('fileSortPreferences', JSON.stringify({ criteria, order }))
     }, [])
 
@@ -156,17 +153,14 @@ export function FileGrid({
         if (searchTerms) {
             const { text, tags, categories } = searchTerms
             filteredFiles = filteredFiles.filter(file => {
-                // Text match
                 const nameMatch = text ?
                     file.name.toLowerCase().includes(text.toLowerCase()) :
                     true
 
-                // If no tags or categories specified, only use text match
                 if (!tags.length && !categories.length) {
                     return nameMatch
                 }
 
-                // Combined tag and category matches
                 const termMatches = [...tags, ...categories].every(term => {
                     const matchesTag = file.tags?.some(fileTag =>
                         fileTag.name.toLowerCase() === term
@@ -181,9 +175,9 @@ export function FileGrid({
         }
 
         // Sort files
-        return filteredFiles.sort((a, b) => {
+        return [...filteredFiles].sort((a, b) => {
             let comparison = 0
-            switch (sortCriteria) {
+            switch (sortState.criteria) {
                 case 'name':
                     comparison = a.name.localeCompare(b.name)
                     break
@@ -197,9 +191,9 @@ export function FileGrid({
                     comparison = a.size - b.size
                     break
             }
-            return sortOrder === 'asc' ? comparison : -comparison
+            return sortState.order === 'asc' ? comparison : -comparison
         })
-    }, [allFiles, searchTerms, sortCriteria, sortOrder])
+    }, [allFiles, searchTerms, sortState]) // Added sortState as dependency
 
     // Calculate pagination
     const paginatedFiles = useMemo(() => {
@@ -241,22 +235,22 @@ export function FileGrid({
                     files={allFiles}
                 />
                 <FileSort
-                    sortCriteria={sortCriteria}
-                    sortOrder={sortOrder}
+                    sortCriteria={sortState.criteria}
+                    sortOrder={sortState.order}
                     onSort={handleSort}
                 />
             </div>
 
             {searchTerm && (
                 <div className="text-sm text-gray-500">
-                    {t('locker.search.results', { count: searchResultCount })}
+                    {t('locker.search.results', {count: searchResultCount})}
                 </div>
             )}
 
             <motion.div
                 className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 p-4 bg-background/50 backdrop-blur-sm rounded-lg border border-border"
                 layout
-                key={`${sortCriteria}-${sortOrder}`}
+                key={`${sortState.criteria}-${sortState.order}`}
             >
                 <AnimatePresence>
                     {paginatedFiles.length > 0 ? (
