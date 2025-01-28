@@ -3,6 +3,8 @@ use serde::Serialize;
 use std::path::{Path, PathBuf};
 use tokio::fs;
 use tokio::task;
+use crate::{log_error, log_info};
+use crate::modules::db::connect_db;
 
 #[derive(Serialize)]
 pub struct Category {
@@ -92,7 +94,7 @@ pub async fn get_categories() -> Result<Vec<Category>, String> {
 
 #[tauri::command]
 pub async fn rename_category(old_name: &str, new_name: &str) -> Result<String, String> {
-    let root_folder_path = get_config().folderPath.clone();
+    let root_folder_path = get_config().folderPath;
     let old_path = Path::new(&root_folder_path).join(old_name);
     let new_path = Path::new(&root_folder_path).join(new_name);
 
@@ -106,16 +108,37 @@ pub async fn rename_category(old_name: &str, new_name: &str) -> Result<String, S
 
     match tokio::fs::rename(&old_path, &new_path).await {
         Ok(_) => {
+            update_category_in_db(old_name, new_name)?;
+
             let message = format!("Successfully renamed '{}' to '{}'", old_name, new_name);
-            println!("{}", message); // Log to console for debugging
+            log_info!("{}", message);
             Ok(message)
         }
         Err(e) => {
             let error_message = format!("Failed to rename '{}' to '{}': {}", old_name, new_name, e);
-            eprintln!("{}", error_message); // Log error to console
+            log_error!("{}", error_message);
             Err(error_message)
         }
     }
+}
+fn update_category_in_db(old_name: &str, new_name: &str) -> Result<(), String> {
+    let mut conn = connect_db()?;
+
+    let tx = conn.transaction().map_err(|e| format!("Failed to start transaction: {}", e))?;
+
+    tx.execute(
+        "UPDATE images SET category = ?1 WHERE category = ?2",
+        [new_name, old_name],
+    ).map_err(|e| format!("Failed to update images table: {}", e))?;
+
+    tx.execute(
+        "UPDATE tags SET name = ?1 WHERE name = ?2 AND is_category = 1",
+        [new_name, old_name],
+    ).map_err(|e| format!("Failed to update tags table: {}", e))?;
+
+    tx.commit().map_err(|e| format!("Failed to commit transaction: {}", e))?;
+
+    Ok(())
 }
 
 #[tauri::command]
