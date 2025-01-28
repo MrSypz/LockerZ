@@ -15,6 +15,7 @@
   },
   "dashboard": {
     "dailyTip": "Daily Tip!",
+    "subheader": "Let manage your content!",
     "content": {
       "totalimg": "Total Images",
       "category": "Categories",

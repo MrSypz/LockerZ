@@ -73,11 +73,11 @@ export function Dashboard() {
     }, []);
 
     const handleCategoryClick = (categoryName: string) => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('lastSelectedCategory', categoryName);
+        if (typeof window !== "undefined") {
+            localStorage.setItem("lastSelectedCategory", categoryName)
         }
-        router.push('/locker');
-    };
+        router.push("/locker")
+    }
 
     const statsItems = [
         {icon: ImageIcon, label: t("dashboard.content.totalimg"), value: stats.total_images.toString()},
@@ -86,93 +86,116 @@ export function Dashboard() {
     ];
 
     return (
-        <div className="space-y-6">
-            <div className="p-6 space-y-8">
-                <div className="flex flex-col space-y-4">
-                    <h1 className="text-3xl font-bold gradient-text">{t('dashboard.header')}</h1>
+        <div className="container mx-auto p-6 space-y-8">
+            <motion.div initial={{opacity: 0, y: -20}} animate={{opacity: 1, y: 0}} transition={{duration: 0.5}}>
+                <h1 className="text-4xl font-bold gradient-text mb-2">{t("dashboard.header")}</h1>
+                <p className="text-muted-foreground">{t("dashboard.subheader")}</p>
+            </motion.div>
 
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {statsItems.map((stat) => (
-                        <Card key={stat.label} className="overflow-hidden transition-all hover:shadow-lg">
-                            <CardContent className="p-6">
-                                <div className="flex items-center space-x-4">
-                                    <div className={`p-3 rounded-full`}>
-                                        <stat.icon size={24} className="text-white"/>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">{stat.label}</p>
-                                        <p className="text-2xl font-bold mt-2 text-primary">{stat.value}</p>
-                                    </div>
-                                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {statsItems.map((stat, index) => (
+                    <motion.div
+                        key={stat.label}
+                        initial={{opacity: 0, y: 20}}
+                        animate={{opacity: 1, y: 0}}
+                        transition={{duration: 0.5, delay: index * 0.1}}
+                    >
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
+                                <stat.icon className="h-4 w-4 text-muted-foreground"/>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{stat.value}</div>
                             </CardContent>
                         </Card>
-                    ))}
-                </div>
+                    </motion.div>
+                ))}
+            </div>
+
+            <motion.div
+                initial={{opacity: 0, y: 20}}
+                animate={{opacity: 1, y: 0}}
+                transition={{duration: 0.5, delay: 0.3}}
+            >
                 <Card>
                     <CardHeader>
-                        <CardTitle>{t('dashboard.dailyTip')}</CardTitle>
+                        <CardTitle className="flex items-center gap-2">
+                            <Lightbulb className="h-5 w-5 text-yellow-500"/>
+                            {t("dashboard.dailyTip")}
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center space-x-2">
-                            <Lightbulb className="text-yellow-500"/>
-                            <p>{dailyTip}</p>
-                        </div>
+                        <p className="text-muted-foreground">{dailyTip}</p>
                     </CardContent>
                 </Card>
-                <Collapsible
-                    open={isOpen}
-                    onOpenChange={setIsOpen}
-                    className="w-full space-y-2"
-                >
-                    <div className="flex items-center justify-between space-x-4 px-4">
-                        <CollapsibleTrigger asChild>
-                            <Button variant="ghost"
-                                    className="p-0 hover:bg-transparent flex items-center space-x-2 w-full justify-start"
-                            >
-                                <FolderOpen className="h-5 w-5"/>
-                                <span className="text-lg font-semibold">{t('dashboard.content.categories')}</span>
-                                <ChevronDown
-                                    className={`h-5 w-5 transition-transform duration-300 ease-in-out ml-auto ${
-                                        isOpen ? "transform rotate-180" : ""
-                                    }`}/>
-                            </Button>
-                        </CollapsibleTrigger>
-                    </div>
-                    <CollapsibleContent className="space-y-2 collapsible-content">
-                        <motion.div
-                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                            initial="hidden"
-                            animate="visible"
-                            variants={{
-                                visible: {transition: {staggerChildren: 0.05}},
-                            }}
-                        >
-                            {categories.map((category) => (
-                                <motion.div
-                                    key={category.name}
-                                    variants={{
-                                        hidden: {opacity: 0, y: 20},
-                                        visible: {opacity: 1, y: 0},
-                                    }}
-                                >
-                                    <Card
-                                        className="overflow-hidden transition-all hover:shadow-lg cursor-pointer"
-                                        onClick={() => handleCategoryClick(category.name)}
+            </motion.div>
+
+            <motion.div
+                initial={{opacity: 0, y: 20}}
+                animate={{opacity: 1, y: 0}}
+                transition={{duration: 0.5, delay: 0.5}}
+            >
+                <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full space-y-2">
+                    <Card>
+                        <CardHeader>
+                            <CollapsibleTrigger asChild>
+                                <Button variant="ghost" className="w-full justify-between">
+                                    <CardTitle className="flex items-center gap-2">
+                                        <FolderOpen className="h-5 w-5"/>
+                                        {t("dashboard.content.categories")}
+                                    </CardTitle>
+                                    <ChevronDown
+                                        className={`h-4 w-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}/>
+                                </Button>
+                            </CollapsibleTrigger>
+                        </CardHeader>
+                        <CollapsibleContent>
+                            <CardContent className="p-0">
+                                <div className="max-h-96 overflow-y-auto p-6">
+                                    <motion.div
+                                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                                        initial="hidden"
+                                        animate="visible"
+                                        variants={{
+                                            visible: {transition: {staggerChildren: 0.05}},
+                                        }}
                                     >
-                                        <CardContent className="p-4">
-                                            <h3 className="text-lg font-semibold">{category.name}</h3>
-                                            <p className="text-sm text-muted-foreground">{category.fileCount} files</p>
-                                            <p className="text-sm text-muted-foreground">{formatBytes(category.size)}</p>
-                                        </CardContent>
-                                    </Card>
-                                </motion.div>
-                            ))}
-                        </motion.div>
-                    </CollapsibleContent>
+                                        {categories.map((category) => (
+                                            <motion.div
+                                                key={category.name}
+                                                variants={{
+                                                    hidden: {opacity: 0, y: 20},
+                                                    visible: {opacity: 1, y: 0},
+                                                }}
+                                            >
+                                                <Card
+                                                    className="overflow-hidden transition-all hover:shadow-lg cursor-pointer"
+                                                    onClick={() => handleCategoryClick(category.name)}
+                                                >
+                                                    <CardHeader>
+                                                        <CardTitle>{category.name}</CardTitle>
+                                                    </CardHeader>
+                                                    <CardContent>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-sm text-muted-foreground">
+                                                                {category.fileCount} files
+                                                            </span>
+                                                            <span className="text-sm font-medium">
+                                                                {formatBytes(category.size)}
+                                                            </span>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            </motion.div>
+                                        ))}
+                                    </motion.div>
+                                </div>
+                            </CardContent>
+                        </CollapsibleContent>
+                    </Card>
                 </Collapsible>
-            </div>
+            </motion.div>
         </div>
     )
 }
