@@ -1,4 +1,4 @@
-import {Dashboard} from "@/components/widget/Dashboard"
+import Dashboard from "@/components/widget/Dashboard"
 
 export default function Home() {
 
