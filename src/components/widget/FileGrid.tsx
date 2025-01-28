@@ -172,7 +172,6 @@ export function FileGrid({
             })
         }
 
-        // Sort files
         return [...filteredFiles].sort((a, b) => {
             let comparison = 0
             switch (sortState.criteria) {
@@ -207,7 +206,6 @@ export function FileGrid({
         }
     }, [sortedFiles.length, imagesPerPage, currentPage, onTotalPagesChange, onPageChange])
 
-    // Keyboard event listener
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.ctrlKey && event.code === 'Space') {
