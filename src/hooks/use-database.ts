@@ -136,7 +136,7 @@ export class DatabaseService {
             throw error;
         }
     }
-    async removeTag(tagName : string): Promise<void> {
+    async deleteTag(tagName : string): Promise<void> {
         try {
             await invoke<string>('remove_tag', {name: tagName} )
         } catch (error) {

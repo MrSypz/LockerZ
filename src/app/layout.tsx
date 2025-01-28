@@ -5,13 +5,12 @@ import '../styles/scrollbar.css'
 import { ThemeProvider } from '@/components/Theme-provider'
 import { Toaster } from '@/components/ui/toaster'
 import I18nProvider from '@/components/I18nProvider'
-import { notoSansMono } from '@/lib/fonts'
+import {notoSansMono, notoSansThai} from '@/lib/fonts'
 import React, { useEffect, useState, useCallback } from "react"
 import { usePathname } from 'next/navigation'
 import {Sidebar} from "@/components/widget/Sidebar";
 import { SettingsProvider } from "@/utils/SettingsContext";
 import {invoke} from "@tauri-apps/api/core";
-// @ts-ignore
 import { WebviewWindow } from "@tauri-apps/api/window"
 import {languages} from "@/lib/lang";
 import UploadProgress from "@/components/widget/ProgressInfo";
@@ -79,7 +78,7 @@ export default function RootLayout({
         }
     }, [pathname, mounted, fetchLanguageSetting])
 
-    const fontClass = languages[currentLang] ?.fontClass.className || notoSansMono.className;
+    const fontClass = notoSansThai.className;
 
     return (
         <html lang={currentLang} suppressHydrationWarning>
