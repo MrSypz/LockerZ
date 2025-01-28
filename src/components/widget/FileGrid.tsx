@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useTranslation } from 'react-i18next'
 import { AlertCircle } from 'lucide-react'
 import { ImageViewer } from './Image-viewer'
-import { FileCard } from "@/components/widget/FileCard"
+import FileCard from "@/components/widget/FileCard"
 import { FileSearch } from "@/components/widget/FileSearch"
 import { FileSort } from "@/components/widget/FileSort"
 

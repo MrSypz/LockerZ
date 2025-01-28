@@ -1,47 +1,60 @@
-import {useTranslation} from "react-i18next";
-import {useSharedSettings} from "@/utils/SettingsContext";
-import {FileContextMenu} from "@/components/widget/Context-menu";
-import {motion} from "framer-motion";
-import {Card, CardContent} from "@/components/ui/card";
-import {Badge} from "@/components/ui/badge";
-import {OptimizedImage} from "@/components/widget/ImageProcessor";
-import {File} from "@/types/file";
-import { Plus, Tag } from 'lucide-react';
-import {useState} from "react";
-
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { FileContextMenu } from "@/components/widget/Context-menu";
+import { OptimizedImage } from "@/components/widget/ImageProcessor";
+import { Tag, Plus, X } from 'lucide-react';
+import { useSharedSettings } from "@/utils/SettingsContext";
+import { File } from "@/types/file"
 interface FileCardProps {
-    file: File
-    onDelete: () => void
-    onMove: () => void
-    onView: () => void
-    onSelect: () => void
-    onTag: () => void
-    index: number
-    column: number
-    totalColumns: number
+    file: File;
+    onDelete: () => void;
+    onMove: () => void;
+    onView: () => void;
+    onSelect: () => void;
+    onTag: () => void;
+    index: number;
+    column: number;
+    totalColumns: number;
 }
 
-export function FileCard({
-                             file,
-                             onDelete,
-                             onMove,
-                             onView,
-                             onTag,
-                             onSelect,
-                             index,
-                             column,
-                             totalColumns
-                         }: FileCardProps) {
+export default function FileCard({
+                                     file,
+                                     onDelete,
+                                     onMove,
+                                     onView,
+                                     onTag,
+                                     onSelect,
+                                     index,
+                                     column,
+                                     totalColumns
+                                 }: FileCardProps) {
     const [isPressed, setIsPressed] = useState(false);
-    const {t} = useTranslation();
-    const {settings} = useSharedSettings();
+    const [showAllTags, setShowAllTags] = useState(false);
+    const { t } = useTranslation();
+    const { settings } = useSharedSettings();
+
     const row = Math.floor(index / totalColumns);
     const isDarkSquare = (row + column) % 2 === 0;
     const offset = (column % 2 === 0 ? 1 : -1) * 12;
 
+    const tags = file.tags || [];
     const maxDisplayTags = 3;
-    const displayTags = file.tags?.slice(0, maxDisplayTags) || [];
-    const remainingTags = (file.tags?.length || 0) - maxDisplayTags;
+    const displayTags = showAllTags ? tags : tags.slice(0, maxDisplayTags);
+    const remainingTags = tags.length - maxDisplayTags;
+
+    const getTagColor = (tag) => {
+        if (tag.is_category) return "bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700";
+        return "bg-primary/10 hover:bg-primary/20 text-primary";
+    };
+
+    const toggleTags = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowAllTags(!showAllTags);
+    };
 
     return (
         <FileContextMenu
@@ -66,10 +79,10 @@ export function FileCard({
                 whileHover={{
                     scale: 1.05,
                     zIndex: 10,
-                    transition: {duration: 0.2}
+                    transition: { duration: 0.2 }
                 }}
                 className="relative"
-                style={{zIndex: 1000 - index}}
+                style={{ zIndex: 1000 - index }}
                 onMouseDown={() => setIsPressed(true)}
                 onMouseUp={() => setIsPressed(false)}
                 onMouseLeave={() => setIsPressed(false)}
@@ -93,6 +106,7 @@ export function FileCard({
                     }}
                 >
                     <CardContent className="p-0">
+                        {/* Image Section */}
                         <div className="relative aspect-[2/3] rounded-t-lg overflow-hidden transition-all duration-200">
                             <OptimizedImage
                                 src={file.filepath}
@@ -103,12 +117,14 @@ export function FileCard({
                             />
                             <div
                                 className={`
-                                    absolute inset-0 bg-black/0
+                                    absolute inset-0
                                     transition-all duration-200
-                                    ${isPressed ? 'bg-black/20' : ''}
+                                    ${isPressed ? 'bg-black/20' : 'bg-black/0'}
                                 `}
                             />
                         </div>
+
+                        {/* Info Section */}
                         <div
                             className={`p-3 space-y-1.5 ${
                                 isDarkSquare
@@ -118,28 +134,52 @@ export function FileCard({
                         >
                             <p className="text-sm font-medium truncate">{file.name}</p>
                             <p className="text-xs opacity-80">{file.category}</p>
+
+                            {/* Tags Section */}
                             <div className="flex items-center space-x-1 mt-1">
-                                <Tag className="w-4 h-4 text-primary"/>
+                                <div className="flex items-center gap-1">
+                                    <Tag className="w-4 h-4 text-primary"/>
+                                    {showAllTags && (
+                                        <button
+                                            onClick={toggleTags}
+                                            className="p-0.5 hover:bg-muted rounded-full"
+                                            title="Collapse tags"
+                                        >
+                                            <X className="w-3 h-3 text-muted-foreground" />
+                                        </button>
+                                    )}
+                                </div>
                                 <div className="flex-1 flex flex-wrap gap-1">
-                                    {displayTags.length > 0 ? (
+                                    {tags.length > 0 ? (
                                         <>
-                                            {displayTags.map((tag, index) => (
+                                            <AnimatePresence mode="wait">
+                                                {displayTags.map((tag) => (
+                                                    <motion.div
+                                                        key={tag.name}
+                                                        initial={{ opacity: 0, scale: 0.8 }}
+                                                        animate={{ opacity: 1, scale: 1 }}
+                                                        exit={{ opacity: 0, scale: 0.8 }}
+                                                        transition={{ duration: 0.15 }}
+                                                    >
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className={`
+                                                                text-xs px-1.5 py-0 
+                                                                transition-colors duration-200
+                                                                ${getTagColor(tag)}
+                                                            `}
+                                                        >
+                                                            {tag.name}
+                                                        </Badge>
+                                                    </motion.div>
+                                                ))}
+                                            </AnimatePresence>
+                                            {!showAllTags && remainingTags > 0 && (
                                                 <Badge
-                                                    key={index}
                                                     variant="secondary"
-                                                    className={`text-xs px-1.5 py-0 transition-colors ${
-                                                        tag.is_category
-                                                            ? "bg-blue-500 text-white dark:bg-blue-600 hover:bg-blue-500 dark:hover:bg-blue-600"
-                                                            : "bg-primary/10 text-primary hover:bg-primary/10"
-                                                    }`}
-                                                >
-                                                    {tag.name}
-                                                </Badge>
-                                            ))}
-                                            {remainingTags > 0 && (
-                                                <Badge
-                                                    variant="secondary"
-                                                    className="text-xs px-1.5 py-0 bg-muted text-muted-foreground cursor-help hover:bg-muted hover:text-muted-foreground"
+                                                    className="text-xs px-1.5 py-0 bg-muted text-muted-foreground
+                                                             cursor-pointer hover:bg-muted/80"
+                                                    onClick={toggleTags}
                                                 >
                                                     <Plus className="w-3 h-3 mr-0.5"/>
                                                     {remainingTags}
@@ -160,4 +200,3 @@ export function FileCard({
         </FileContextMenu>
     );
 }
-
