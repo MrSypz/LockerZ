@@ -1,6 +1,4 @@
-"use client"
-
-import * as React from "react"
+import { useState, useEffect, useCallback, DragEvent } from "react"
 import { Check, ChevronsUpDown, Upload } from 'lucide-react'
 import { getCurrentWindow } from "@tauri-apps/api/window"
 import { useTranslation } from 'react-i18next'
@@ -19,7 +17,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import {Category} from "@/types/file";
+import { Category } from "@/types/file"
 
 interface CategorySelectorProps {
     selectedCategory: string;
@@ -36,11 +34,42 @@ export function CategorySelector({
                                      onCategoryChange,
                                      uploadImgFiles
                                  }: CategorySelectorProps) {
-    const [open, setOpen] = React.useState(false)
-    const [isDragActive, setIsDragActive] = React.useState(false)
+    const [open, setOpen] = useState(false)
+    const [isDragActive, setIsDragActive] = useState(false)
+    const [selectedIndex, setSelectedIndex] = useState(0)
     const { t } = useTranslation()
 
-    React.useEffect(() => {
+    const allCategories = ["all", ...categories]
+
+    useEffect(() => {
+        if (!open) return
+
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowUp') {
+                e.preventDefault()
+                setSelectedIndex(prev => {
+                    const newIndex = prev - 1
+                    return newIndex < 0 ? allCategories.length - 1 : newIndex
+                })
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault()
+                setSelectedIndex(prev => {
+                    const newIndex = prev + 1
+                    return newIndex >= allCategories.length ? 0 : newIndex
+                })
+            } else if (e.key === 'Enter') {
+                e.preventDefault()
+                const selectedCategory = allCategories[selectedIndex]
+                onCategoryChange(selectedCategory)
+                setOpen(false)
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyPress)
+        return () => window.removeEventListener('keydown', handleKeyPress)
+    }, [open, allCategories, onCategoryChange, selectedIndex])
+
+    useEffect(() => {
         let isMounted = true
         let unlistenFunction: (() => void) | undefined
 
@@ -71,7 +100,7 @@ export function CategorySelector({
         }
     }, [uploadImgFiles])
 
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
         e.preventDefault()
         setIsDragActive(true)
     }
@@ -80,12 +109,12 @@ export function CategorySelector({
         setIsDragActive(false)
     }
 
-    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    const handleDrop = async (e: DragEvent<HTMLDivElement>) => {
         e.preventDefault()
         setIsDragActive(false)
     }
 
-    const handleClick = React.useCallback(() => {
+    const handleClick = useCallback(() => {
         uploadImgFiles()
     }, [uploadImgFiles])
 
@@ -126,7 +155,10 @@ export function CategorySelector({
                                     onCategoryChange("all")
                                     setOpen(false)
                                 }}
-                                className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                                className={cn(
+                                    "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700",
+                                    selectedIndex === 0 && "bg-gray-100 dark:bg-gray-700"
+                                )}
                             >
                                 <Check
                                     className={cn(
@@ -136,14 +168,17 @@ export function CategorySelector({
                                 />
                                 <span>{t('category.allCategories')}</span>
                             </CommandItem>
-                            {categories.map((category) => (
+                            {categories.map((category, index) => (
                                 <CommandItem
                                     key={category}
                                     onSelect={() => {
                                         onCategoryChange(category)
                                         setOpen(false)
                                     }}
-                                    className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    className={cn(
+                                        "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700",
+                                        selectedIndex === index + 1 && "bg-gray-100 dark:bg-gray-700"
+                                    )}
                                 >
                                     <Check
                                         className={cn(
@@ -186,4 +221,3 @@ export function CategorySelector({
         </div>
     )
 }
-

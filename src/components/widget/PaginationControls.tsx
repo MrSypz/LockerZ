@@ -1,4 +1,4 @@
-import React from 'react'
+import {useEffect, ChangeEvent, KeyboardEvent, useState} from 'react'
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
@@ -19,17 +19,35 @@ export function PaginationControls({
                                        onPageChange,
                                        onImagesPerPageChange
                                    }: PaginationControlsProps) {
-    const [inputPage, setInputPage] = React.useState(currentPage.toString())
+    const [inputPage, setInputPage] = useState(currentPage.toString())
 
-    React.useEffect(() => {
+    useEffect(() => {
         setInputPage(currentPage.toString())
     }, [currentPage])
 
-    const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (document.activeElement?.tagName === 'INPUT') return
+
+            if (e.key === 'ArrowLeft') {
+                handlePrevPage()
+            } else if (e.key === 'ArrowRight') {
+                handleNextPage()
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [currentPage, totalPages])
+
+    const handlePageInputChange = (e: ChangeEvent<HTMLInputElement>) => {
         setInputPage(e.target.value)
     }
 
-    const handlePageInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handlePageInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
             const newPage = parseInt(inputPage, 10)
             if (!isNaN(newPage) && newPage >= 1 && newPage <= totalPages) {
@@ -102,7 +120,7 @@ export function PaginationControls({
                 value={imagesPerPage.toString()}
                 onValueChange={(value) => onImagesPerPageChange(Number(value))}
             >
-                <SelectTrigger className="w-[180px] bg-black/50 ">
+                <SelectTrigger className="w-[180px] bg-black/50">
                     <SelectValue placeholder="Images per page" />
                 </SelectTrigger>
                 <SelectContent>
@@ -115,4 +133,3 @@ export function PaginationControls({
         </div>
     )
 }
-
