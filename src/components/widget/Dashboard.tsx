@@ -116,9 +116,6 @@ export default function Dashboard() {
                             <HardDrive className="h-4 w-4" />
                             <span>{formatBytes(category.size)}</span>
                         </div>
-                        <Button variant="ghost" size="sm" className="h-7 hover:bg-primary/10">
-                            Open
-                        </Button>
                     </div>
                 </CardContent>
             </Card>
@@ -207,7 +204,7 @@ export default function Dashboard() {
                             >
                                 <LayoutGrid className="h-4 w-4" />
                             </Button>
-                            <Button
+                                <Button
                                 variant={viewMode === 'list' ? 'secondary' : 'ghost'}
                                 size="sm"
                                 onClick={() => setViewMode('list')}
