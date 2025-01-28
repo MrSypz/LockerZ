@@ -217,6 +217,17 @@ export function FileGrid({
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [])
 
+    useEffect(() => {
+        const handleEscapeKey = (event: KeyboardEvent) => {
+            if (event.key === 'Escape' && selectedImageIndex !== null) {
+                handleCloseViewer();
+            }
+        };
+
+        window.addEventListener('keydown', handleEscapeKey);
+        return () => window.removeEventListener('keydown', handleEscapeKey);
+    }, [selectedImageIndex, handleCloseViewer]);
+
     const searchResultCount = searchTerm ? sortedFiles.length : allFiles.length
 
     return (
