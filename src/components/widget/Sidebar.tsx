@@ -2,11 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {Home, FolderOpen, Image, Settings, Menu, Info} from 'lucide-react'
+import { Home, FolderOpen, Image, Settings, Menu, Info } from "lucide-react"
 import { useState, useEffect } from "react"
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import { getVersion } from "@tauri-apps/api/app"
-import { useTranslation } from 'react-i18next'
+import { useTranslation } from "react-i18next"
+import { cn } from "@/lib/utils"
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -15,11 +18,11 @@ export function Sidebar() {
   const pathname = usePathname()
 
   const menuItems = [
-    { icon: Home, label: t('sidebar.home'), href: "/" },
-    { icon: Image, label: t('sidebar.image'), href: "/locker" },
-    { icon: FolderOpen, label: t('sidebar.folder'), href: "/category" },
-    { icon: Settings, label: t('sidebar.settings'), href: "/settings" },
-    { icon: Info , label: t('sidebar.about'), href: "/about" }
+    { icon: Home, label: t("sidebar.home"), href: "/" },
+    { icon: Image, label: t("sidebar.image"), href: "/locker" },
+    { icon: FolderOpen, label: t("sidebar.folder"), href: "/category" },
+    { icon: Settings, label: t("sidebar.settings"), href: "/settings" },
+    { icon: Info, label: t("sidebar.about"), href: "/about" },
   ]
 
   useEffect(() => {
@@ -34,43 +37,29 @@ export function Sidebar() {
 
     fetchVersion()
   }, [])
-  useEffect(() => {
-    const titlebar = document.querySelector('.titlebar');
-    if (titlebar) {
-      if (isCollapsed) {
-        titlebar.classList.remove('titlebar-expanded');
-        titlebar.classList.add('titlebar-collapsed');
-      } else {
-        titlebar.classList.remove('titlebar-collapsed');
-        titlebar.classList.add('titlebar-expanded');
-      }
-    }
-  }, [isCollapsed]);
-
 
   return (
-      <aside
+      <Card
           className={cn(
               "flex flex-col h-screen bg-secondary p-4 transition-all duration-300",
               isCollapsed ? "w-16" : "w-64"
           )}
       >
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1
-              className={cn(
-                  "text-2xl font-bold gradient-text",
-                  isCollapsed && "hidden"
-              )}
-          >
-            LockerZ
-          </h1>
-          <button
+          {!isCollapsed && (
+              <h1 className="text-2xl font-bold gradient-text">LockerZ</h1>
+          )}
+          <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-2 rounded-md hover:bg-primary/20"
           >
-            <Menu size={24}/>
-          </button>
+            <Menu size={24} />
+          </Button>
         </div>
+
+        {/* Navigation */}
         <nav className="flex-1">
           <ul className="space-y-2">
             {menuItems.map((item) => (
@@ -82,7 +71,7 @@ export function Sidebar() {
                           pathname === item.href && "bg-primary/20"
                       )}
                   >
-                    <item.icon size={24} className="text-primary"/>
+                    <item.icon size={24} className="text-primary" />
                     {!isCollapsed && (
                         <span className="ml-4 text-foreground">{item.label}</span>
                     )}
@@ -91,15 +80,12 @@ export function Sidebar() {
             ))}
           </ul>
         </nav>
-        <div className="mt-auto pt-4 space-y-2">
-          <div className={cn(
-              "text-xs text-muted-foreground",
-              isCollapsed ? "text-center" : "px-2"
-          )}>
-            {isCollapsed ? appVersion : `LockerZ ${appVersion}`}
-          </div>
+
+        {/* Footer */}
+        <Separator className="my-4" />
+        <div className="mt-auto text-xs text-muted-foreground">
+          {isCollapsed ? appVersion : `LockerZ ${appVersion}`}
         </div>
-      </aside>
+      </Card>
   )
 }
-
