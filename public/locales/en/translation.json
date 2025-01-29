@@ -54,6 +54,9 @@
     "edit": {
       "title": "Edit Category",
       "description": "Modify category details or select a new placeholder image.",
+      "name": "Name",
+      "icon": "Icon",
+      "selectIcon": "Selected Icon",
       "rename": "Rename",
       "changePlaceholder": "Change Placeholder Image",
       "delete": "Delete Category"

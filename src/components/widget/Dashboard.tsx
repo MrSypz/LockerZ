@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-    FolderOpen, ImageIcon, ChevronDown, Lightbulb,
+    FolderOpen, ImageIcon, Lightbulb,
     HardDrive, Search, Grid, LayoutGrid, Image
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { useTranslation } from 'react-i18next';
 import { invoke } from "@tauri-apps/api/core";
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import {OptimizedImage} from "@/components/widget/ImageProcessor";
+import {CategoryIcon, DatabaseService} from "@/hooks/use-database";
 
 interface Category {
     name: string
@@ -91,37 +93,85 @@ export default function Dashboard() {
     ];
 
     const CategoryCard = ({ category }: { category: Category }) => {
+        const [categoryIcon, setCategoryIcon] = useState<CategoryIcon | null>(null);
+        const db = new DatabaseService();
+
+        useEffect(() => {
+            const loadCategoryIcon = async () => {
+                try {
+                    const icon = await db.getCategoryIcon(category.name);
+                    setCategoryIcon(icon);
+                } catch (error) {
+                    console.error('Failed to load category icon:', error);
+                }
+            };
+
+            loadCategoryIcon();
+        }, [category.name]);
+
+        const IconComponent = () => {
+            if (categoryIcon && categoryIcon.relative_path && categoryIcon.filename) {
+                const iconPath = `${categoryIcon.relative_path}/${categoryIcon.filename}`;
+                return (
+                    <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-primary/10 flex items-center justify-center">
+                        <OptimizedImage
+                            src={iconPath}
+                            alt={category.name}
+                            width={300}
+                            height={300}
+                            quality={100}
+                        />
+                    </div>
+                );
+            }
+            return (
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <FolderOpen className="h-6 w-6 text-primary" />
+                </div>
+            );
+        };
+
         return (
             <Card
-                className="overflow-hidden transition-all hover:shadow-lg cursor-pointer border-2 hover:border-primary/50"
+                className="overflow-hidden transition-all hover:shadow-lg cursor-pointer group border-2 hover:border-primary/50"
                 onClick={() => handleCategoryClick(category.name)}
             >
-                <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center justify-between">
-                        <span className="truncate">{category.name}</span>
-                        <FolderOpen className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                            <Image className="h-5 w-5 text-primary" />
-                            <span className="text-2xl font-bold">{category.file_count}</span>
-                        </div>
-                        <span className="text-sm text-muted-foreground">images</span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                            <HardDrive className="h-4 w-4" />
-                            <span>{formatBytes(category.size)}</span>
+                <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                        <IconComponent />
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-lg font-semibold truncate">
+                                    {category.name}
+                                </h3>
+                                <FolderOpen
+                                    className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5">
+                                        <Image className="h-4 w-4 text-primary" />
+                                        <span className="text-sm text-muted-foreground">Images</span>
+                                    </div>
+                                    <div className="w-px h-4 bg-border" />
+                                    <span className="font-medium">{category.file_count}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5">
+                                        <HardDrive className="h-4 w-4 text-primary" />
+                                        <span className="text-sm text-muted-foreground">Size</span>
+                                    </div>
+                                    <div className="w-px h-4 bg-border" />
+                                    <span className="font-medium">{formatBytes(category.size)}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </CardContent>
             </Card>
         );
     };
-
     return (
         <div className="container mx-auto p-6 space-y-8">
             {/* Header Section */}

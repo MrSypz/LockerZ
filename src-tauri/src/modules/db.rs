@@ -4,7 +4,7 @@ use crate::modules::pathutils::get_main_path;
 use rusqlite::{Connection, Result, ToSql};
 use serde::{Deserialize, Serialize};
 use std::fs::create_dir_all;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use crate::{log_error, log_info};
 use crate::modules::config::get_config;
 
@@ -20,6 +20,12 @@ pub struct Image {
 pub struct TagInfo {
     name: String,
     is_category: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CategoryIcon {
+    relative_path: Option<String>,
+    filename: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -77,6 +83,18 @@ pub fn init_db() -> Result<Connection, String> {
     )
     .map_err(|e| e.to_string())?;
 
+    conn.execute(
+        "
+        CREATE TABLE IF NOT EXISTS category_icons (
+            category TEXT PRIMARY KEY,
+            relative_path TEXT,
+            filename TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (category) REFERENCES tags(name) ON DELETE CASCADE
+        )",
+        [],
+    )
+        .map_err(|e| e.to_string())?;
 
     Ok(conn)
 }
@@ -372,6 +390,65 @@ pub fn create_category_tags() -> Result<(), String> {
     log_info!("Created category tags: {:?}", created_tags);
 
     Ok(())
+}
+
+// Add these new functions for managing category icons
+#[tauri::command]
+pub fn set_category_icon(category: String, path: Option<PathBuf>) -> Result<(), String> {
+    let conn = connect_db()?;
+
+    match path {
+        Some(icon_path) => {
+            let filename = icon_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .ok_or("Invalid filename")?;
+
+            let relative_path = icon_path
+                .parent()
+                .and_then(|p| p.to_str())
+                .ok_or("Invalid path")?;
+
+            conn.execute(
+                "INSERT OR REPLACE INTO category_icons (category, relative_path, filename)
+                 VALUES (?1, ?2, ?3)",
+                [&category, relative_path, filename],
+            )
+                .map_err(|e| e.to_string())?;
+        }
+        None => {
+            // Remove icon if path is None
+            conn.execute(
+                "DELETE FROM category_icons WHERE category = ?1",
+                [&category],
+            )
+                .map_err(|e| e.to_string())?;
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_category_icon(category: String) -> Result<Option<CategoryIcon>, String> {
+    let conn = connect_db()?;
+
+    let mut stmt = conn.prepare(
+        "SELECT relative_path, filename FROM category_icons WHERE category = ?1"
+    ).map_err(|e| e.to_string())?;
+
+    let result = stmt.query_row([&category], |row| {
+        Ok(CategoryIcon {
+            relative_path: row.get(0)?,
+            filename: row.get(1)?,
+        })
+    });
+
+    match result {
+        Ok(icon) => Ok(Some(icon)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
 }
 
 pub fn get_batch_image_ids(file_paths: &[(PathBuf, String)]) -> Result<HashMap<PathBuf, i64>, String> {

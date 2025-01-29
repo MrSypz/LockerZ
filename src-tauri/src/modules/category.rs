@@ -106,35 +106,49 @@ pub async fn rename_category(old_name: &str, new_name: &str) -> Result<String, S
         return Err(format!("Category '{}' already exists", new_name));
     }
 
+    // Update database first
+    update_category_in_db(old_name, new_name)?;
+
+    // Then try to rename the directory
     match tokio::fs::rename(&old_path, &new_path).await {
         Ok(_) => {
-            update_category_in_db(old_name, new_name)?;
-
             let message = format!("Successfully renamed '{}' to '{}'", old_name, new_name);
             log_info!("{}", message);
             Ok(message)
         }
         Err(e) => {
+            // If directory rename fails, we should roll back the database changes
+            if let Err(rollback_err) = update_category_in_db(new_name, old_name) {
+                log_error!("Failed to rollback database changes: {}", rollback_err);
+            }
             let error_message = format!("Failed to rename '{}' to '{}': {}", old_name, new_name, e);
             log_error!("{}", error_message);
             Err(error_message)
         }
     }
 }
+
 fn update_category_in_db(old_name: &str, new_name: &str) -> Result<(), String> {
     let mut conn = connect_db()?;
-
     let tx = conn.transaction().map_err(|e| format!("Failed to start transaction: {}", e))?;
 
+    // Update the images table
     tx.execute(
         "UPDATE images SET category = ?1 WHERE category = ?2",
         [new_name, old_name],
     ).map_err(|e| format!("Failed to update images table: {}", e))?;
 
+    // Update the tags table
     tx.execute(
         "UPDATE tags SET name = ?1 WHERE name = ?2 AND is_category = 1",
         [new_name, old_name],
     ).map_err(|e| format!("Failed to update tags table: {}", e))?;
+
+    // Update the category_icons table
+    tx.execute(
+        "UPDATE category_icons SET category = ?1 WHERE category = ?2",
+        [new_name, old_name],
+    ).map_err(|e| format!("Failed to update category_icons table: {}", e))?;
 
     tx.commit().map_err(|e| format!("Failed to commit transaction: {}", e))?;
 

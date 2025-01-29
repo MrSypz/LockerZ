@@ -10,6 +10,10 @@ export interface TagInfo {
     name: string;
     is_category: boolean;
 }
+export interface CategoryIcon {
+    relative_path?: string;
+    filename?: string;
+}
 
 export class DatabaseService {
     /**
@@ -149,6 +153,20 @@ export class DatabaseService {
                 oldName: oldName,
                 newName: newName
             });
+        } catch (error) {
+            throw error;
+        }
+    }
+    async setCategoryIcon(category: string, path: string | null): Promise<void> {
+        try {
+            await invoke('set_category_icon', { category, path });
+        } catch (error) {
+            throw error;
+        }
+    }
+    async getCategoryIcon(category: string): Promise<CategoryIcon | null> {
+        try {
+            return await invoke('get_category_icon', { category });
         } catch (error) {
             throw error;
         }
