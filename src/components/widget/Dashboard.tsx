@@ -113,7 +113,7 @@ export default function Dashboard() {
             if (categoryIcon && categoryIcon.relative_path && categoryIcon.filename) {
                 const iconPath = `${categoryIcon.relative_path}/${categoryIcon.filename}`;
                 return (
-                    <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-primary/10 flex items-center justify-center">
+                    <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-primary/10 flex items-center justify-center">
                         <OptimizedImage
                             src={iconPath}
                             alt={category.name}
@@ -226,18 +226,18 @@ export default function Dashboard() {
                 </Card>
             </motion.div>
 
-            {/* Categories Section */}
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
+                initial={{opacity: 0, y: 20}}
+                animate={{opacity: 1, y: 0}}
+                transition={{duration: 0.5, delay: 0.5}}
                 className="space-y-4"
             >
                 <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-semibold">{t("dashboard.content.categories")}</h2>
                     <div className="flex items-center gap-4">
                         <div className="relative w-64">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Search
+                                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
                             <Input
                                 placeholder="Search categories..."
                                 value={searchTerm}
@@ -252,15 +252,15 @@ export default function Dashboard() {
                                 onClick={() => setViewMode('grid')}
                                 className="px-2"
                             >
-                                <LayoutGrid className="h-4 w-4" />
+                                <LayoutGrid className="h-4 w-4"/>
                             </Button>
-                                <Button
+                            <Button
                                 variant={viewMode === 'list' ? 'secondary' : 'ghost'}
                                 size="sm"
                                 onClick={() => setViewMode('list')}
                                 className="px-2"
                             >
-                                <Grid className="h-4 w-4" />
+                                <Grid className="h-4 w-4"/>
                             </Button>
                         </div>
                     </div>
@@ -269,39 +269,45 @@ export default function Dashboard() {
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={viewMode}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className={
-                            viewMode === 'grid'
-                                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                                : "space-y-4"
-                        }
+                        initial={{opacity: 0}}
+                        animate={{opacity: 1}}
+                        exit={{opacity: 0}}
+                        className="bg-muted/20 rounded-xl p-4 shadow-md"
                     >
-                        {filteredCategories.map((category) => (
-                            <motion.div
-                                key={category.name}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                whileHover={{ scale: 1.02 }}
-                                transition={{ duration: 0.2 }}
+                        {/* Updated Overflow Behavior */}
+                        <div
+                            className="h-96 rounded-lg overflow-hidden hover:overflow-y-auto transition-all duration-300">
+                            <div
+                                className={viewMode === 'grid'
+                                    ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 h-full"
+                                    : "space-y-4 h-full"}
                             >
-                                <CategoryCard category={category} />
-                            </motion.div>
-                        ))}
+                                {filteredCategories.map((category) => (
+                                    <motion.div
+                                        key={category.name}
+                                        initial={{opacity: 0, y: 20}}
+                                        animate={{opacity: 1, y: 0}}
+                                        exit={{opacity: 0, y: -20}}
+                                        whileHover={{scale: 1.02}}
+                                        transition={{duration: 0.2}}
+                                    >
+                                        <CategoryCard category={category}/>
+                                    </motion.div>
+                                ))}
+                            </div>
+
+                            {filteredCategories.length === 0 && (
+                                <motion.div
+                                    initial={{opacity: 0}}
+                                    animate={{opacity: 1}}
+                                    className="text-center py-8"
+                                >
+                                    <p className="text-muted-foreground">No categories found matching your search.</p>
+                                </motion.div>
+                            )}
+                        </div>
                     </motion.div>
                 </AnimatePresence>
-
-                {filteredCategories.length === 0 && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-center py-8"
-                    >
-                        <p className="text-muted-foreground">No categories found matching your search.</p>
-                    </motion.div>
-                )}
             </motion.div>
         </div>
     );
