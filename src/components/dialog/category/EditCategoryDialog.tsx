@@ -61,7 +61,7 @@ export function EditCategoryDialog({
                 multiple: false,
                 filters: [{
                     name: 'Images',
-                    extensions: ['png', 'jpg', 'jpeg', 'gif']
+                    extensions: ['png', 'jpg', 'jpeg', 'jfif', 'webp']
                 }]
             });
 
