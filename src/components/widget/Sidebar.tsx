@@ -1,21 +1,21 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, FolderOpen, Image, Settings, Menu, Info } from "lucide-react";
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { getVersion } from "@tauri-apps/api/app";
-import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { Home, FolderOpen, Image, Settings, Menu, Info } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { getVersion } from "@tauri-apps/api/app"
+import { useTranslation } from "react-i18next"
+import { cn } from "@/lib/utils"
 
 export function Sidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [appVersion, setAppVersion] = useState("0.0.0");
-  const { t } = useTranslation();
-  const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [appVersion, setAppVersion] = useState("0.0.0")
+  const { t } = useTranslation()
+  const pathname = usePathname()
 
   const menuItems = [
     { icon: Home, label: t("sidebar.home"), href: "/" },
@@ -23,31 +23,30 @@ export function Sidebar() {
     { icon: FolderOpen, label: t("sidebar.folder"), href: "/category" },
     { icon: Settings, label: t("sidebar.settings"), href: "/settings" },
     { icon: Info, label: t("sidebar.about"), href: "/about" },
-  ];
+  ]
 
   useEffect(() => {
     const fetchVersion = async () => {
       try {
-        const version = await getVersion();
-        setAppVersion(version);
+        const version = await getVersion()
+        setAppVersion(version)
       } catch (error) {
-        setAppVersion("Unknown");
+        setAppVersion("Unknown")
       }
-    };
+    }
 
-    fetchVersion();
-  }, []);
+    fetchVersion()
+  }, [])
 
   return (
       <Card
           className={cn(
-              "flex flex-col h-[calc(100vh-2.5rem)] bg-secondary p-4 transition-all duration-300",
-              isCollapsed ? "w-16" : "w-64",
-              "rounded-l-lg" // Add rounded corners only to the right side
+              "flex flex-col h-screen bg-secondary p-4 transition-all duration-300",
+              isCollapsed ? "w-16" : "w-64"
           )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-8">
           {!isCollapsed && (
               <h1 className="text-2xl font-bold gradient-text">LockerZ</h1>
           )}
@@ -88,5 +87,5 @@ export function Sidebar() {
           {isCollapsed ? appVersion : `LockerZ ${appVersion}`}
         </div>
       </Card>
-  );
+  )
 }
