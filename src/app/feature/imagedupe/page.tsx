@@ -1,3 +1,4 @@
+'use client'
 import DuplicateChecker from "@/components/widget/DuplicateChecker"
 import React from "react";
 
