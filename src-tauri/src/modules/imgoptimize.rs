@@ -10,9 +10,45 @@ use opencv::{
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use tokio::sync::Mutex as AsyncMutex;
+use tokio::sync::{Mutex as AsyncMutex, Semaphore};
 use tokio::task;
+
+
+#[derive(Clone, Serialize, Deserialize)]
+struct CachedImage {
+    data: String,
+    timestamp: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BatchRequest {
+    pub paths: Vec<String>,
+    pub width: Option<i32>,
+    pub height: Option<i32>,
+    pub quality: Option<i32>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct BatchResult {
+    pub path: String,
+    pub data: Option<String>,
+    pub error: Option<String>,
+}
+
+
+lazy_static::lazy_static! {
+    static ref CACHE: AsyncMutex<Cache> = AsyncMutex::new(Cache::new());
+}
+lazy_static::lazy_static! {
+    static ref OPENCV_INIT: () = {
+        if have_opencl().expect("REASON") {
+            set_use_opencl(true).expect("REASON");
+        }
+    };
+}
+
 
 #[tauri::command]
 pub async fn handle_optimize_image_request(
@@ -47,15 +83,121 @@ pub async fn handle_optimize_image_request(
     }
 }
 
+#[tauri::command]
+pub async fn batch_optimize_images(request: BatchRequest) -> Result<Vec<BatchResult>, String> {
+    // Initialize OpenCV's OpenCL
+    if have_opencl().unwrap_or(false) {
+        set_use_opencl(true).map_err(|e| e.to_string())?;
+    }
+
+    let max_concurrent = num_cpus::get();
+    let semaphore = Arc::new(Semaphore::new(max_concurrent));
+    let mut tasks = Vec::new();
+
+    for path in request.paths {
+        let sem = semaphore.clone();
+        let width = request.width;
+        let height = request.height;
+        let quality = request.quality.unwrap_or(90);
+        let path_for_result = path.clone();
+
+        let task = task::spawn(async move {
+            let _permit = sem.acquire().await.unwrap();
+
+            match task::spawn_blocking(move || {
+                process_single_image(&path, width, height, quality)
+            }).await {
+                Ok(result) => match result {
+                    Ok(optimized_data) => BatchResult {
+                        path: path_for_result,
+                        data: Some(general_purpose::STANDARD.encode(optimized_data)),
+                        error: None,
+                    },
+                    Err(e) => BatchResult {
+                        path: path_for_result,
+                        data: None,
+                        error: Some(e.to_string()),
+                    },
+                },
+                Err(e) => BatchResult {
+                    path: path_for_result,
+                    data: None,
+                    error: Some(format!("Task join error: {}", e)),
+                },
+            }
+        });
+
+        tasks.push(task);
+    }
+
+    let results = futures::future::join_all(tasks)
+        .await
+        .into_iter()
+        .filter_map(|r| r.ok())
+        .collect();
+
+    Ok(results)
+}
+
+fn process_single_image(
+    path: &str,
+    width: Option<i32>,
+    height: Option<i32>,
+    quality: i32,
+) -> Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync>> {
+    let src_img = imgcodecs::imread(path, imgcodecs::IMREAD_COLOR)?;
+    let src_width = src_img.cols();
+    let src_height = src_img.rows();
+
+    let (target_width, target_height) = match (width, height) {
+        (Some(w), Some(h)) => {
+            let src_aspect = src_width as f32 / src_height as f32;
+            let target_aspect = w as f32 / h as f32;
+            if src_aspect > target_aspect {
+                let new_height = (w as f32 / src_aspect).round() as i32;
+                (w, new_height.min(h))
+            } else {
+                let new_width = (h as f32 * src_aspect).round() as i32;
+                (new_width.min(w), h)
+            }
+        }
+        (Some(w), None) => {
+            let aspect_ratio = src_height as f32 / src_width as f32;
+            let new_height = (w as f32 * aspect_ratio).round() as i32;
+            (w, new_height)
+        }
+        (None, Some(h)) => {
+            let aspect_ratio = src_width as f32 / src_height as f32;
+            let new_width = (h as f32 * aspect_ratio).round() as i32;
+            (new_width, h)
+        }
+        (None, None) => (src_width, src_height),
+    };
+
+    let interpolation = if target_width * target_height <= src_width * src_height {
+        imgproc::INTER_AREA
+    } else {
+        imgproc::INTER_CUBIC
+    };
+
+    let mut buf = Vector::new();
+    let dsize = Size::new(target_width, target_height);
+
+    let mut resized = Mat::default();
+    imgproc::resize(&src_img, &mut resized, dsize, 0.0, 0.0, interpolation)?;
+
+    let mut params = Vector::new();
+    params.push(imgcodecs::IMWRITE_JPEG_QUALITY);
+    params.push(quality);
+    imgcodecs::imencode(".jpg", &resized, &mut buf, &params)?;
+
+    Ok(buf.to_vec())
+}
+
 struct Cache {
     images: HashMap<String, CachedImage>,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
-struct CachedImage {
-    data: String,
-    timestamp: u64,
-}
 
 impl Cache {
     fn new() -> Self {
@@ -81,17 +223,6 @@ impl Cache {
             },
         );
     }
-}
-
-lazy_static::lazy_static! {
-    static ref CACHE: AsyncMutex<Cache> = AsyncMutex::new(Cache::new());
-}
-lazy_static::lazy_static! {
-    static ref OPENCV_INIT: () = {
-        if have_opencl().expect("REASON") {
-            set_use_opencl(true).expect("REASON");
-        }
-    };
 }
 
 pub async fn optimize_image(

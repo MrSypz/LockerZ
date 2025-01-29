@@ -7,6 +7,8 @@ import { ImageViewer } from './Image-viewer'
 import FileCard from "@/components/widget/FileCard"
 import { FileSearch } from "@/components/widget/FileSearch"
 import { FileSort } from "@/components/widget/FileSort"
+import { useBatchProcessing} from './BatchProcessingProvider';
+import {useSharedSettings} from "@/utils/SettingsContext";
 
 type SortCriteria = 'name' | 'date' | 'createat' | 'size'
 type SortOrder = 'asc' | 'desc'
@@ -119,6 +121,11 @@ export function FileGrid({
     const [sortState, setSortState] = useState(() => getSavedSortPreferences())
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
+    const { settings } = useSharedSettings();
+    const {
+        optimizeImages,
+        reset
+    } = useBatchProcessing();
 
     const handleSort = useCallback((criteria: SortCriteria, order: SortOrder) => {
         setSortState({ criteria, order })
@@ -196,6 +203,24 @@ export function FileGrid({
         const start = (currentPage - 1) * imagesPerPage
         return sortedFiles.slice(start, start + imagesPerPage)
     }, [sortedFiles, currentPage, imagesPerPage])
+
+    useEffect(() => {
+        if (paginatedFiles.length > 0) {
+            // Use the optimizeImages function from context
+            optimizeImages(
+                paginatedFiles,
+                settings.imageWidth,
+                settings.imageHeight,
+                settings.imageQuality
+            ).catch(error => {
+                console.error('Failed to optimize images:', error);
+            });
+        }
+
+        return () => {
+            reset(); // Clean up when component unmounts or files change
+        };
+    }, [paginatedFiles, settings, optimizeImages, reset]);
 
     useEffect(() => {
         const totalPages = Math.ceil(sortedFiles.length / imagesPerPage)
@@ -292,5 +317,5 @@ export function FileGrid({
                 />
             )}
         </div>
-    )
+    );
 }

@@ -17,7 +17,7 @@ use modules::{
     config::get_settings, config::setup_folders,config::update_settings,
     db::init_db,db as Database,
     filehandler::delete_file,filehandler::move_file, filehandler::move_file_category,filehandler::save_and_move_file,filehandler::get_files,
-    imgoptimize::handle_optimize_image_request,
+    imgoptimize::handle_optimize_image_request,imgoptimize::batch_optimize_images,
     logger::LOGGER,
     imagedupe::find_duplicates, // Add this line
     stats::get_stats
@@ -100,7 +100,8 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             save_and_move_file,
             get_files,
             get_stats,
-            find_duplicates, // Add this line
+            find_duplicates,
+            batch_optimize_images,
             Database::remove_image_tag, //Database
             Database::get_all_tags,
             Database::search_images_by_tags,

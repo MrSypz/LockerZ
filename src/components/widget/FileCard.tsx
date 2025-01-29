@@ -8,6 +8,8 @@ import { OptimizedImage } from "@/components/widget/ImageProcessor";
 import { Tag, Plus, X } from 'lucide-react';
 import { useSharedSettings } from "@/utils/SettingsContext";
 import { File } from "@/types/file"
+import {useBatchProcessing} from "@/components/widget/BatchProcessingProvider";
+import {BatchOptimizedImage} from "@/components/widget/BatchOptimizedImage";
 interface FileCardProps {
     file: File;
     onDelete: () => void;
@@ -34,7 +36,9 @@ export default function FileCard({
     const [isPressed, setIsPressed] = useState(false);
     const [showAllTags, setShowAllTags] = useState(false);
     const { t } = useTranslation();
+    const { optimizedImages, imageStatus } = useBatchProcessing();
     const { settings } = useSharedSettings();
+
 
     const row = Math.floor(index / totalColumns);
     const isDarkSquare = (row + column) % 2 === 0;
@@ -108,12 +112,14 @@ export default function FileCard({
                     <CardContent className="p-0">
                         {/* Image Section */}
                         <div className="relative aspect-[2/3] rounded-t-lg overflow-hidden transition-all duration-200">
-                            <OptimizedImage
+                            <BatchOptimizedImage
                                 src={file.filepath}
                                 alt={file.name}
                                 width={settings.imageWidth}
                                 height={settings.imageHeight}
                                 quality={settings.imageQuality}
+                                optimizedData={optimizedImages.get(file.filepath)}
+                                status={imageStatus.get(file.filepath) || 'queued'}
                             />
                             <div
                                 className={`

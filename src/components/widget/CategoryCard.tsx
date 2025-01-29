@@ -1,12 +1,13 @@
 // CategoryCard.tsx
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { ImageIcon } from 'lucide-react';
+import {ImageIcon, SeparatorVertical} from 'lucide-react';
 import { motion } from "framer-motion";
 import { formatBytes } from "@/components/widget/Dashboard";
 import { EditCategoryDialog } from "@/components/dialog/category/EditCategoryDialog";
 import { DatabaseService } from "@/hooks/use-database";
 import {OptimizedImage} from "@/components/widget/ImageProcessor";
+import { Separator } from "@/components/ui/separator"
 
 interface Category {
     name: string;

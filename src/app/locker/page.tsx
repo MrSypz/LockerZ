@@ -24,6 +24,7 @@ import {useTranslation} from "react-i18next"
 import {useSharedSettings} from "@/utils/SettingsContext"
 import {ALLOWED_FILE_TYPES, IMAGES_PER_PAGE_STORAGE_KEY, PAGE_STORAGE_KEY} from "@/lib/localstoragekey"
 import {TagManagerDialog} from "@/components/widget/TagManagerDialog"
+import { BatchProcessingProvider } from '@/components/widget/BatchProcessingProvider'
 
 interface FileMoveResponse {
     success: boolean;
@@ -360,6 +361,7 @@ export default function Locker() {
     }, [fetchCategories, onCategoryChange, rememberCategory]);
 
     return (
+        <BatchProcessingProvider>
         <div className="flex h-screen">
             <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto p-4 md:p-8">
@@ -456,5 +458,6 @@ export default function Locker() {
                 </AlertDialogContent>
             </AlertDialog>
         </div>
-    )
+        </BatchProcessingProvider>
+    );
 }
