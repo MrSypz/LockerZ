@@ -1,23 +1,13 @@
-import { useState, useEffect, useCallback, DragEvent } from "react"
-import { Check, ChevronsUpDown, Upload } from 'lucide-react'
-import { getCurrentWindow } from "@tauri-apps/api/window"
-import { useTranslation } from 'react-i18next'
+import {DragEvent, useCallback, useEffect, useRef, useState} from "react"
+import {Check, ChevronsUpDown, Upload} from 'lucide-react'
+import {getCurrentWindow} from "@tauri-apps/api/window"
+import {useTranslation} from 'react-i18next'
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-} from "@/components/ui/command"
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover"
-import { Category } from "@/types/file"
+import {cn} from "@/lib/utils"
+import {Button} from "@/components/ui/button"
+import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem,} from "@/components/ui/command"
+import {Popover, PopoverContent, PopoverTrigger,} from "@/components/ui/popover"
+import {Category} from "@/types/file"
 
 interface CategorySelectorProps {
     selectedCategory: string;
@@ -38,8 +28,30 @@ export function CategorySelector({
     const [isDragActive, setIsDragActive] = useState(false)
     const [selectedIndex, setSelectedIndex] = useState(0)
     const { t } = useTranslation()
+    const commandGroupRef = useRef<HTMLDivElement>(null)
+
 
     const allCategories = ["all", ...categories]
+
+    const scrollSelectedIntoView = useCallback((index: number) => {
+        if (!commandGroupRef.current) return
+
+        const items = commandGroupRef.current.querySelectorAll('[role="option"]')
+        const selectedItem = items[index] as HTMLElement
+        if (!selectedItem) return
+
+        const container = commandGroupRef.current
+        const containerHeight = container.clientHeight
+        const itemHeight = selectedItem.offsetHeight
+
+        // Calculate the ideal scroll position to center the item
+        const itemOffset = selectedItem.offsetTop
+        const idealScrollTop = itemOffset - (containerHeight - itemHeight)
+
+        // Ensure we don't scroll beyond bounds
+        const maxScroll = container.scrollHeight - containerHeight
+        container.scrollTop = Math.max(0, Math.min(idealScrollTop, maxScroll))
+    }, [])
 
     useEffect(() => {
         if (!open) return
@@ -49,13 +61,19 @@ export function CategorySelector({
                 e.preventDefault()
                 setSelectedIndex(prev => {
                     const newIndex = prev - 1
-                    return newIndex < 0 ? allCategories.length - 1 : newIndex
+                    const finalIndex = newIndex < 0 ? allCategories.length - 1 : newIndex
+                    // Scroll into view after state update
+                    setTimeout(() => scrollSelectedIntoView(finalIndex), 0)
+                    return finalIndex
                 })
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault()
                 setSelectedIndex(prev => {
                     const newIndex = prev + 1
-                    return newIndex >= allCategories.length ? 0 : newIndex
+                    const finalIndex = newIndex >= allCategories.length ? 0 : newIndex
+                    // Scroll into view after state update
+                    setTimeout(() => scrollSelectedIntoView(finalIndex), 0)
+                    return finalIndex
                 })
             } else if (e.key === 'Enter') {
                 e.preventDefault()
@@ -67,7 +85,8 @@ export function CategorySelector({
 
         window.addEventListener('keydown', handleKeyPress)
         return () => window.removeEventListener('keydown', handleKeyPress)
-    }, [open, allCategories, onCategoryChange, selectedIndex])
+    }, [open, allCategories, onCategoryChange, selectedIndex, scrollSelectedIntoView])
+
 
     useEffect(() => {
         let isMounted = true
@@ -140,16 +159,16 @@ export function CategorySelector({
                                 ? categories.find((category) => category === selectedCategory) || t('category.allCategories')
                                 : t('category.allCategories')}
                         </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50"/>
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[200px] p-0">
                     <Command className="rounded-lg border shadow-md">
-                        <CommandInput placeholder={t('category.search')} className="h-9" />
+                        <CommandInput placeholder={t('category.search')} className="h-9"/>
                         <CommandEmpty className="py-2 text-center text-sm text-gray-500">
                             {t('category.notFound')}
                         </CommandEmpty>
-                        <CommandGroup className="max-h-[200px] overflow-y-auto">
+                        <CommandGroup ref={commandGroupRef} className="max-h-[200px] overflow-y-auto">
                             <CommandItem
                                 onSelect={() => {
                                     onCategoryChange("all")
@@ -159,6 +178,7 @@ export function CategorySelector({
                                     "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700",
                                     selectedIndex === 0 && "bg-gray-100 dark:bg-gray-700"
                                 )}
+                                role="option"
                             >
                                 <Check
                                     className={cn(
@@ -179,6 +199,7 @@ export function CategorySelector({
                                         "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700",
                                         selectedIndex === index + 1 && "bg-gray-100 dark:bg-gray-700"
                                     )}
+                                    role="option"
                                 >
                                     <Check
                                         className={cn(
@@ -210,7 +231,7 @@ export function CategorySelector({
                         : "border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500"
                 )}
             >
-                <Upload className="h-10 w-10 text-gray-400" />
+                <Upload className="h-10 w-10 text-gray-400"/>
                 <p
                     className="text-center text-sm font-medium leading-5 max-w-[150px] truncate text-gray-600 dark:text-gray-300"
                     title={isDragActive ? t('category.dragdrop.idle') : t('category.dragdrop.hover')}
