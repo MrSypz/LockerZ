@@ -8,6 +8,7 @@ mod modules {
     pub mod pathutils;
     pub mod stats;
     pub mod db;
+    pub mod imagedupe;
 }
 
 use modules::{
@@ -18,6 +19,7 @@ use modules::{
     filehandler::delete_file,filehandler::move_file, filehandler::move_file_category,filehandler::save_and_move_file,filehandler::get_files,
     imgoptimize::handle_optimize_image_request,
     logger::LOGGER,
+    imagedupe::find_duplicates, // Add this line
     stats::get_stats
 };
 use tauri::Manager;
@@ -35,9 +37,28 @@ fn show_in_folder(path: String) {
     }
 }
 
+#[tauri::command]
+fn show_in_photos(path: String) {
+    #[cfg(target_os = "windows")]
+    {
+        let path = if path.contains(" ") {
+            format!("\"{}\"", path)
+        } else {
+            path
+        };
+
+        std::process::Command::new("cmd")
+            .args(&["/C", "start", &path])
+            .spawn()
+            .unwrap();
+    }
+}
+
+
+
 // Run the Tauri app
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
+pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let _ = setup_folders();
     let _ = init_db();
     log_pre!("Application started");
@@ -65,6 +86,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             show_in_folder,
+            show_in_photos,
             handle_optimize_image_request,
             get_categories,
             rename_category,
@@ -78,6 +100,7 @@ pub fn run() {
             save_and_move_file,
             get_files,
             get_stats,
+            find_duplicates, // Add this line
             Database::remove_image_tag, //Database
             Database::get_all_tags,
             Database::search_images_by_tags,
@@ -94,4 +117,6 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+
+    Ok(())  // Return Result
 }
