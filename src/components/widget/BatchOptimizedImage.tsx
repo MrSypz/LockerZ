@@ -12,6 +12,35 @@ interface BatchOptimizedImageProps {
     onRetry?: () => void;
 }
 
+// Animation variants
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+};
+
+const loadingVariants = {
+    hidden: { opacity: 0, scale: 0.9 },
+    visible: {
+        opacity: 1,
+        scale: 1,
+        transition: { duration: 0.3 }
+    },
+    exit: {
+        opacity: 0,
+        scale: 0.9,
+        transition: { duration: 0.2 }
+    }
+};
+
+const imageVariants = {
+    hidden: { filter: "blur(10px)", opacity: 0 },
+    visible: {
+        filter: "blur(0px)",
+        opacity: 1,
+        transition: { duration: 0.5, delay: 0.2 }
+    }
+};
+
 export default function BatchOptimizedImage({
                                                 src,
                                                 alt,
@@ -23,8 +52,13 @@ export default function BatchOptimizedImage({
                                             }: BatchOptimizedImageProps) {
     const imageUrl = optimizedData ? `data:image/webp;base64,${optimizedData}` : src;
     const [showSuccess, setShowSuccess] = useState(false);
+    const [hasStartedLoading, setHasStartedLoading] = useState(false);
 
     useEffect(() => {
+        if (status === "queued" || status === "processing") {
+            setHasStartedLoading(true);
+        }
+
         if (status === "loaded") {
             setShowSuccess(true);
             const timer = setTimeout(() => setShowSuccess(false), 1500);
@@ -34,25 +68,40 @@ export default function BatchOptimizedImage({
 
     return (
         <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="relative w-full h-full"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="relative w-full h-full bg-gray-900 overflow-hidden"
         >
             {/* Loading States */}
-            {(status === "processing" || status === "queued") && (
-                <div className="absolute inset-0 bg-gray-900">
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <div className="relative">
-                            <div className="w-12 h-12 rounded-full border-4 border-gray-700 border-t-indigo-500 animate-spin" />
+            <AnimatePresence>
+                {(status === "processing" || status === "queued") && hasStartedLoading && (
+                    <motion.div
+                        variants={loadingVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        className="absolute inset-0 flex flex-col items-center justify-center"
+                    >
+                        <motion.div
+                            className="relative"
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        >
+                            <div className="w-12 h-12 rounded-full border-4 border-gray-700 border-t-indigo-500" />
                             <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-indigo-500 opacity-20" />
-                        </div>
-                        <span className="mt-4 text-gray-400 text-sm">
+                        </motion.div>
+                        <motion.span
+                            className="mt-4 text-gray-400 text-sm"
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                        >
                             {status === "queued" ? "Waiting to optimize..." : "Optimizing..."}
-                        </span>
-                    </div>
-                </div>
-            )}
+                        </motion.span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Main Image */}
             <motion.img
@@ -61,35 +110,35 @@ export default function BatchOptimizedImage({
                 width={width}
                 height={height}
                 className="w-full h-full object-cover"
-                initial={{ filter: "blur(10px)", opacity: 0 }}
-                animate={{
-                    filter: status === "loaded" ? "blur(0px)" : "blur(10px)",
-                    opacity: status === "loaded" ? 1 : 0,
-                }}
-                transition={{ duration: 0.5 }}
+                variants={imageVariants}
+                initial="hidden"
+                animate={status === "loaded" ? "visible" : "hidden"}
                 loading="lazy"
             />
 
             {/* Error State */}
-            {status === "error" && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="absolute inset-0 flex items-center justify-center bg-red-50"
-                >
-                    <div className="bg-white p-4 rounded-lg shadow-lg">
-                        <p className="text-red-500 text-sm">Failed to optimize image</p>
-                        {onRetry && (
-                            <button
-                                onClick={onRetry}
-                                className="mt-2 text-xs text-blue-500 hover:text-blue-600"
-                            >
-                                Retry
-                            </button>
-                        )}
-                    </div>
-                </motion.div>
-            )}
+            <AnimatePresence>
+                {status === "error" && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 flex items-center justify-center bg-red-50"
+                    >
+                        <div className="bg-white p-4 rounded-lg shadow-lg">
+                            <p className="text-red-500 text-sm">Failed to optimize image</p>
+                            {onRetry && (
+                                <button
+                                    onClick={onRetry}
+                                    className="mt-2 text-xs text-blue-500 hover:text-blue-600"
+                                >
+                                    Retry
+                                </button>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Success Message */}
             <AnimatePresence>
