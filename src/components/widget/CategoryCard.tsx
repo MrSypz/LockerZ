@@ -55,7 +55,7 @@ export function CategoryCard({ category, onRename, onDelete, onRefresh }: Catego
             <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
                 <CardContent className="p-4">
                     <div className="flex items-start space-x-4">
-                        <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                        <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
                             {categoryIcon ? (
                                 <OptimizedImage src={categoryIcon} alt={category.name} width={300} height={300}></OptimizedImage>
                             ) : (
