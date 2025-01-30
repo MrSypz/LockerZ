@@ -11,6 +11,7 @@ import { usePathname } from 'next/navigation'
 import {Sidebar} from "@/components/widget/Sidebar";
 import { SettingsProvider } from "@/utils/SettingsContext";
 import {invoke} from "@tauri-apps/api/core";
+// @ts-ignore
 import { WebviewWindow } from "@tauri-apps/api/window"
 import UploadProgress from "@/components/widget/ProgressInfo";
 
