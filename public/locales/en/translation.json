@@ -191,13 +191,16 @@
       "imageWidth": "Image Width",
       "imageWidth.description": "Set the maximum width for displayed images in pixels.",
       "imageHeight": "Image Height",
-      "imageHeight.description": "Set the maximum height for displayed images in pixels."
+      "imageHeight.description": "Set the maximum height for displayed images in pixels.",
+      "batchprocess": "Batch Processing",
+      "batchprocess.description": "Number of image that request for optimize tweak as you want! Min: 1 Max: 255."
     },
     "performanceImpact": {
       "veryhigh": "Very High impact",
       "high": "High impact",
       "medium": "Medium impact",
-      "low": "Low impact"
+      "low": "Low impact",
+      "none": "Not Affect"
     },
     "toast": {
       "error": "Failed to update settings",

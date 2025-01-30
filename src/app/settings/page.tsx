@@ -212,8 +212,8 @@ export default function Settings() {
                             </div>
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center">
-                                    <Label htmlFor="image-height">{t('settings.lockerSettings.imageHeight')}</Label>
-                                    <PerformanceImpact impact="veryhigh"/>
+                                    <Label htmlFor="image-height">{t('settings.lockerSettings.batchprocess')}</Label>
+                                    <PerformanceImpact impact="none"/>
                                 </div>
                                 <CardDescription>{t('settings.lockerSettings.batchprocess.description')}</CardDescription>
                                 <Input
