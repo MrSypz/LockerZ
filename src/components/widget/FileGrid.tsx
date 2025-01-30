@@ -261,7 +261,6 @@ export function FileGrid({
                 <FileSearch
                     searchTerm={searchTerm}
                     onSearchChange={handleSearch}
-                    placeholder={t('locker.search.placeholder_with_tags')}
                     files={allFiles}
                 />
                 <FileSort
@@ -278,7 +277,6 @@ export function FileGrid({
             )}
             <motion.div
                 className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 p-4 bg-background/50 backdrop-blur-sm rounded-lg border border-border"
-                // layout
                 key={`${sortState.criteria}-${sortState.order}`}
             >
                 <AnimatePresence>
