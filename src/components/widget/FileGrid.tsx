@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { File } from '@/types/file'
-import { motion, AnimatePresence } from "framer-motion"
+import {motion, AnimatePresence} from "framer-motion"
 import { useTranslation } from 'react-i18next'
 import { AlertCircle } from 'lucide-react'
 import { ImageViewer } from './Image-viewer'
@@ -276,10 +276,9 @@ export function FileGrid({
                     {t('locker.search.results', {count: searchResultCount})}
                 </div>
             )}
-
             <motion.div
                 className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 p-4 bg-background/50 backdrop-blur-sm rounded-lg border border-border"
-                layout
+                // layout
                 key={`${sortState.criteria}-${sortState.order}`}
             >
                 <AnimatePresence>
@@ -308,7 +307,6 @@ export function FileGrid({
                     ) : null}
                 </AnimatePresence>
             </motion.div>
-
             {selectedImageIndex !== null && (
                 <ImageViewer
                     files={paginatedFiles}
