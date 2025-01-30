@@ -70,6 +70,12 @@ export default function Settings() {
             updateSettings({ imageHeight: height });
         }
     }
+    const handleBatchProcessChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const value = parseInt(event.target.value);
+        if (!isNaN(value)) {
+            updateSettings({ batch_process: value });
+        }
+    }
 
     if (isLoading) {
         return (
@@ -157,12 +163,13 @@ export default function Settings() {
                                     checked={settings.rememberCategory}
                                     onCheckedChange={handleRememberCategoryToggle}
                                 />
-                                <Label htmlFor="remember-category">{t('settings.lockerSettings.rememberCategory')}</Label>
+                                <Label
+                                    htmlFor="remember-category">{t('settings.lockerSettings.rememberCategory')}</Label>
                             </div>
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center">
                                     <Label htmlFor="image-quality">{t('settings.lockerSettings.imageQuality')}</Label>
-                                    <PerformanceImpact impact="high" />
+                                    <PerformanceImpact impact="high"/>
                                 </div>
                                 <CardDescription>{t('settings.lockerSettings.imageQuality.description')}</CardDescription>
                                 <Slider
@@ -178,7 +185,7 @@ export default function Settings() {
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center">
                                     <Label htmlFor="image-width">{t('settings.lockerSettings.imageWidth')}</Label>
-                                    <PerformanceImpact impact="veryhigh" />
+                                    <PerformanceImpact impact="veryhigh"/>
                                 </div>
                                 <CardDescription>{t('settings.lockerSettings.imageWidth.description')}</CardDescription>
                                 <Input
@@ -192,7 +199,7 @@ export default function Settings() {
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center">
                                     <Label htmlFor="image-height">{t('settings.lockerSettings.imageHeight')}</Label>
-                                    <PerformanceImpact impact="veryhigh" />
+                                    <PerformanceImpact impact="veryhigh"/>
                                 </div>
                                 <CardDescription>{t('settings.lockerSettings.imageHeight.description')}</CardDescription>
                                 <Input
@@ -201,6 +208,21 @@ export default function Settings() {
                                     value={settings?.imageHeight}
                                     onChange={handleImageHeightChange}
                                     min={250}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <Label htmlFor="image-height">{t('settings.lockerSettings.imageHeight')}</Label>
+                                    <PerformanceImpact impact="veryhigh"/>
+                                </div>
+                                <CardDescription>{t('settings.lockerSettings.batchprocess.description')}</CardDescription>
+                                <Input
+                                    id="batch-process"
+                                    type="number"
+                                    value={settings?.batch_process}
+                                    onChange={handleBatchProcessChange}
+                                    min={2}
+                                    max={255}
                                 />
                             </div>
                         </CardContent>

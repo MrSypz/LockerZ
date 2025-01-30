@@ -10,6 +10,7 @@ interface Settings {
     imageQuality: number;
     imageWidth: number;
     imageHeight: number;
+    batch_process: number;
 }
 export function useSettings() {
     const [settings, setSettings] = useState<Settings | null>(null);

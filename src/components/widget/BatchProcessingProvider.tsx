@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, {createContext, useContext, useState, useCallback, useEffect} from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import {useSharedSettings} from "@/utils/SettingsContext";
 
 interface BatchProcessingState {
     optimizedImages: Map<string, string>;
@@ -16,14 +17,17 @@ interface BatchProcessingContextValue extends BatchProcessingState {
 
 const BatchProcessingContext = createContext<BatchProcessingContextValue | null>(null);
 
-const BATCH_SIZE = 32; // Process 32 images at a time
-
 export function BatchProcessingProvider({ children }: { children: React.ReactNode }) {
+    const { settings } = useSharedSettings()
+    const [batchSize, setBatchSize] = useState(settings.batch_process);
     const [state, setState] = useState<BatchProcessingState>({
         optimizedImages: new Map(),
         imageStatus: new Map(),
         isProcessing: false,
     });
+    useEffect(() => {
+        setBatchSize(settings.batch_process);
+    }, [settings.batch_process]);
 
     const updateOptimizedImages = useCallback((images: Map<string, string>) => {
         setState(prev => ({
@@ -45,11 +49,14 @@ export function BatchProcessingProvider({ children }: { children: React.ReactNod
         height: number,
         quality: number
     ) => {
-        // Process images in batches
-        for (let i = 0; i < images.length; i += BATCH_SIZE) {
-            const batch = images.slice(i, i + BATCH_SIZE);
+        console.log(`Starting optimization for ${images.length} images with batch size ${batchSize}`);
+        const startTime = performance.now();
 
-            // Mark current batch as processing
+        for (let i = 0; i < images.length; i += batchSize) {
+            const batchStart = performance.now();
+            const batch = images.slice(i, i + batchSize);
+
+            console.log(`Processing batch ${i / batchSize + 1} with ${batch.length} images...`);
             const processingStatus = new Map(
                 batch.map(img => [img.filepath, 'processing' as const])
             );
@@ -61,8 +68,8 @@ export function BatchProcessingProvider({ children }: { children: React.ReactNod
                         paths: batch.map(img => img.filepath),
                         width,
                         height,
-                        quality
-                    }
+                        quality,
+                    },
                 }) as Array<{
                     path: string;
                     data?: string;
@@ -84,7 +91,6 @@ export function BatchProcessingProvider({ children }: { children: React.ReactNod
 
                 updateOptimizedImages(optimizedMap);
                 updateImageStatus(statusMap);
-
             } catch (error) {
                 console.error('Batch processing failed:', error);
                 const errorStatus = new Map(
@@ -92,8 +98,14 @@ export function BatchProcessingProvider({ children }: { children: React.ReactNod
                 );
                 updateImageStatus(errorStatus);
             }
+
+            const batchEnd = performance.now();
+            console.log(`Batch ${i / batchSize + 1} processed in ${(batchEnd - batchStart).toFixed(2)} ms`);
         }
-    }, [updateOptimizedImages, updateImageStatus]);
+
+        const endTime = performance.now();
+        console.log(`Total processing time: ${(endTime - startTime).toFixed(2)} ms`);
+    }, [batchSize, updateOptimizedImages, updateImageStatus]);
 
     const reset = useCallback(() => {
         setState({

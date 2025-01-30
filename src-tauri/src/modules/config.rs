@@ -18,6 +18,7 @@ pub struct Config {
     pub imageQuality: u8,
     pub imageWidth: u32,
     pub imageHeight: u32,
+    pub batch_process: u8
 }
 
 pub static CONFIG: Lazy<RwLock<Config>> = Lazy::new(|| {
@@ -112,6 +113,7 @@ impl Default for Config {
             imageQuality: 75,
             imageWidth: 960,
             imageHeight: 540,
+            batch_process: 32
         }
     }
 }
@@ -224,6 +226,10 @@ pub async fn update_settings(new_settings: Value) -> Result<Config, String> {
     if let Some(image_height) = new_settings.get("imageHeight").and_then(|v| v.as_u64()) {
         current_config.imageHeight = image_height as u32;
         log_info!("Updated image height: {}", current_config.imageHeight);
+    }
+    if let Some(batch_process) = new_settings.get("batch_process").and_then(|v| v.as_u64()) {
+        current_config.batch_process = batch_process as u8;
+        log_info!("Updated batch process: {}", current_config.batch_process);
     }
 
     if let Err(e) = current_config.write_config(&config_path) {
