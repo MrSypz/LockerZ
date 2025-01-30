@@ -221,7 +221,7 @@ export default function Settings() {
                                     type="number"
                                     value={settings?.batch_process}
                                     onChange={handleBatchProcessChange}
-                                    min={2}
+                                    min={1}
                                     max={255}
                                 />
                             </div>
