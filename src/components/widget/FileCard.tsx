@@ -4,12 +4,11 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileContextMenu } from "@/components/widget/Context-menu";
-import { OptimizedImage } from "@/components/widget/ImageProcessor";
 import { Tag, Plus, X } from 'lucide-react';
 import { useSharedSettings } from "@/utils/SettingsContext";
 import { File } from "@/types/file"
 import {useBatchProcessing} from "@/components/widget/BatchProcessingProvider";
-import {BatchOptimizedImage} from "@/components/widget/BatchOptimizedImage";
+import BatchOptimizedImage from "@/components/widget/BatchOptimizedImage";
 interface FileCardProps {
     file: File;
     onDelete: () => void;

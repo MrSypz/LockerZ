@@ -1,6 +1,5 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface BatchOptimizedImageProps {
     src: string;
@@ -9,19 +8,29 @@ interface BatchOptimizedImageProps {
     height: number;
     quality?: number;
     optimizedData?: string | null;
-    status: 'queued' | 'processing' | 'loaded' | 'error';
+    status: "queued" | "processing" | "loaded" | "error";
+    onRetry?: () => void;
 }
 
-export function BatchOptimizedImage({
-                                        src,
-                                        alt,
-                                        width,
-                                        height,
-                                        optimizedData,
-                                        status
-                                    }: BatchOptimizedImageProps) {
-    // Use the original image if optimization hasn't completed
-    const imageUrl = optimizedData ? `data:image/jpeg;base64,${optimizedData}` : src;
+export default function BatchOptimizedImage({
+                                                src,
+                                                alt,
+                                                width,
+                                                height,
+                                                optimizedData,
+                                                status,
+                                                onRetry,
+                                            }: BatchOptimizedImageProps) {
+    const imageUrl = optimizedData ? `data:image/webp;base64,${optimizedData}` : src;
+    const [showSuccess, setShowSuccess] = useState(false);
+
+    useEffect(() => {
+        if (status === "loaded") {
+            setShowSuccess(true);
+            const timer = setTimeout(() => setShowSuccess(false), 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [status]);
 
     return (
         <motion.div
@@ -30,39 +39,72 @@ export function BatchOptimizedImage({
             transition={{ duration: 0.3 }}
             className="relative w-full h-full"
         >
-            {/* Always render the image */}
+            {/* Loading States */}
+            {(status === "processing" || status === "queued") && (
+                <div className="absolute inset-0 bg-gray-900">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <div className="relative">
+                            <div className="w-12 h-12 rounded-full border-4 border-gray-700 border-t-indigo-500 animate-spin" />
+                            <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-indigo-500 opacity-20" />
+                        </div>
+                        <span className="mt-4 text-gray-400 text-sm">
+                            {status === "queued" ? "Waiting to optimize..." : "Optimizing..."}
+                        </span>
+                    </div>
+                </div>
+            )}
+
+            {/* Main Image */}
             <motion.img
                 src={imageUrl}
                 alt={alt}
                 width={width}
                 height={height}
-                className={`w-full h-full object-cover transition-opacity duration-300 ${status === 'loaded' ? 'opacity-100' : 'opacity-70'}`}
-                initial={{ filter: 'blur(10px)' }}
+                className="w-full h-full object-cover"
+                initial={{ filter: "blur(10px)", opacity: 0 }}
                 animate={{
-                    filter: status === 'loaded' ? 'blur(0px)' : 'blur(10px)',
+                    filter: status === "loaded" ? "blur(0px)" : "blur(10px)",
+                    opacity: status === "loaded" ? 1 : 0,
                 }}
                 transition={{ duration: 0.5 }}
                 loading="lazy"
             />
 
-            {/* Overlay states */}
-            {status === 'processing' && (
-                <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-10">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                </div>
+            {/* Error State */}
+            {status === "error" && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="absolute inset-0 flex items-center justify-center bg-red-50"
+                >
+                    <div className="bg-white p-4 rounded-lg shadow-lg">
+                        <p className="text-red-500 text-sm">Failed to optimize image</p>
+                        {onRetry && (
+                            <button
+                                onClick={onRetry}
+                                className="mt-2 text-xs text-blue-500 hover:text-blue-600"
+                            >
+                                Retry
+                            </button>
+                        )}
+                    </div>
+                </motion.div>
             )}
 
-            {status === 'queued' && (
-                <div className="absolute inset-0 bg-gray-900/30 flex items-center justify-center z-10">
-                    <span className="text-sm text-white">Queued</span>
-                </div>
-            )}
-
-            {status === 'error' && (
-                <div className="absolute inset-0 bg-red-500/10 backdrop-blur-sm flex items-center justify-center z-10">
-                    <span className="text-sm text-red-500">Failed to optimize</span>
-                </div>
-            )}
+            {/* Success Message */}
+            <AnimatePresence>
+                {showSuccess && status === "loaded" && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        transition={{ duration: 0.3 }}
+                        className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/50 to-transparent"
+                    >
+                        <p className="text-white text-sm text-center">Optimization complete!</p>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 }
