@@ -136,7 +136,7 @@ export default function Settings() {
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="language-select">{t('settings.languageSettings.language')}</Label>
-                                <Select value={settings.lang} onValueChange={handleLanguageChange}>
+                                <Select value={settings?.lang} onValueChange={handleLanguageChange}>
                                     <SelectTrigger id="language-select" className="w-[200px]">
                                         <SelectValue placeholder={t('settings.languageSettings.language')}/>
                                     </SelectTrigger>
@@ -160,7 +160,7 @@ export default function Settings() {
                             <div className="flex items-center space-x-2">
                                 <Switch
                                     id="remember-category"
-                                    checked={settings.rememberCategory}
+                                    checked={settings?.rememberCategory}
                                     onCheckedChange={handleRememberCategoryToggle}
                                 />
                                 <Label
