@@ -9,7 +9,7 @@ import { FileSearch } from "@/components/widget/FileSearch"
 import { FileSort } from "@/components/widget/FileSort"
 import { useBatchProcessing} from './BatchProcessingProvider';
 import {useSharedSettings} from "@/utils/SettingsContext";
-import {getCurrentWindow} from "@tauri-apps/api/window";
+import {DragDropZone} from "@/components/widget/DragDropZone";
 
 type SortCriteria = 'name' | 'date' | 'createat' | 'size'
 type SortOrder = 'asc' | 'desc'
@@ -103,7 +103,6 @@ interface FileGridProps {
     imagesPerPage: number
     onPageChange: (page: number) => void
     onTotalPagesChange: (pages: number) => void
-    uploadImgFiles: (droppedFiles?: string[]) => Promise<void>;
 }
 
 export function FileGrid({
@@ -116,11 +115,9 @@ export function FileGrid({
                              imagesPerPage,
                              onPageChange,
                              onTotalPagesChange,
-                             uploadImgFiles
                          }: FileGridProps) {
     const totalColumns = useColumnCount()
     const { t } = useTranslation()
-    const [isDragActive, setIsDragActive] = useState(false)
 
     const [sortState, setSortState] = useState(() => getSavedSortPreferences())
     const [searchTerm, setSearchTerm] = useState('')
@@ -130,40 +127,6 @@ export function FileGrid({
         optimizeImages,
         reset
     } = useBatchProcessing();
-
-    useEffect(() => {
-        let isMounted = true
-        let unlistenFunction
-
-        const setupDragDropListener = async () => {
-            if (!isMounted) return
-
-            unlistenFunction = await getCurrentWindow().onDragDropEvent((event) => {
-                if (!isMounted) return
-
-                switch (event.payload.type) {
-                    case 'over':
-                        setIsDragActive(true)
-                        break
-                    case 'drop':
-                        setIsDragActive(false)
-                        uploadImgFiles(event.payload.paths)
-                        break
-                    default:
-                        setIsDragActive(false)
-                }
-            })
-        }
-
-        setupDragDropListener()
-
-        return () => {
-            isMounted = false
-            if (unlistenFunction) {
-                unlistenFunction()
-            }
-        }
-    }, [uploadImgFiles])
 
     const handleSort = useCallback((criteria: SortCriteria, order: SortOrder) => {
         setSortState({ criteria, order })
@@ -314,35 +277,17 @@ export function FileGrid({
                 </div>
             )}
 
-            <motion.div
-                layout
-                className={`
-                    relative min-h-[300px]
-                    grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 
-                    gap-4 p-4 rounded-lg transition-colors duration-300
-                    ${isDragActive
-                    ? 'bg-primary/5 border-2 border-dashed border-primary ring-4 ring-primary/10'
-                    : 'bg-background/50 backdrop-blur-sm border border-border'
-                }
-                `}
-                animate={{
-                    scale: isDragActive ? 0.99 : 1,
-                }}
-                transition={{ duration: 0.2 }}
+            <DragDropZone
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 p-4"
+                hasContent={paginatedFiles.length > 0}
             >
-                {/* Overlay for drag state */}
                 <AnimatePresence>
-                    {isDragActive && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="absolute inset-0 rounded-lg z-50
                                 flex items-center justify-center"
-                            style={{
-                                backgroundColor: 'rgba(var(--primary) / 0.1)',
-                                backdropFilter: 'blur(8px)'
-                            }}
                         >
                             <motion.div
                                 className="text-center p-8 rounded-xl"
@@ -350,16 +295,8 @@ export function FileGrid({
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ duration: 0.2 }}
                             >
-                                <Upload className="h-16 w-16 mx-auto mb-4 text-primary animate-bounce" />
-                                <p className="text-xl font-semibold text-primary mb-2">
-                                    Drop images here
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    Release to upload your files
-                                </p>
                             </motion.div>
                         </motion.div>
-                    )}
                 </AnimatePresence>
 
                 <AnimatePresence>
@@ -389,12 +326,12 @@ export function FileGrid({
                         <div className="col-span-full flex flex-col items-center justify-center h-64">
                             <Upload className="w-12 h-12 text-muted-foreground mb-4"/>
                             <p className="text-muted-foreground font-medium">
-                                Drop images here or click to upload
+                                Drop images here
                             </p>
                         </div>
                     )}
                 </AnimatePresence>
-            </motion.div>
+            </DragDropZone>
 
             {selectedImageIndex !== null && (
                 <ImageViewer

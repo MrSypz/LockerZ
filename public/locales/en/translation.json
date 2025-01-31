@@ -47,7 +47,7 @@
   "categories": {
     "imageSelection": {
       "title": "Select Category Image",
-      "noImages": "No images found in this category."
+      "noImages": "No images found in this category. Drop the image here!"
     },
     "edit": {
       "title": "Edit Category",

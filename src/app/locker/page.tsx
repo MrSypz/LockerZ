@@ -2,7 +2,7 @@
 
 import React, {useState, useEffect, useCallback, useRef} from 'react'
 import {toast} from "@/hooks/use-toast"
-import {Loader2, AlertCircle} from 'lucide-react'
+import {Loader2, AlertCircle, Upload} from 'lucide-react'
 import {open} from '@tauri-apps/plugin-dialog'
 import {invoke} from "@tauri-apps/api/core"
 import {MoveDialog} from '@/components/widget/Move-dialog'
@@ -25,6 +25,7 @@ import {useSharedSettings} from "@/utils/SettingsContext"
 import {ALLOWED_FILE_TYPES, IMAGES_PER_PAGE_STORAGE_KEY, PAGE_STORAGE_KEY} from "@/lib/localstoragekey"
 import {TagManagerDialog} from "@/components/widget/TagManagerDialog"
 import { BatchProcessingProvider } from '@/components/widget/BatchProcessingProvider'
+import {DragAndDropProvider} from "@/components/widget/DragAndDropProvider";
 
 interface FileMoveResponse {
     success: boolean;
@@ -175,7 +176,6 @@ export default function Locker() {
             return;
         }
 
-        // Process files without showing additional toasts
         for (const file of validFiles) {
             try {
                 let response;
@@ -198,7 +198,6 @@ export default function Locker() {
             }
         }
 
-        // Refresh the file list
         await fetchAllFiles();
     }, [selectedCategory, files, fetchAllFiles]);
 
@@ -256,7 +255,6 @@ export default function Locker() {
         localStorage.setItem(IMAGES_PER_PAGE_STORAGE_KEY, value.toString());
         localStorage.setItem(PAGE_STORAGE_KEY, '1');
 
-        // Update displayed files based on new page size
         const startIndex = 0;
         const endIndex = Math.min(value, allFiles.length);
         setFiles(allFiles.slice(startIndex, endIndex));
@@ -267,11 +265,9 @@ export default function Locker() {
         setCurrentPage(page);
         localStorage.setItem(PAGE_STORAGE_KEY, page.toString());
 
-        // Calculate new page boundaries
         const startIndex = (page - 1) * imagesPerPage;
         const endIndex = Math.min(startIndex + imagesPerPage, allFiles.length);
 
-        // Update displayed files
         setFiles(allFiles.slice(startIndex, endIndex));
     }, [allFiles, imagesPerPage]);
 
@@ -343,9 +339,13 @@ export default function Locker() {
         loadInitialData();
     }, [fetchCategories, onCategoryChange, rememberCategory]);
 
+    console.log(allFiles.length)
+    console.log(allFiles.length > 0)
+
     return (
         <BatchProcessingProvider>
-        <div className="flex h-screen">
+            <DragAndDropProvider onFilesDrop={handleFileDrop}>
+            <div className="flex h-screen">
             <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto p-4 md:p-8">
                     <div className="container mx-auto max-w-[2000px]">
@@ -363,11 +363,24 @@ export default function Locker() {
                                 <p className="text-foreground font-medium">Loading images...</p>
                             </div>
                         ) : !files || files.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-64 mt-8">
+                            <div
+                                className="flex flex-col items-center justify-center h-64 mt-8 "
+                                onDragOver={(e) => {
+                                    e.preventDefault();
+                                    e.currentTarget.classList.add("border-primary", "bg-primary/10");
+                                }}
+                                onDragLeave={(e) => {
+                                    e.preventDefault();
+                                    e.currentTarget.classList.remove("border-primary", "bg-primary/10");
+                                }}
+                            >
                                 <AlertCircle className="w-12 h-12 text-muted-foreground mb-4"/>
-                                <p className="text-muted-foreground font-medium">
-                                    {t('categories.imageSelection.noImages')}
-                                </p>
+                                <div className="flex flex-col items-center space-y-2">
+                                    <p className="text-muted-foreground font-medium text-center">
+                                        {t('categories.imageSelection.noImages')}
+                                    </p>
+                                    <Upload className="h-10 w-10 text-gray-400"/>
+                                </div>
                             </div>
                         ) : (
                             <FileGrid
@@ -388,9 +401,7 @@ export default function Locker() {
                                 imagesPerPage={imagesPerPage}
                                 onPageChange={handlePageChange}
                                 onTotalPagesChange={setTotalPages}
-                                uploadImgFiles={handleFileDrop}
                             />
-
                         )}
                         {selectedFileForTags && (
                             <TagManagerDialog
@@ -442,6 +453,7 @@ export default function Locker() {
                 </AlertDialogContent>
             </AlertDialog>
         </div>
+            </DragAndDropProvider>
         </BatchProcessingProvider>
     );
 }
