@@ -3,33 +3,28 @@ import { invoke } from '@tauri-apps/api/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import {
-    Loader2,
-    Image as ImageIcon,
-    ChevronLeft,
-    ChevronRight,
-    FolderOpen,
-    Trash,
-    Settings2
-} from 'lucide-react';
-import { OptimizedImage } from "@/components/widget/ImageProcessor";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger
-} from "@/components/ui/tooltip";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DialogBody } from "next/dist/client/components/react-dev-overlay/internal/components/Dialog";
-import { Separator } from "@/components/ui/separator";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Loader2, Image as ImageIcon, ChevronLeft, ChevronRight, FolderOpen, Trash, Settings2 } from 'lucide-react';
+import { OptimizedImage } from '@/components/widget/ImageProcessor';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { motion, AnimatePresence } from 'framer-motion';
+import DuplicateProgress from '@/components/widget/DuplicateProgress';
+
+// TypeScript interfaces
+interface ImageInfo {
+    path: string;
+    category: string;
+    similarity?: number;
+}
+
+interface DuplicateGroup {
+    path: string;
+    category: string;
+    duplicates: ImageInfo[];
+}
 
 const ImageResolutions = {
     "720p": { width: 1280, height: 720 },
@@ -38,8 +33,14 @@ const ImageResolutions = {
     "4k": { width: 3840, height: 2160 }
 };
 
-const ImageCard = ({ src, alt, info, resolution, onConfirmDelete }) => {
-    const handleShowInFolder = async (path) => {
+const ImageCard: React.FC<{
+    src: string;
+    alt: string;
+    info: ImageInfo;
+    resolution: keyof typeof ImageResolutions;
+    onConfirmDelete: (category: string, path: string) => void;
+}> = ({ src, alt, info, resolution, onConfirmDelete }) => {
+    const handleShowInFolder = async (path: string) => {
         try {
             await invoke('show_in_folder', { path });
         } catch (error) {
@@ -47,7 +48,7 @@ const ImageCard = ({ src, alt, info, resolution, onConfirmDelete }) => {
         }
     };
 
-    const handleShowInPhotos = async (path) => {
+    const handleShowInPhotos = async (path: string) => {
         try {
             await invoke('show_in_photos', { path });
         } catch (error) {
@@ -115,17 +116,18 @@ const ImageCard = ({ src, alt, info, resolution, onConfirmDelete }) => {
     );
 };
 
-import { motion, AnimatePresence } from "framer-motion";
-import DuplicateProgress from "@/components/widget/DuplicateProgress";
-
-const DuplicateGroup = ({ group, resolution, onConfirmDelete }) => (
+const DuplicateGroup: React.FC<{
+    group: DuplicateGroup;
+    resolution: keyof typeof ImageResolutions;
+    onConfirmDelete: (category: string, path: string) => void;
+}> = ({ group, resolution, onConfirmDelete }) => (
     <AnimatePresence mode="wait">
         <motion.div
             key={group.path}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0, transition: { type: "spring", stiffness: 200, damping: 25 } }}
             exit={{ opacity: 0, x: -20, transition: { type: "spring", stiffness: 200, damping: 25 } }}
-            className="grid grid-cols-2 gap-8"
+            className="grid grid-cols-1 md:grid-cols-2 gap-8"
         >
             {/* Original Image - Left Column */}
             <div className="space-y-4">
@@ -142,7 +144,6 @@ const DuplicateGroup = ({ group, resolution, onConfirmDelete }) => (
                     className="sticky top-14"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1, transition: { delay: 0.2, type: "spring", stiffness: 200, damping: 25 } }}
-                    transition={{ delay: 0.2 }}
                 >
                     <ImageCard
                         src={group.path}
@@ -189,7 +190,6 @@ const DuplicateGroup = ({ group, resolution, onConfirmDelete }) => (
                                     hidden: { opacity: 0, x: 20 },
                                     visible: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 150, damping: 25 } }
                                 }}
-                                transition={{ duration: 0.3 }}
                             >
                                 <ImageCard
                                     src={duplicate.path}
@@ -211,14 +211,14 @@ const DuplicateGroup = ({ group, resolution, onConfirmDelete }) => (
     </AnimatePresence>
 );
 
-const DuplicateChecker = () => {
-    const [duplicates, setDuplicates] = useState([]);
+const DuplicateChecker: React.FC = () => {
+    const [duplicates, setDuplicates] = useState<DuplicateGroup[]>([]);
     const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
     const [loading, setLoading] = useState(false);
     const [threshold, setThreshold] = useState(0.95);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-    const [fileToDelete, setFileToDelete] = useState(null);
-    const [resolution, setResolution] = useState("1080p");
+    const [fileToDelete, setFileToDelete] = useState<{ category: string; path: string } | null>(null);
+    const [resolution, setResolution] = useState<keyof typeof ImageResolutions>("1080p");
 
     useEffect(() => {
         const handleKeyPress = (e: KeyboardEvent) => {
@@ -238,7 +238,7 @@ const DuplicateChecker = () => {
             setLoading(true);
             setDuplicates([]);
             setCurrentGroupIndex(0);
-            const results = await invoke('find_duplicates', {
+            const results = await invoke<DuplicateGroup[]>('find_duplicates', {
                 similarityThreshold: threshold
             });
             setDuplicates(results);
@@ -249,8 +249,8 @@ const DuplicateChecker = () => {
         }
     };
 
-    const handleDelete = (category, name) => {
-        setFileToDelete({ category, name });
+    const handleDelete = (category: string, path: string) => {
+        setFileToDelete({ category, path });
         setShowConfirmDialog(true);
     };
 
@@ -259,18 +259,18 @@ const DuplicateChecker = () => {
             try {
                 await invoke('delete_file', {
                     category: fileToDelete.category,
-                    name: fileToDelete.name
+                    name: fileToDelete.path
                 });
 
                 setDuplicates(prevDuplicates => {
                     const updatedDuplicates = prevDuplicates.map(group => {
-                        if (group.path === fileToDelete.name) {
+                        if (group.path === fileToDelete.path) {
                             return null;
                         }
                         return {
                             ...group,
                             duplicates: group.duplicates.filter(
-                                duplicate => duplicate.path !== fileToDelete.name
+                                duplicate => duplicate.path !== fileToDelete.path
                             )
                         };
                     }).filter(Boolean);
@@ -289,7 +289,7 @@ const DuplicateChecker = () => {
         }
     };
 
-    const navigateGroup = (direction) => {
+    const navigateGroup = (direction: 'prev' | 'next') => {
         if (!duplicates.length) return;
 
         setCurrentGroupIndex(prev => {
@@ -310,7 +310,7 @@ const DuplicateChecker = () => {
                     <CardHeader>
                         <CardTitle className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <ImageIcon className="h-5 w-5"/>
+                                <ImageIcon className="h-5 w-5" />
                                 Duplicate Image Checker
                             </div>
                             <div className="flex items-center gap-4">
@@ -348,7 +348,7 @@ const DuplicateChecker = () => {
                                 <Button onClick={checkDuplicates} disabled={loading}>
                                     {loading ? (
                                         <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                             Checking...
                                         </>
                                     ) : (
@@ -406,7 +406,7 @@ const DuplicateChecker = () => {
                     <p className="text-muted-foreground">
                         Are you sure you want to delete this image? This action cannot be undone.
                     </p>
-                    <DialogBody className="flex justify-end gap-2 mt-4">
+                    <div className="flex justify-end gap-2 mt-4">
                         <Button
                             variant="outline"
                             onClick={() => setShowConfirmDialog(false)}
@@ -419,7 +419,7 @@ const DuplicateChecker = () => {
                         >
                             Delete
                         </Button>
-                    </DialogBody>
+                    </div>
                 </DialogContent>
             </Dialog>
         </TooltipProvider>
