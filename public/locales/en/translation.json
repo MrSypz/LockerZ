@@ -38,10 +38,7 @@
         "descending": "Descending"
       }
     },
-    "dragdrop": {
-      "idle": "Drop files here!",
-      "hover": "Drag & drop files or click to select"
-    },
+    "upload": "Upload",
     "search": "Search category...",
     "notFound": "Not found the result",
     "allCategories": "All Categories",

@@ -405,6 +405,7 @@ export default function Locker() {
                                 imagesPerPage={imagesPerPage}
                                 onPageChange={handlePageChange}
                                 onTotalPagesChange={setTotalPages}
+                                uploadImgFiles={handleFileDrop}
                             />
 
                         )}
