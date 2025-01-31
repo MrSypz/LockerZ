@@ -26,6 +26,8 @@ import {ALLOWED_FILE_TYPES, IMAGES_PER_PAGE_STORAGE_KEY, PAGE_STORAGE_KEY} from 
 import {TagManagerDialog} from "@/components/widget/TagManagerDialog"
 import { BatchProcessingProvider } from '@/components/widget/BatchProcessingProvider'
 import {DragAndDropProvider} from "@/components/widget/DragAndDropProvider";
+import {DragDropZone} from "@/components/widget/DragDropZone";
+import { motion } from 'framer-motion'
 
 interface FileMoveResponse {
     success: boolean;
@@ -295,7 +297,6 @@ export default function Locker() {
 
             setAllFiles(data.files);
 
-            // Set initial page of files
             const startIndex = 0;
             const endIndex = Math.min(imagesPerPage, data.files.length);
             setFiles(data.files.slice(startIndex, endIndex));
@@ -339,9 +340,6 @@ export default function Locker() {
         loadInitialData();
     }, [fetchCategories, onCategoryChange, rememberCategory]);
 
-    console.log(allFiles.length)
-    console.log(allFiles.length > 0)
-
     return (
         <BatchProcessingProvider>
             <DragAndDropProvider onFilesDrop={handleFileDrop}>
@@ -363,25 +361,43 @@ export default function Locker() {
                                 <p className="text-foreground font-medium">Loading images...</p>
                             </div>
                         ) : !files || files.length === 0 ? (
-                            <div
-                                className="flex flex-col items-center justify-center h-64 mt-8 "
-                                onDragOver={(e) => {
-                                    e.preventDefault();
-                                    e.currentTarget.classList.add("border-primary", "bg-primary/10");
-                                }}
-                                onDragLeave={(e) => {
-                                    e.preventDefault();
-                                    e.currentTarget.classList.remove("border-primary", "bg-primary/10");
-                                }}
+                            <DragDropZone
+                                className="h-64 mt-8 relative"
+                                hasContent={false}
                             >
-                                <AlertCircle className="w-12 h-12 text-muted-foreground mb-4"/>
-                                <div className="flex flex-col items-center space-y-2">
-                                    <p className="text-muted-foreground font-medium text-center">
-                                        {t('categories.imageSelection.noImages')}
-                                    </p>
-                                    <Upload className="h-10 w-10 text-gray-400"/>
+                                <div className="absolute inset-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 opacity-10 pointer-events-none">
+                                    {[...Array(10)].map((_, index) => (
+                                        <motion.div
+                                            key={index}
+                                            className="aspect-[2/3] rounded-lg bg-muted"
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{
+                                                opacity: 1,
+                                                scale: 1,
+                                                transition: {
+                                                    delay: index * 0.1,
+                                                    duration: 0.2
+                                                }
+                                            }}
+                                        />
+                                    ))}
                                 </div>
-                            </div>
+
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.3 }}
+                                        className="flex flex-col items-center space-y-4"
+                                    >
+                                        <AlertCircle className="w-12 h-12 text-muted-foreground"/>
+                                        <p className="text-muted-foreground font-medium text-center">
+                                            {t('categories.imageSelection.noImages')}
+                                        </p>
+                                        <Upload className="h-10 w-10 text-gray-400 animate-bounce"/>
+                                    </motion.div>
+                                </div>
+                            </DragDropZone>
                         ) : (
                             <FileGrid
                                 allFiles={allFiles}

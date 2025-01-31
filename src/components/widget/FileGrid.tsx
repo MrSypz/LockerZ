@@ -282,24 +282,6 @@ export function FileGrid({
                 hasContent={paginatedFiles.length > 0}
             >
                 <AnimatePresence>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute inset-0 rounded-lg z-50
-                                flex items-center justify-center"
-                        >
-                            <motion.div
-                                className="text-center p-8 rounded-xl"
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                            </motion.div>
-                        </motion.div>
-                </AnimatePresence>
-
-                <AnimatePresence>
                     {paginatedFiles.length > 0 ? (
                         paginatedFiles.map((file, index) => (
                             <FileCard
