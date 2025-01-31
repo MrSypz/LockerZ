@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {
     Check,
     ChevronsUpDown,
@@ -7,10 +7,10 @@ import {
     Search,
     Folder,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import {motion, AnimatePresence} from "framer-motion";
+import {useTranslation} from "react-i18next";
+import {cn} from "@/lib/utils";
+import {Button} from "@/components/ui/button";
 import {
     Command,
     CommandEmpty,
@@ -23,7 +23,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { Category } from "@/types/file";
+import {Category} from "@/types/file";
 
 function useDebouncedValue<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -56,9 +56,8 @@ export function CategorySelector({
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [searchValue, setSearchValue] = useState("");
     const debouncedSearchValue = useDebouncedValue(searchValue, 1000); // Debounce delay: 1 second
-    const { t } = useTranslation();
+    const {t} = useTranslation();
     const commandGroupRef = useRef<HTMLDivElement>(null);
-
     const allCategories = useMemo(() => ["all", ...categories], [categories]);
 
     const filteredCategories = useMemo(() => {
@@ -74,10 +73,6 @@ export function CategorySelector({
             return category.toLowerCase().includes(searchTerm);
         });
     }, [allCategories, debouncedSearchValue, t]);
-
-    const handleUploadClick = useCallback(() => {
-        uploadImgFiles();
-    }, [uploadImgFiles]);
 
     const handleSelect = useCallback(
         (category: string) => {
@@ -143,10 +138,11 @@ export function CategorySelector({
         return () => window.removeEventListener("keydown", handleKeyPress);
     }, [open, filteredCategories, handleSelect, selectedIndex, scrollSelectedIntoView]);
 
+
     return (
         <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{opacity: 0, y: -20}}
+            animate={{opacity: 1, y: 0}}
             className="flex justify-between items-center mb-8"
         >
             <div className="flex items-center gap-4">
@@ -167,7 +163,8 @@ export function CategorySelector({
                             disabled={isCategoriesLoading}
                         >
                             <div className="flex items-center gap-2 overflow-hidden">
-                                <Folder className="h-4 w-4 text-primary shrink-0 transition-transform group-hover:scale-110" />
+                                <Folder
+                                    className="h-4 w-4 text-primary shrink-0 transition-transform group-hover:scale-110"/>
                                 <span className="truncate">
                                     {selectedCategory
                                         ? categories.find(
@@ -176,13 +173,14 @@ export function CategorySelector({
                                         : t("category.allCategories")}
                                 </span>
                             </div>
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 transition-transform group-hover:scale-110" />
+                            <ChevronsUpDown
+                                className="ml-2 h-4 w-4 shrink-0 opacity-50 transition-transform group-hover:scale-110"/>
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[250px] p-0">
                         <Command className="rounded-lg border shadow-lg">
                             <div className="flex items-center px-3 border-b">
-                                <Search className="h-4 w-4 text-muted-foreground mr-2" />
+                                <Search className="h-4 w-4 text-muted-foreground mr-2"/>
                                 <CommandInput
                                     placeholder={t("category.search")}
                                     value={searchValue}
@@ -192,7 +190,7 @@ export function CategorySelector({
                             </div>
                             <CommandEmpty className="py-4 text-center">
                                 <div className="flex flex-col items-center gap-2">
-                                    <FolderOpen className="h-8 w-8 text-muted-foreground" />
+                                    <FolderOpen className="h-8 w-8 text-muted-foreground"/>
                                     <p className="text-sm text-muted-foreground">
                                         {t("category.notFound")}
                                     </p>
@@ -206,9 +204,9 @@ export function CategorySelector({
                                     {filteredCategories.map((category, index) => (
                                         <motion.div
                                             key={category}
-                                            initial={{ opacity: 0, y: 5 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -5 }}
+                                            initial={{opacity: 0, y: 5}}
+                                            animate={{opacity: 1, y: 0}}
+                                            exit={{opacity: 0, y: -5}}
                                             transition={{
                                                 duration: 0.15,
                                                 delay: index * 0.03,
@@ -228,9 +226,9 @@ export function CategorySelector({
                                                 <div className="flex items-center gap-2 w-full">
                                                     <div className="flex items-center justify-center w-6">
                                                         {selectedCategory === category ? (
-                                                            <Check className="h-4 w-4 text-primary" />
+                                                            <Check className="h-4 w-4 text-primary"/>
                                                         ) : (
-                                                            <Folder className="h-4 w-4 text-muted-foreground" />
+                                                            <Folder className="h-4 w-4 text-muted-foreground"/>
                                                         )}
                                                     </div>
                                                     <span className="flex-grow">
@@ -249,7 +247,7 @@ export function CategorySelector({
                 </Popover>
 
                 <Button
-                    onClick={handleUploadClick}
+                    onClick={() => uploadImgFiles()}
                     variant="default"
                     className="group relative overflow-hidden"
                 >
@@ -257,8 +255,8 @@ export function CategorySelector({
                         className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/20 transition-opacity group-hover:opacity-100 opacity-0"
                     />
                     <div className="relative flex items-center gap-2">
-                        <Upload className="h-4 w-4 transition-transform group-hover:scale-110" />
-                        <span>{t("locker.upload")}</span>
+                        <Upload className="h-4 w-4 transition-transform group-hover:scale-110"/>
+                        <span>{t("category.upload")}</span>
                     </div>
                 </Button>
             </div>
