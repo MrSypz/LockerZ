@@ -86,7 +86,10 @@ pub async fn handle_optimize_image_request(
     }
 
     // Acquire semaphore permit
-    let _permit = PROCESSING_SEMAPHORE.acquire().await.map_err(|e| e.to_string())?;
+    let _permit = PROCESSING_SEMAPHORE
+        .acquire()
+        .await
+        .map_err(|e| e.to_string())?;
 
     match process_image(src, width, height, quality).await {
         Ok(optimized_image) => {
@@ -169,9 +172,8 @@ async fn process_image(
         let src_width = src_img.cols();
         let src_height = src_img.rows();
 
-        let (target_width, target_height) = calculate_dimensions(
-            src_width, src_height, width, height
-        );
+        let (target_width, target_height) =
+            calculate_dimensions(src_width, src_height, width, height);
 
         let interpolation = if target_width * target_height <= src_width * src_height {
             imgproc::INTER_AREA
@@ -197,7 +199,7 @@ async fn process_image(
         imgcodecs::imencode(".jpg", &resized, &mut buf, &params)?;
         Ok(buf.to_vec())
     })
-        .await?
+    .await?
 }
 
 fn calculate_dimensions(

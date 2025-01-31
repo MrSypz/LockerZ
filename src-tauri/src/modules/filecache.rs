@@ -1,3 +1,4 @@
+use crate::modules::db::TagInfo;
 use bincode::{deserialize, serialize};
 use chrono::{DateTime, Local};
 use lazy_static::lazy_static;
@@ -8,7 +9,6 @@ use std::fs::{self, File};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use crate::modules::db::TagInfo;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FileInfo {
@@ -75,7 +75,11 @@ impl FileCache {
         self.cache_dir.join(format!("{}_files.bin", cache_key))
     }
 
-    pub async fn refresh_category(&self, root_path: &Path, category: &str) -> io::Result<Vec<FileInfo>> {
+    pub async fn refresh_category(
+        &self,
+        root_path: &Path,
+        category: &str,
+    ) -> io::Result<Vec<FileInfo>> {
         let mut files = Vec::new();
         let category_path = if category == "all" {
             root_path.to_path_buf()
@@ -105,10 +109,13 @@ impl FileCache {
         let cache_key = self.generate_cache_key(root_path, category);
         {
             let mut cache = self.cache.lock().unwrap();
-            cache.insert(cache_key.clone(), CacheEntry {
-                files: files.clone(),
-                last_modified: Local::now(),
-            });
+            cache.insert(
+                cache_key.clone(),
+                CacheEntry {
+                    files: files.clone(),
+                    last_modified: Local::now(),
+                },
+            );
         }
 
         self.write_cache(root_path, category, &files)?;
@@ -163,10 +170,13 @@ impl FileCache {
             // Update memory cache
             {
                 let mut cache = self.cache.lock().unwrap();
-                cache.insert(cache_key.clone(), CacheEntry {
-                    files: all_files.clone(),
-                    last_modified: Local::now(),
-                });
+                cache.insert(
+                    cache_key.clone(),
+                    CacheEntry {
+                        files: all_files.clone(),
+                        last_modified: Local::now(),
+                    },
+                );
             }
 
             // Update disk cache
@@ -198,10 +208,13 @@ impl FileCache {
             // Update memory cache
             {
                 let mut cache = self.cache.lock().unwrap();
-                cache.insert(cache_key.clone(), CacheEntry {
-                    files: category_files.clone(),
-                    last_modified: Local::now(),
-                });
+                cache.insert(
+                    cache_key.clone(),
+                    CacheEntry {
+                        files: category_files.clone(),
+                        last_modified: Local::now(),
+                    },
+                );
             }
 
             // Update disk cache
@@ -233,11 +246,16 @@ impl FileCache {
                 .format("%Y-%m-%d %H:%M:%S")
                 .to_string(),
             root_path: root_path.to_string_lossy().to_string(),
-            tags: None,  // Initialize with None
+            tags: None, // Initialize with None
         })
     }
 
-    fn write_cache(&self, root_path: &Path, category: &str, content: &[FileInfo]) -> io::Result<()> {
+    fn write_cache(
+        &self,
+        root_path: &Path,
+        category: &str,
+        content: &[FileInfo],
+    ) -> io::Result<()> {
         let cache_path = self.get_cache_path(root_path, category);
 
         if let Some(cache_dir) = cache_path.parent() {
@@ -246,8 +264,8 @@ impl FileCache {
             }
         }
 
-        let serialized = serialize(content)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+        let serialized =
+            serialize(content).map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
 
         let mut file = File::create(cache_path)?;
         file.write_all(&serialized)?;
@@ -264,8 +282,7 @@ impl FileCache {
         let mut data = Vec::new();
         file.read_to_end(&mut data)?;
 
-        deserialize(&data)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
+        deserialize(&data).map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
     }
 
     pub fn remove_file(&self, root_path: &Path, category: &str, file_name: &str) -> io::Result<()> {
@@ -334,10 +351,13 @@ impl FileCache {
         let all_cache_key = self.generate_cache_key(root_path, "all");
         {
             let mut cache = self.cache.lock().unwrap();
-            cache.insert(all_cache_key, CacheEntry {
-                files: all_files.clone(),
-                last_modified: Local::now(),
-            });
+            cache.insert(
+                all_cache_key,
+                CacheEntry {
+                    files: all_files.clone(),
+                    last_modified: Local::now(),
+                },
+            );
         }
 
         // Write updated 'all' category to disk
@@ -375,10 +395,13 @@ impl FileCache {
         let cache_key = self.generate_cache_key(root_path, "all");
         {
             let mut cache = self.cache.lock().unwrap();
-            cache.insert(cache_key, CacheEntry {
-                files: all_files.clone(),
-                last_modified: Local::now(),
-            });
+            cache.insert(
+                cache_key,
+                CacheEntry {
+                    files: all_files.clone(),
+                    last_modified: Local::now(),
+                },
+            );
         }
 
         // Update disk cache
@@ -424,10 +447,13 @@ impl FileCache {
                 let cache_key = self.generate_cache_key(root_path, &category_name);
                 {
                     let mut cache = self.cache.lock().unwrap();
-                    cache.insert(cache_key, CacheEntry {
-                        files: category_files.clone(),
-                        last_modified: Local::now(),
-                    });
+                    cache.insert(
+                        cache_key,
+                        CacheEntry {
+                            files: category_files.clone(),
+                            last_modified: Local::now(),
+                        },
+                    );
                 }
                 self.write_cache(root_path, &category_name, &category_files)?;
             }
@@ -437,10 +463,13 @@ impl FileCache {
         let all_cache_key = self.generate_cache_key(root_path, "all");
         {
             let mut cache = self.cache.lock().unwrap();
-            cache.insert(all_cache_key, CacheEntry {
-                files: all_files.clone(),
-                last_modified: Local::now(),
-            });
+            cache.insert(
+                all_cache_key,
+                CacheEntry {
+                    files: all_files.clone(),
+                    last_modified: Local::now(),
+                },
+            );
         }
         self.write_cache(root_path, "all", &all_files)?;
 

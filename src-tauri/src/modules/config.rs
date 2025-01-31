@@ -1,3 +1,4 @@
+use crate::modules::filehandler::initialize_cache;
 use crate::modules::logger::LOGGER;
 use crate::modules::pathutils::get_main_path;
 use crate::{log_error, log_info, log_pre};
@@ -8,7 +9,6 @@ use std::fs;
 use std::io::{self};
 use std::path::{Path, PathBuf};
 use std::sync::RwLock;
-use crate::modules::filehandler::initialize_cache;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
@@ -18,7 +18,7 @@ pub struct Config {
     pub imageQuality: u8,
     pub imageWidth: u32,
     pub imageHeight: u32,
-    pub batch_process: u8
+    pub batch_process: u8,
 }
 
 pub static CONFIG: Lazy<RwLock<Config>> = Lazy::new(|| {
@@ -113,7 +113,7 @@ impl Default for Config {
             imageQuality: 75,
             imageWidth: 960,
             imageHeight: 540,
-            batch_process: 32
+            batch_process: 32,
         }
     }
 }

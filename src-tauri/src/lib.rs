@@ -1,31 +1,41 @@
 mod modules {
     pub mod category;
     pub mod config;
+    pub mod db;
     pub mod filecache;
     pub mod filehandler;
+    pub mod imagedupe;
     pub mod imgoptimize;
     pub mod logger;
     pub mod pathutils;
     pub mod stats;
-    pub mod db;
-    pub mod imagedupe;
 }
 
+use crate::modules::db::{create_category_tags, migrate_database};
+use crate::modules::imgoptimize::start_cache_cleanup;
 use modules::{
-    category::create_category, category::delete_category, category::get_categories,
+    category::create_category,
+    category::delete_category,
+    category::get_categories,
     category::rename_category,
-    config::get_settings, config::setup_folders,config::update_settings,
-    db::init_db,db as Database,
-    filehandler::delete_file,filehandler::move_file, filehandler::move_file_category,filehandler::save_and_move_file,filehandler::get_files,
-    imgoptimize::handle_optimize_image_request,imgoptimize::batch_optimize_images,
-    logger::LOGGER,
+    config::get_settings,
+    config::setup_folders,
+    config::update_settings,
+    db as Database,
+    db::init_db,
+    filehandler::delete_file,
+    filehandler::get_files,
+    filehandler::move_file,
+    filehandler::move_file_category,
+    filehandler::save_and_move_file,
     imagedupe::find_duplicates, // Add this line
-    stats::get_stats
+    imgoptimize::batch_optimize_images,
+    imgoptimize::handle_optimize_image_request,
+    logger::LOGGER,
+    stats::get_stats,
 };
 use tauri::Manager;
 use window_vibrancy::apply_acrylic;
-use crate::modules::db::{create_category_tags, migrate_database};
-use crate::modules::imgoptimize::start_cache_cleanup;
 
 #[tauri::command]
 fn show_in_folder(path: String) {
@@ -54,8 +64,6 @@ fn show_in_photos(path: String) {
             .unwrap();
     }
 }
-
-
 
 // Run the Tauri app
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -121,5 +129,5 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 
-    Ok(())  // Return Result
+    Ok(()) // Return Result
 }

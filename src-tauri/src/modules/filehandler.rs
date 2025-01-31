@@ -26,7 +26,7 @@ pub struct MoveFileCategoryResponse {
     pub success: bool,
 }
 
-#[derive(Debug,Clone, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct UploadProgress {
     pub filename: String,
     pub progress: f32,
@@ -40,7 +40,6 @@ pub struct FileResponse {
     pub total_pages: u32,
     pub total_files: usize,
 }
-
 
 // new! Initialize cache at startup
 pub fn initialize_cache() -> io::Result<()> {
@@ -85,12 +84,14 @@ pub async fn get_files(
 
     let category = category.unwrap_or_else(|| "all".to_string());
     // Try to get files from cache first
-    let mut cached_files = cache.get_files(&root_folder_path, &category)
+    let mut cached_files = cache
+        .get_files(&root_folder_path, &category)
         .map_err(|e| format!("Error getting files: {}", e))?;
 
     // If cache is empty, rebuild it
     if cached_files.is_empty() {
-        cached_files = cache.refresh_category(&root_folder_path, &category)
+        cached_files = cache
+            .refresh_category(&root_folder_path, &category)
             .await
             .map_err(|e| format!("Error refreshing cache: {}", e))?;
     }
@@ -106,8 +107,8 @@ pub async fn get_files(
         .map_err(|e| format!("Error getting image IDs: {}", e))?;
 
     // Get all tags in a single query
-    let tags_map = db::get_batch_image_tags(&image_ids)
-        .map_err(|e| format!("Error getting tags: {}", e))?;
+    let tags_map =
+        db::get_batch_image_tags(&image_ids).map_err(|e| format!("Error getting tags: {}", e))?;
 
     // Associate tags with files
     for file in &mut cached_files {
@@ -188,25 +189,32 @@ pub async fn move_file(
         .len() as usize;
 
     // Emit start event
-    app.emit("upload-started", UploadProgress {
-        filename: file_name.clone(),
-        progress: 0.0,
-        status: "starting".to_string(),
-    }).map_err(|e| format!("Failed to emit start event: {}", e))?;
+    app.emit(
+        "upload-started",
+        UploadProgress {
+            filename: file_name.clone(),
+            progress: 0.0,
+            status: "starting".to_string(),
+        },
+    )
+    .map_err(|e| format!("Failed to emit start event: {}", e))?;
 
     let stats = match fs::rename(&original_path, &target_path) {
         Ok(_) => {
             // Emit completion for rename (instant move)
-            if let Err(e) = app.emit("upload-progress", UploadProgress {
-                filename: file_name.clone(),
-                progress: 100.0,
-                status: "moving".to_string(),
-            }) {
+            if let Err(e) = app.emit(
+                "upload-progress",
+                UploadProgress {
+                    filename: file_name.clone(),
+                    progress: 100.0,
+                    status: "moving".to_string(),
+                },
+            ) {
                 log_error!("Failed to emit progress event: {}", e);
             }
 
             fs::metadata(&target_path)
-        },
+        }
         Err(_) => {
             // Fallback to copy + delete with progress
             let mut source = fs::File::open(&original_path)
@@ -218,21 +226,28 @@ pub async fn move_file(
             let mut bytes_copied = 0;
 
             loop {
-                let n = source.read(&mut buffer)
+                let n = source
+                    .read(&mut buffer)
                     .map_err(|e| format!("Error reading from source file: {}", e))?;
-                if n == 0 { break; }
+                if n == 0 {
+                    break;
+                }
 
-                target.write_all(&buffer[..n])
+                target
+                    .write_all(&buffer[..n])
                     .map_err(|e| format!("Error writing to target file: {}", e))?;
 
                 bytes_copied += n;
                 let progress = (bytes_copied as f32 / total_size as f32) * 100.0;
 
-                if let Err(e) = app.emit("upload-progress", UploadProgress {
-                    filename: file_name.clone(),
-                    progress: progress.min(100.0),
-                    status: "moving".to_string(),
-                }) {
+                if let Err(e) = app.emit(
+                    "upload-progress",
+                    UploadProgress {
+                        filename: file_name.clone(),
+                        progress: progress.min(100.0),
+                        status: "moving".to_string(),
+                    },
+                ) {
                     log_error!("Failed to emit progress event: {}", e);
                 }
             }
@@ -242,14 +257,18 @@ pub async fn move_file(
 
             fs::metadata(&target_path)
         }
-    }.map_err(|e| format!("File operation failed: {}", e))?;
+    }
+    .map_err(|e| format!("File operation failed: {}", e))?;
 
     // Emit completion
-    if let Err(e) = app.emit("upload-finished", UploadProgress {
-        filename: file_name.clone(),
-        progress: 100.0,
-        status: "complete".to_string(),
-    }) {
+    if let Err(e) = app.emit(
+        "upload-finished",
+        UploadProgress {
+            filename: file_name.clone(),
+            progress: 100.0,
+            status: "complete".to_string(),
+        },
+    ) {
         log_error!("Failed to emit completion event: {}", e);
     }
 
@@ -260,20 +279,24 @@ pub async fn move_file(
     );
 
     // Create file info and update cache
-    let file_info = cache.create_file_info(
-        file_name.clone(),
-        category.clone(),
-        &target_path,
-        &stats,
-        &root_folder_path,
-    ).map_err(|e| format!("Error creating file info: {}", e))?;
+    let file_info = cache
+        .create_file_info(
+            file_name.clone(),
+            category.clone(),
+            &target_path,
+            &stats,
+            &root_folder_path,
+        )
+        .map_err(|e| format!("Error creating file info: {}", e))?;
 
     // Refresh category cache to include new file
-    cache.refresh_category(&root_folder_path, &category)
+    cache
+        .refresh_category(&root_folder_path, &category)
         .await
         .map_err(|e| format!("Error refreshing category cache: {}", e))?;
 
-    cache.update_all_category(&root_folder_path)
+    cache
+        .update_all_category(&root_folder_path)
         .await
         .map_err(|e| format!("Error updating all category cache: {}", e))?;
 
@@ -301,7 +324,8 @@ pub async fn delete_file(category: String, name: String) -> Result<FileDeleteRes
     log_info!("File {} has been deleted from category: {}", name, category);
 
     // Remove from cache
-    cache.remove_file(&root_folder_path, &category, &name)
+    cache
+        .remove_file(&root_folder_path, &category, &name)
         .map_err(|e| format!("Error updating cache: {}", e))?;
 
     Ok(FileDeleteResponse {
@@ -348,10 +372,13 @@ pub async fn move_file_category(
     })?;
 
     // Update cache
-    cache.move_file(&root_folder_path, &old_category, &new_category, &file_name).await
+    cache
+        .move_file(&root_folder_path, &old_category, &new_category, &file_name)
+        .await
         .map_err(|e| format!("Error updating cache: {}", e))?;
 
-    cache.update_all_category(&root_folder_path)
+    cache
+        .update_all_category(&root_folder_path)
         .await
         .map_err(|e| format!("Error updating all category cache: {}", e))?;
 
@@ -386,11 +413,15 @@ pub async fn save_and_move_file(
     let total_size = file_content.len();
 
     // Emit start event
-    app.emit("upload-started", UploadProgress {
-        filename: file_name.clone(),
-        progress: 0.0,
-        status: "starting".to_string(),
-    }).map_err(|e| format!("Failed to emit progress: {}", e))?;
+    app.emit(
+        "upload-started",
+        UploadProgress {
+            filename: file_name.clone(),
+            progress: 0.0,
+            status: "starting".to_string(),
+        },
+    )
+    .map_err(|e| format!("Failed to emit progress: {}", e))?;
 
     // Create category directory if it doesn't exist
     fs::create_dir_all(&category_path).map_err(|e| {
@@ -419,11 +450,15 @@ pub async fn save_and_move_file(
         let progress = (bytes_written as f32 / total_size as f32) * 100.0;
 
         // Emit progress
-        app.emit("upload-progress", UploadProgress {
-            filename: file_name.clone(),
-            progress: progress.min(100.0),
-            status: "uploading".to_string(),
-        }).map_err(|e| format!("Failed to emit progress: {}", e))?;
+        app.emit(
+            "upload-progress",
+            UploadProgress {
+                filename: file_name.clone(),
+                progress: progress.min(100.0),
+                status: "uploading".to_string(),
+            },
+        )
+        .map_err(|e| format!("Failed to emit progress: {}", e))?;
     }
 
     let stats = fs::metadata(&target_path).map_err(|e| {
@@ -433,27 +468,35 @@ pub async fn save_and_move_file(
     })?;
 
     // Emit completion
-    app.emit("upload-finished", UploadProgress {
-        filename: file_name.clone(),
-        progress: 100.0,
-        status: "complete".to_string(),
-    }).map_err(|e| format!("Failed to emit progress: {}", e))?;
+    app.emit(
+        "upload-finished",
+        UploadProgress {
+            filename: file_name.clone(),
+            progress: 100.0,
+            status: "complete".to_string(),
+        },
+    )
+    .map_err(|e| format!("Failed to emit progress: {}", e))?;
 
     // Create file info and update cache
-    let file_info = cache.create_file_info(
-        file_name.clone(),
-        category.clone(),
-        &target_path,
-        &stats,
-        &root_folder_path,
-    ).map_err(|e| format!("Error creating file info: {}", e))?;
+    let file_info = cache
+        .create_file_info(
+            file_name.clone(),
+            category.clone(),
+            &target_path,
+            &stats,
+            &root_folder_path,
+        )
+        .map_err(|e| format!("Error creating file info: {}", e))?;
 
     // Refresh category cache
-    cache.refresh_category(&root_folder_path, &category)
+    cache
+        .refresh_category(&root_folder_path, &category)
         .await
         .map_err(|e| format!("Error refreshing category cache: {}", e))?;
 
-    cache.update_all_category(&root_folder_path)
+    cache
+        .update_all_category(&root_folder_path)
         .await
         .map_err(|e| format!("Error updating all category cache: {}", e))?;
 

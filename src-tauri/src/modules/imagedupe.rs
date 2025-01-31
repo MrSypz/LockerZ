@@ -8,8 +8,8 @@ use rayon::prelude::*;
 use serde::Serialize;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex};
 use tauri::Emitter;
 use tokio::task;
 
@@ -75,7 +75,10 @@ fn compute_phash(image_path: &Path) -> Result<Mat, Box<dyn std::error::Error + S
     Ok(hash)
 }
 
-fn compute_similarity(hash1: &Mat, hash2: &Mat) -> Result<f64, Box<dyn std::error::Error + Send + Sync>> {
+fn compute_similarity(
+    hash1: &Mat,
+    hash2: &Mat,
+) -> Result<f64, Box<dyn std::error::Error + Send + Sync>> {
     let mut diff = Mat::default();
     opencv::core::absdiff(hash1, hash2, &mut diff)?;
     let sum = opencv::core::sum_elems(&diff)?;
@@ -93,14 +96,17 @@ pub async fn find_duplicates(
     let config = get_config();
     let root_path = config.folderPath;
 
-    let _ = window.emit("dupe-check-started", ProgressInfo {
-        filename: "Duplicate Check".to_string(),
-        progress: 0.0,
-        status: "starting".to_string(),
-        phase: "Initializing".to_string(),
-        current_file: None,
-        target_file: None,
-    });
+    let _ = window.emit(
+        "dupe-check-started",
+        ProgressInfo {
+            filename: "Duplicate Check".to_string(),
+            progress: 0.0,
+            status: "starting".to_string(),
+            phase: "Initializing".to_string(),
+            current_file: None,
+            target_file: None,
+        },
+    );
 
     task::spawn_blocking(move || {
         // Collect image paths
@@ -109,14 +115,17 @@ pub async fn find_duplicates(
         let processed_count = Arc::new(AtomicUsize::new(0));
         let window = Arc::new(window);
 
-        let _ = window.emit("dupe-check-progress", ProgressInfo {
-            filename: "Duplicate Check".to_string(),
-            progress: 0.0,
-            status: "processing".to_string(),
-            phase: "Computing Hashes".to_string(),
-            current_file: None,
-            target_file: None,
-        });
+        let _ = window.emit(
+            "dupe-check-progress",
+            ProgressInfo {
+                filename: "Duplicate Check".to_string(),
+                progress: 0.0,
+                status: "processing".to_string(),
+                phase: "Computing Hashes".to_string(),
+                current_file: None,
+                target_file: None,
+            },
+        );
 
         // Compute hashes in parallel
         let image_hashes: Vec<ImageHash> = image_paths
@@ -128,14 +137,17 @@ pub async fn find_duplicates(
                         let count = processed_count.fetch_add(1, Ordering::Relaxed);
                         if count % 10 == 0 {
                             let progress = (count as f32 / total_images as f32) * 40.0;
-                            let _ = window.emit("dupe-check-progress", ProgressInfo {
-                                filename: "Duplicate Check".to_string(),
-                                progress,
-                                status: "processing".to_string(),
-                                phase: "Computing Hashes".to_string(),
-                                current_file: Some(path.to_string_lossy().to_string()),
-                                target_file: None,
-                            });
+                            let _ = window.emit(
+                                "dupe-check-progress",
+                                ProgressInfo {
+                                    filename: "Duplicate Check".to_string(),
+                                    progress,
+                                    status: "processing".to_string(),
+                                    phase: "Computing Hashes".to_string(),
+                                    current_file: Some(path.to_string_lossy().to_string()),
+                                    target_file: None,
+                                },
+                            );
                         }
                         batch_results.push(ImageHash {
                             path: path.clone(),
@@ -148,14 +160,17 @@ pub async fn find_duplicates(
             })
             .collect();
 
-        let _ = window.emit("dupe-check-progress", ProgressInfo {
-            filename: "Duplicate Check".to_string(),
-            progress: 40.0,
-            status: "processing".to_string(),
-            phase: "Comparing Images".to_string(),
-            current_file: None,
-            target_file: None,
-        });
+        let _ = window.emit(
+            "dupe-check-progress",
+            ProgressInfo {
+                filename: "Duplicate Check".to_string(),
+                progress: 40.0,
+                status: "processing".to_string(),
+                phase: "Comparing Images".to_string(),
+                current_file: None,
+                target_file: None,
+            },
+        );
 
         let duplicates = Arc::new(Mutex::new(Vec::new()));
         let processed = Arc::new(Mutex::new(HashSet::<PathBuf>::new()));
@@ -186,7 +201,8 @@ pub async fn find_duplicates(
                             "dupe-check-progress",
                             ProgressInfo {
                                 filename: "Duplicate Check".to_string(),
-                                progress: ((40.0 + comp_count as f32 / total_images as f32 * 60.0) as f32)
+                                progress: ((40.0 + comp_count as f32 / total_images as f32 * 60.0)
+                                    as f32)
                                     .min(99.0),
                                 status: "processing".to_string(),
                                 phase: "Comparing Images".to_string(),
@@ -219,23 +235,22 @@ pub async fn find_duplicates(
             }
         });
 
+        let _ = window.emit(
+            "dupe-check-finished",
+            ProgressInfo {
+                filename: "Duplicate Check".to_string(),
+                progress: 100.0,
+                status: "complete".to_string(),
+                phase: "Complete".to_string(),
+                current_file: None,
+                target_file: None,
+            },
+        );
 
-        let _ = window.emit("dupe-check-finished", ProgressInfo {
-            filename: "Duplicate Check".to_string(),
-            progress: 100.0,
-            status: "complete".to_string(),
-            phase: "Complete".to_string(),
-            current_file: None,
-            target_file: None,
-        });
-
-        Ok(Arc::try_unwrap(duplicates)
-            .unwrap()
-            .into_inner()
-            .unwrap())
+        Ok(Arc::try_unwrap(duplicates).unwrap().into_inner().unwrap())
     })
-        .await
-        .map_err(|e| e.to_string())?
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 fn collect_image_paths(root_path: &Path) -> Result<Vec<(PathBuf, String)>, String> {
@@ -245,7 +260,9 @@ fn collect_image_paths(root_path: &Path) -> Result<Vec<(PathBuf, String)>, Strin
         let entry = entry.map_err(|e| e.to_string())?;
         let category_path = entry.path();
 
-        if !category_path.is_dir() { continue; }
+        if !category_path.is_dir() {
+            continue;
+        }
 
         let category_name = category_path
             .file_name()
@@ -253,13 +270,17 @@ fn collect_image_paths(root_path: &Path) -> Result<Vec<(PathBuf, String)>, Strin
             .unwrap_or("")
             .to_string();
 
-        if category_name == "temp" { continue; }
+        if category_name == "temp" {
+            continue;
+        }
 
         for file in std::fs::read_dir(&category_path).map_err(|e| e.to_string())? {
             let file = file.map_err(|e| e.to_string())?;
             let file_path = file.path();
             if let Some(extension) = file_path.extension() {
-                if ["jpg", "jpeg", "png", "jfif", "webp"].contains(&extension.to_str().unwrap_or("")) {
+                if ["jpg", "jpeg", "png", "jfif", "webp"]
+                    .contains(&extension.to_str().unwrap_or(""))
+                {
                     image_paths.push((file_path, category_name.clone()));
                 }
             }

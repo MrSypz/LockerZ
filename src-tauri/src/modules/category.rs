@@ -1,10 +1,10 @@
 use crate::modules::config::get_config;
+use crate::modules::db::connect_db;
+use crate::{log_error, log_info};
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 use tokio::fs;
 use tokio::task;
-use crate::{log_error, log_info};
-use crate::modules::db::connect_db;
 
 #[derive(Serialize)]
 pub struct Category {
@@ -130,27 +130,33 @@ pub async fn rename_category(old_name: &str, new_name: &str) -> Result<String, S
 
 fn update_category_in_db(old_name: &str, new_name: &str) -> Result<(), String> {
     let mut conn = connect_db()?;
-    let tx = conn.transaction().map_err(|e| format!("Failed to start transaction: {}", e))?;
+    let tx = conn
+        .transaction()
+        .map_err(|e| format!("Failed to start transaction: {}", e))?;
 
     // Update the images table
     tx.execute(
         "UPDATE images SET category = ?1 WHERE category = ?2",
         [new_name, old_name],
-    ).map_err(|e| format!("Failed to update images table: {}", e))?;
+    )
+    .map_err(|e| format!("Failed to update images table: {}", e))?;
 
     // Update the tags table
     tx.execute(
         "UPDATE tags SET name = ?1 WHERE name = ?2 AND is_category = 1",
         [new_name, old_name],
-    ).map_err(|e| format!("Failed to update tags table: {}", e))?;
+    )
+    .map_err(|e| format!("Failed to update tags table: {}", e))?;
 
     // Update the category_icons table
     tx.execute(
         "UPDATE category_icons SET category = ?1 WHERE category = ?2",
         [new_name, old_name],
-    ).map_err(|e| format!("Failed to update category_icons table: {}", e))?;
+    )
+    .map_err(|e| format!("Failed to update category_icons table: {}", e))?;
 
-    tx.commit().map_err(|e| format!("Failed to commit transaction: {}", e))?;
+    tx.commit()
+        .map_err(|e| format!("Failed to commit transaction: {}", e))?;
 
     Ok(())
 }
