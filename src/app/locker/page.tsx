@@ -17,7 +17,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import {FileGrid} from '@/components/widget/FileGrid'
-import {CategorySelector} from '@/components/widget/CategorySelector'
+import CategorySelector from '@/components/widget/CategorySelector'
 import {PaginationControls} from '@/components/widget/PaginationControls'
 import {File, FileResponse, Category} from '@/types/file'
 import {useTranslation} from "react-i18next"
