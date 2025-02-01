@@ -80,6 +80,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     start_cache_cleanup();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|_app| {
             let window = _app.get_webview_window("main").unwrap();
