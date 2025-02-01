@@ -111,7 +111,7 @@ export default function RootLayout({
         </div>
         <SettingsProvider>
             <I18nProvider initialLang={currentLang} onLanguageChangeAction={setCurrentLang}>
-                <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+                <ThemeProvider attribute="class" defaultTheme="root" enableSystem={false}>
                     <div className="flex h-screen bg-background text-foreground">
                         <Sidebar/>
                         <div className="flex flex-col flex-1 overflow-hidden">
