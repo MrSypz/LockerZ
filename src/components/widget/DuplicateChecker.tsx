@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { motion, AnimatePresence } from 'framer-motion';
 import DuplicateProgress from '@/components/widget/DuplicateProgress';
 
-// TypeScript interfaces
 interface ImageInfo {
     path: string;
     category: string;
@@ -116,34 +115,26 @@ const ImageCard: React.FC<{
     );
 };
 
-const DuplicateGroup: React.FC<{
-    group: DuplicateGroup;
-    resolution: keyof typeof ImageResolutions;
-    onConfirmDelete: (category: string, path: string) => void;
-}> = ({ group, resolution, onConfirmDelete }) => (
+const DuplicateGroup = ({ group, resolution, onConfirmDelete }) => (
     <AnimatePresence mode="wait">
         <motion.div
             key={group.path}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0, transition: { type: "spring", stiffness: 200, damping: 25 } }}
-            exit={{ opacity: 0, x: -20, transition: { type: "spring", stiffness: 200, damping: 25 } }}
             className="grid grid-cols-1 md:grid-cols-2 gap-8"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
         >
-            {/* Original Image - Left Column */}
+            {/* Original Image */}
             <div className="space-y-4">
-                <motion.div
-                    className="flex items-center gap-2 sticky top-0 bg-background/95 backdrop-blur-sm py-2 z-10"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1, type: "spring", stiffness: 150, damping: 20 }}
-                >
+                <div className="flex items-center gap-2 sticky top-0 bg-background/95 backdrop-blur-sm py-2 z-10">
                     <h3 className="text-lg font-semibold">Original Image</h3>
                     <Separator className="flex-1" />
-                </motion.div>
+                </div>
                 <motion.div
                     className="sticky top-14"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1, transition: { delay: 0.2, type: "spring", stiffness: 200, damping: 25 } }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                 >
                     <ImageCard
                         src={group.path}
@@ -155,41 +146,23 @@ const DuplicateGroup: React.FC<{
                 </motion.div>
             </div>
 
-            {/* Similar Images - Right Column */}
+            {/* Similar Images */}
             <div className="space-y-4">
-                <motion.div
-                    className="flex items-center gap-2 sticky top-0 bg-background/95 backdrop-blur-sm py-2 z-10"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1, type: "spring", stiffness: 150, damping: 20 }}
-                >
+                <div className="flex items-center gap-2 sticky top-0 bg-background/95 backdrop-blur-sm py-2 z-10">
                     <h3 className="text-lg font-semibold">Similar Images</h3>
-                    <span className="text-sm text-muted-foreground">
-                        ({group.duplicates.length} found)
-                    </span>
+                    <span className="text-sm text-muted-foreground">({group.duplicates.length} found)</span>
                     <Separator className="flex-1" />
-                </motion.div>
+                </div>
                 <ScrollArea className="h-[calc(100vh-280px)]">
-                    <motion.div
-                        className="space-y-4 pr-4"
-                        initial="hidden"
-                        animate="visible"
-                        variants={{
-                            hidden: {},
-                            visible: {
-                                transition: {
-                                    staggerChildren: 0.1
-                                }
-                            }
-                        }}
-                    >
+                    <motion.div className="space-y-4 pr-4">
                         {group.duplicates.map((duplicate, index) => (
                             <motion.div
-                                key={index}
-                                variants={{
-                                    hidden: { opacity: 0, x: 20 },
-                                    visible: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 150, damping: 25 } }
-                                }}
+                                key={duplicate.path}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
                             >
                                 <ImageCard
                                     src={duplicate.path}
