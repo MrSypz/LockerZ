@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { File } from '@/types/file'
-import {motion, AnimatePresence} from "framer-motion"
-import { useTranslation } from 'react-i18next'
+import React, {useCallback, useEffect, useMemo, useState} from 'react'
+import {File} from '@/types/file'
+import {AnimatePresence} from "framer-motion"
+import {useTranslation} from 'react-i18next'
 import {AlertCircle, Upload} from 'lucide-react'
-import { ImageViewer } from './Image-viewer'
+import {ImageViewer} from './Image-viewer'
 import FileCard from "@/components/widget/FileCard"
-import { FileSearch } from "@/components/widget/FileSearch"
-import { FileSort } from "@/components/widget/FileSort"
-import { useBatchProcessing} from './BatchProcessingProvider';
+import {FileSearch} from "@/components/widget/FileSearch"
+import {FileSort} from "@/components/widget/FileSort"
+import {useBatchProcessing} from './BatchProcessingProvider';
 import {useSharedSettings} from "@/utils/SettingsContext";
 import {DragDropZone} from "@/components/widget/DragDropZone";
 
@@ -123,10 +123,7 @@ export function FileGrid({
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
     const { settings } = useSharedSettings();
-    const {
-        optimizeImages,
-        reset
-    } = useBatchProcessing();
+    const {optimizeImages, reset} = useBatchProcessing();
 
     const handleSort = useCallback((criteria: SortCriteria, order: SortOrder) => {
         setSortState({ criteria, order })
@@ -136,15 +133,12 @@ export function FileGrid({
     const handleSearch = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         const newSearchTerm = event.target.value
         setSearchTerm(newSearchTerm)
-        if (currentPage !== 1) {
-            onPageChange(1)
-        }
+        if (currentPage !== 1) onPageChange(1);
     }, [currentPage, onPageChange])
 
     const handleSelectImage = useCallback((index: number) => {
-        setSelectedImageIndex(index)
-    }, [])
-
+        setSelectedImageIndex(index);
+    }, []);
     const handleCloseViewer = useCallback(() => {
         setSelectedImageIndex(null)
     }, [])
@@ -207,7 +201,6 @@ export function FileGrid({
 
     useEffect(() => {
         if (paginatedFiles.length > 0) {
-            // Use the optimizeImages function from context
             optimizeImages(
                 paginatedFiles,
                 settings.imageWidth,
@@ -219,7 +212,7 @@ export function FileGrid({
         }
 
         return () => {
-            reset(); // Clean up when component unmounts or files change
+            reset();
         };
     }, [paginatedFiles, settings, optimizeImages, reset]);
 
