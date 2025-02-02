@@ -34,7 +34,7 @@ export default function AboutPage() {
 
     return (
         <div className="container mx-auto py-10">
-            <h1 className="text-4xl font-bold mb-10">{t('about.title')}</h1>
+            <h1 className="text-4xl font-bold mb-10 gradient-text-header">{t('about.title')}</h1>
 
             <div className="grid gap-10 md:grid-cols-2">
                 <Card>

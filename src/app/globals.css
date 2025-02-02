@@ -44,10 +44,22 @@
     }
 }
 
-.gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#1e202c] to-[#60519b];
+.gradient-text-header{
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500 dark:from-blue-400 dark:to-purple-300;
 }
 
+.file-card-I {
+    @apply bg-[#f2f5fd] text-gray-900;
+}
+.file-card-II {
+    @apply bg-[#192731];
+}
+.tag-colour-I {
+    @apply bg-[#213a56] hover:bg-[#0f1e3f] text-gray-50;
+}
+.tag-colour-II {
+    @apply bg-[#cdaa80] hover:bg-[#997953] text-gray-50;
+}
 
 .glass-effect {
     @apply bg-white/10 backdrop-blur-lg border border-white/10 dark:bg-black/30 dark:border-blue-500/20;

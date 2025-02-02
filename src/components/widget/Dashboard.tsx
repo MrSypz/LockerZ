@@ -12,8 +12,8 @@ import { useTranslation } from 'react-i18next';
 import { invoke } from "@tauri-apps/api/core";
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import {OptimizedImage} from "@/components/widget/ImageProcessor";
-import {CategoryIcon, DatabaseService} from "@/hooks/use-database";
+import { OptimizedImage } from "@/components/widget/ImageProcessor";
+import { CategoryIcon, DatabaseService } from "@/hooks/use-database";
 
 interface Category {
     name: string
@@ -172,6 +172,7 @@ export default function Dashboard() {
             </Card>
         );
     };
+
     return (
         <div className="container mx-auto p-6 space-y-8">
             {/* Header Section */}
@@ -181,7 +182,7 @@ export default function Dashboard() {
                 transition={{ duration: 0.5 }}
                 className="mb-8"
             >
-                <h1 className="text-4xl font-bold gradient-text mb-2">{t("dashboard.header")}</h1>
+                <h1 className="text-4xl font-bold gradient-text-header mb-2">{t("dashboard.header")}</h1>
                 <p className="text-muted-foreground">{t("dashboard.subheader")}</p>
             </motion.div>
 
@@ -226,10 +227,11 @@ export default function Dashboard() {
                 </Card>
             </motion.div>
 
+            {/* Categories Section */}
             <motion.div
-                initial={{opacity: 0, y: 20}}
-                animate={{opacity: 1, y: 0}}
-                transition={{duration: 0.5, delay: 0.5}}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
                 className="space-y-4"
             >
                 <div className="flex items-center justify-between">
@@ -237,7 +239,7 @@ export default function Dashboard() {
                     <div className="flex items-center gap-4">
                         <div className="relative w-64">
                             <Search
-                                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
+                                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Search categories..."
                                 value={searchTerm}
@@ -252,7 +254,7 @@ export default function Dashboard() {
                                 onClick={() => setViewMode('grid')}
                                 className="px-2"
                             >
-                                <LayoutGrid className="h-4 w-4"/>
+                                <LayoutGrid className="h-4 w-4" />
                             </Button>
                             <Button
                                 variant={viewMode === 'list' ? 'secondary' : 'ghost'}
@@ -260,7 +262,7 @@ export default function Dashboard() {
                                 onClick={() => setViewMode('list')}
                                 className="px-2"
                             >
-                                <Grid className="h-4 w-4"/>
+                                <Grid className="h-4 w-4" />
                             </Button>
                         </div>
                     </div>
@@ -269,12 +271,11 @@ export default function Dashboard() {
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={viewMode}
-                        initial={{opacity: 0}}
-                        animate={{opacity: 1}}
-                        exit={{opacity: 0}}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         className="bg-muted/20 rounded-xl p-4 shadow-md"
                     >
-                        {/* Updated Overflow Behavior */}
                         <div
                             className="h-96 rounded-lg overflow-hidden hover:overflow-y-auto transition-all duration-300">
                             <div
@@ -285,21 +286,21 @@ export default function Dashboard() {
                                 {filteredCategories.map((category) => (
                                     <motion.div
                                         key={category.name}
-                                        initial={{opacity: 0, y: 20}}
-                                        animate={{opacity: 1, y: 0}}
-                                        exit={{opacity: 0, y: -20}}
-                                        whileHover={{scale: 1.02}}
-                                        transition={{duration: 0.2}}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        whileHover={{ scale: 1.02 }}
+                                        transition={{ duration: 0.2 }}
                                     >
-                                        <CategoryCard category={category}/>
+                                        <CategoryCard category={category} />
                                     </motion.div>
                                 ))}
                             </div>
 
                             {filteredCategories.length === 0 && (
                                 <motion.div
-                                    initial={{opacity: 0}}
-                                    animate={{opacity: 1}}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
                                     className="text-center py-8"
                                 >
                                     <p className="text-muted-foreground">No categories found matching your search.</p>

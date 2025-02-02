@@ -144,7 +144,7 @@ export default function CategoryPage() {
                 <main className="flex-1 overflow-y-auto p-6">
                     {/* Header Section */}
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold gradient-text">
+                        <h1 className="text-3xl font-bold gradient-text-header">
                             {t('categories.page.head')}
                         </h1>
                         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

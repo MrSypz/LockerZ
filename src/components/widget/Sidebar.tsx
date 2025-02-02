@@ -57,7 +57,7 @@ export function Sidebar() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           {!isCollapsed && (
-              <h1 className="text-2xl font-bold gradient-text">LockerZ</h1>
+              <h1 className="text-2xl font-bold gradient-text-header">LockerZ</h1>
           )}
           <Button
               variant="ghost"
