@@ -9,6 +9,7 @@ import { useSharedSettings } from "@/utils/SettingsContext";
 import { useBatchProcessing } from "@/components/widget/BatchProcessingProvider";
 import BatchOptimizedImage from "@/components/widget/BatchOptimizedImage";
 import {File} from "@/types/file"
+import {TagInfo} from "@/hooks/use-database";
 interface FileCardProps {
     file: File;
     onDelete: () => void;
@@ -76,12 +77,12 @@ export default function FileCard({
     const displayTags = showAllTags ? tags : tags.slice(0, maxDisplayTags);
     const remainingTags = tags.length - maxDisplayTags;
 
-    const getTagColor = (tag) => {
-        if (tag.is_category) return "bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700";
-        return "bg-primary/10 hover:bg-primary/20 text-primary";
+    const getTagColor = (tag: TagInfo) => {
+        if (tag.is_category) return "tag-colour-I";
+        return "tag-colour-II";
     };
 
-    const toggleTags = (e) => {
+    const toggleTags = (e: { preventDefault: () => void; stopPropagation: () => void; }) => {
         e.preventDefault();
         e.stopPropagation();
         setShowAllTags(!showAllTags);
@@ -121,8 +122,8 @@ export default function FileCard({
             hover:ring-2 hover:ring-primary/50 
             cursor-pointer 
             ${isDarkSquare
-                        ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                    ? 'file-card-I'
+                    : 'file-card-II'
                     }
           `}
                     onDoubleClick={(e) => {
@@ -154,8 +155,8 @@ export default function FileCard({
                         <div
                             className={`p-3 space-y-1.5 ${
                                 isDarkSquare
-                                    ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                                    ? 'file-card-I'
+                                    : 'file-card-II'
                             }`}
                         >
                             <p className="text-sm font-medium truncate">{file.name}</p>
@@ -163,14 +164,14 @@ export default function FileCard({
 
                             <div className="flex items-center space-x-1 mt-1">
                                 <div className="flex items-center gap-1">
-                                    <Tag className="w-4 h-4 text-primary"/>
+                                    <Tag className="w-4 h-4"/>
                                     {showAllTags && (
                                         <button
                                             onClick={toggleTags}
-                                            className="p-0.5 hover:bg-muted rounded-full"
+                                            className="p-0.5 hover:bg-muted file-card-I rounded-full"
                                             title="Collapse tags"
                                         >
-                                            <X className="w-3 h-3 text-muted-foreground" />
+                                            <X className="w-3 h-3 text-muted-foreground " />
                                         </button>
                                     )}
                                 </div>
@@ -203,7 +204,7 @@ export default function FileCard({
                                             )}
                                         </>
                                     ) : (
-                                        <span className="text-xs italic text-muted-foreground">
+                                        <span className="text-xs italic text-gray-500">
                       {t('category.tags-empty')}
                     </span>
                                     )}

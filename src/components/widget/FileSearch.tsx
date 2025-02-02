@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback } from 'react';
 import { Input } from "@/components/ui/input";
-import { Search } from 'lucide-react';
+import {Folder, Search, TagIcon} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Command, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { File } from '@/types/file';
@@ -149,7 +149,7 @@ export function FileSearch({ searchTerm, onSearchChange, files }: FileSearchProp
     const handleSuggestionClick = (suggestion: Suggestion) => {
         if (!inputRef.current) return;
 
-        const { token, startPos, endPos } = getCurrentToken(searchTerm, cursorPosition);
+        const {startPos, endPos } = getCurrentToken(searchTerm, cursorPosition);
         const beforeToken = searchTerm.slice(0, startPos);
         const afterToken = searchTerm.slice(endPos);
 
@@ -210,14 +210,24 @@ export function FileSearch({ searchTerm, onSearchChange, files }: FileSearchProp
                                     key={`${suggestion.type}-${suggestion.value}-${index}`}
                                     onSelect={() => handleSuggestionClick(suggestion)}
                                     className={`cursor-pointer px-4 py-2 hover:bg-accent ${
-                                        suggestion.type === 'tag' ? 'text-blue-500' :
-                                            suggestion.type === 'category' ? 'text-green-500' : ''
+                                        suggestion.type === "tag"
+                                            ? "text-blue-500"
+                                            : suggestion.type === "category"
+                                                ? "text-green-500"
+                                                : ""
                                     }`}
                                 >
-                                    {suggestion.display}
+                                    <div className="flex items-center gap-2">
+                                        {suggestion.type === "tag" ? (
+                                            <TagIcon className="h-4 w-4" />
+                                        ) : suggestion.type === "category" ? (
+                                            <Folder className="h-4 w-4" />
+                                        ) : null}
+                                        <span>{suggestion.display}</span>
+                                    </div>
                                 </CommandItem>
                             ))}
-                        </CommandGroup>
+                        </CommandGroup>;
                     </Command>
                 </div>
             )}
