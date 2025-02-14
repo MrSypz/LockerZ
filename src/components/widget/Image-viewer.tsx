@@ -84,9 +84,9 @@ export function ImageViewer({
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 onClose();
-            } else if (event.key === 'ArrowLeft') {
+            } else if (event.key === 'a') {
                 handleNavigate('prev');
-            } else if (event.key === 'ArrowRight') {
+            } else if (event.key === 'd') {
                 handleNavigate('next');
             }
         };
