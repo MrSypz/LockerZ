@@ -5,8 +5,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { ImagePanel } from "@/components/dialog/ImagePanel"
-import { TagPanel } from "@/components/dialog/TagPanel"
+import { ImagePanel } from "@/components/dialog/tags/ImagePanel"
+import { TagPanel } from "@/components/dialog/tags/TagPanel"
 import { DatabaseService } from "@/hooks/use-database"
 import { useToast } from "@/hooks/use-toast"
 import { Tag } from "lucide-react"
