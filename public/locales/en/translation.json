@@ -142,7 +142,8 @@
         "viewpath": "Open in Explorer",
         "move": "Move to...",
         "delete": "Delete",
-        "tags": "Tags"
+        "tags": "Tags",
+        "selectAll": "Select ALl"
       }
     },
     "selection": {

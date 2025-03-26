@@ -3,9 +3,9 @@
 import type React from "react"
 import { useCallback, useEffect, useMemo, useState, forwardRef, useImperativeHandle } from "react"
 import type { File } from "@/types/file"
-import { AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import { useTranslation } from "react-i18next"
-import { AlertCircle, Upload, Trash2, FolderInput, Tag } from "lucide-react"
+import { AlertCircle, Upload, Trash2, FolderInput, Tag, CheckSquare, X, Info } from "lucide-react"
 import { ImageViewer } from "./Image-viewer"
 import FileCard from "@/components/widget/FileCard"
 import { FileSearch } from "@/components/widget/FileSearch"
@@ -14,7 +14,8 @@ import { useBatchProcessing } from "./BatchProcessingProvider"
 import { useSharedSettings } from "@/utils/SettingsContext"
 import { DragDropZone } from "@/components/widget/DragDropZone"
 import { Button } from "@/components/ui/button"
-import { motion } from "framer-motion"
+import { Separator } from "@/components/ui/separator"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 type SortCriteria = "name" | "date" | "createat" | "size"
 type SortOrder = "asc" | "desc"
@@ -134,6 +135,17 @@ export const FileGrid = forwardRef<{ clearSelection: () => void }, FileGridProps
         const { settings } = useSharedSettings()
         const { optimizeImages, reset } = useBatchProcessing()
         const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
+        const [showTooltips, setShowTooltips] = useState(true)
+
+        // Hide tooltips after first use
+        useEffect(() => {
+            if (selectedFiles.size > 0 && showTooltips) {
+                const timer = setTimeout(() => {
+                    setShowTooltips(false)
+                }, 10000)
+                return () => clearTimeout(timer)
+            }
+        }, [selectedFiles.size, showTooltips])
 
         const handleSort = useCallback((criteria: SortCriteria, order: SortOrder) => {
             setSortState({ criteria, order })
@@ -325,29 +337,126 @@ export const FileGrid = forwardRef<{ clearSelection: () => void }, FileGridProps
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 20 }}
-                    className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 bg-background/90 backdrop-blur-sm border border-border rounded-lg shadow-lg p-2 flex items-center gap-2"
+                    transition={{ duration: 0.3, type: "spring", stiffness: 500, damping: 30 }}
+                    className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 flex flex-col items-center gap-3"
                 >
-                    <span className="text-sm font-medium px-2">{t("locker.selection.count", { count: selectedFiles.size })}</span>
-                    <Button variant="outline" size="sm" onClick={handleBulkTag} className="flex items-center gap-1">
-                        <Tag className="h-4 w-4" />
-                        {t("locker.selection.tag")}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleBulkMove} className="flex items-center gap-1">
-                        <FolderInput className="h-4 w-4" />
-                        {t("locker.selection.move")}
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleBulkDelete}
-                        className="flex items-center gap-1 text-destructive hover:bg-destructive/10"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                        {t("locker.selection.delete")}
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={clearSelection}>
-                        {t("locker.selection.clear")}
-                    </Button>
+                    {/* Help tooltip */}
+                    <AnimatePresence>
+                        {showTooltips && selectedFiles.size === 1 && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                className="bg-black/80 text-white px-4 py-2 rounded-lg text-sm max-w-md text-center shadow-lg"
+                            >
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Info className="h-4 w-4 text-blue-300" />
+                                    <span className="font-medium">Bulk Actions</span>
+                                </div>
+                                <p>Select multiple images to tag, move, or delete them all at once.</p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Main toolbar */}
+                    <div className="flex items-center gap-2">
+                        {/* Selection count pill */}
+                        <motion.div
+                            initial={{ scale: 0.8 }}
+                            animate={{ scale: 1 }}
+                            className="bg-white dark:bg-gray-900 border border-border shadow-lg rounded-full px-4 py-2 flex items-center gap-2"
+                        >
+                            <span className="font-medium text-sm">{t("locker.selection.count", { count: selectedFiles.size })}</span>
+                            <button
+                                onClick={clearSelection}
+                                className="rounded-full p-1  hover:bg-muted/80 transition-colors"
+                                aria-label="Clear selection"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </motion.div>
+
+                        {/* Action buttons */}
+                        <div className="bg-black/80 backdrop-blur-md border border-border/50 rounded-full shadow-xl px-1 py-1 flex items-center gap-1">
+                            <TooltipProvider delayDuration={300}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleBulkTag}
+                                            className="flex items-center gap-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-3 rounded-full"
+                                        >
+                                            <motion.div whileHover={{ rotate: 15 }} transition={{ type: "spring", stiffness: 300 }}>
+                                                <Tag className="h-4 w-4" />
+                                            </motion.div>
+                                            <span className="font-medium">{t("locker.selection.tag")}</span>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">
+                                        <p>Add or remove tags from selected images</p>
+                                    </TooltipContent>
+                                </Tooltip>
+
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleBulkMove}
+                                            className="flex items-center gap-1.5 hover:bg-green-50 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 px-3 rounded-full"
+                                        >
+                                            <motion.div whileHover={{ y: -3 }} transition={{ type: "spring", stiffness: 300 }}>
+                                                <FolderInput className="h-4 w-4" />
+                                            </motion.div>
+                                            <span className="font-medium">{t("locker.selection.move")}</span>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">
+                                        <p>Move selected images to another category</p>
+                                    </TooltipContent>
+                                </Tooltip>
+
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleBulkDelete}
+                                            className="flex items-center gap-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 px-3 rounded-full"
+                                        >
+                                            <motion.div whileHover={{ scale: 1.15 }} transition={{ type: "spring", stiffness: 300 }}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </motion.div>
+                                            <span className="font-medium">{t("locker.selection.delete")}</span>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">
+                                        <p>Delete all selected images</p>
+                                    </TooltipContent>
+                                </Tooltip>
+
+                                <Separator orientation="vertical" className="h-8 mx-1" />
+
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={selectAllFiles}
+                                            className="flex items-center gap-1.5 hover:bg-primary/10 text-primary rounded-full px-3"
+                                        >
+                                            <CheckSquare className="h-4 w-4" />
+                                            <span className="font-medium">{t("locker.dialog.menu.selectAll")}</span>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">
+                                        <p>Select all images on this page</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    </div>
                 </motion.div>
             )
         }

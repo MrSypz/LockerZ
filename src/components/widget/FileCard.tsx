@@ -2,12 +2,12 @@
 
 import type React from "react"
 import { useState } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { useTranslation } from "react-i18next"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { FileContextMenu } from "@/components/widget/Context-menu"
-import { Tag, Plus, X, CheckCircle } from "lucide-react"
+import { Tag, Plus, X, Check } from "lucide-react"
 import { useSharedSettings } from "@/utils/SettingsContext"
 import { useBatchProcessing } from "@/components/widget/BatchProcessingProvider"
 import BatchOptimizedImage from "@/components/widget/BatchOptimizedImage"
@@ -28,6 +28,60 @@ interface FileCardProps {
     onToggleSelect: () => void
 }
 
+const selectionStyles = {
+    crossline: {
+        container: "absolute inset-0 flex items-center justify-center z-10 overflow-hidden",
+        indicator: "relative w-full h-full",
+        icon: ({ isSelected }: { isSelected: boolean }) => {
+            return (
+                <AnimatePresence>
+                    {isSelected && (
+                        <>
+                            <motion.div
+                                className="absolute inset-0 bg-black/30 backdrop-blur-[1px]"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                            />
+
+                            <motion.div
+                                className="absolute top-1/2 left-0 w-full h-14 bg-primary/90 flex items-center justify-center shadow-lg transform -translate-y-1/2"
+                                initial={{ scaleX: 0, opacity: 0 }}
+                                animate={{ scaleX: 1, opacity: 1 }}
+                                exit={{ scaleX: 0, opacity: 0 }}
+                                transition={{
+                                    type: "spring",
+                                    stiffness: 300,
+                                    damping: 25,
+                                    opacity: { duration: 0.2 },
+                                }}
+                            >
+                                <motion.div
+                                    className="flex items-center gap-2"
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
+                                    transition={{ delay: 0.15, duration: 0.2 }}
+                                >
+                                    <Check className="h-6 w-6 text-green-400" strokeWidth={3} />
+                                    <span className="font-bold text-lg text-gray-900 tracking-wider">SELECTED</span>
+                                </motion.div>
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
+            )
+        },
+        animation: {
+            initial: {},
+            animate: {},
+            transition: {},
+        },
+        backgroundEffect: "",
+    },
+}
+
 const animations = {
     fadeInRotate: {
         initial: { opacity: 0, rotate: -5 }, // Slight rotation for a dynamic entrance
@@ -45,7 +99,7 @@ const animations = {
         transition: { type: "spring", stiffness: 500, damping: 10 }, // Faster and snappier
     },
     tap: {
-        scale: 0.95, // Slight scale down on tap
+        scale: 0.95,
         transition: { type: "spring", stiffness: 500, damping: 15 }, // Faster and snappier
     },
 }
@@ -70,13 +124,14 @@ export default function FileCard({
     const { optimizedImages, imageStatus } = useBatchProcessing()
     const { settings } = useSharedSettings()
 
+    const selectedStyle = selectionStyles.crossline
+
     const row = Math.floor(index / totalColumns)
     const isDarkSquare = (row + column) % 2 === 0
     const offset = (column % 2 === 0 ? 1 : -1) * 12
 
     const animation = animations[animationType]
 
-    // Calculate staggered delay based on position
     const staggerDelay = index * 0.05
 
     const tags = file.tags || []
@@ -113,17 +168,16 @@ export default function FileCard({
                 initial={animation.initial}
                 animate={{
                     ...animation.animate,
-                    y: offset, // Keep the offset for the staggered effect
-                    scale: isPressed ? 0.95 : 1, // Apply scale on press
-                    // Apply the same tilt effect to selected items as we do on hover
+                    y: offset,
+                    scale: isPressed ? 0.95 : 1,
                     rotate: isSelected ? 2 : 0,
                 }}
                 transition={{
                     ...animation.transition,
                     delay: staggerDelay,
                 }}
-                whileHover={isSelected ? { y: -5 } : animations.hover} // Only apply y movement if already selected
-                whileTap={animations.tap} // Apply tap animation
+                whileHover={isSelected ? { y: -5 } : animations.hover}
+                whileTap={animations.tap}
                 className="relative"
                 style={{ zIndex: 1000 - index }}
                 onMouseDown={() => setIsPressed(true)}
@@ -133,13 +187,13 @@ export default function FileCard({
             >
                 <Card
                     className={`
-                        overflow-hidden 
-                        transition-colors duration-200 ease-in-out 
-                        hover:ring-2 hover:ring-primary/50 
-                        cursor-pointer 
-                        ${isSelected ? "ring-2 ring-primary shadow-lg" : ""}
-                        ${isDarkSquare ? "file-card-I" : "file-card-II"}
-                    `}
+            overflow-hidden 
+            transition-all duration-200 ease-in-out 
+            hover:ring-2 hover:ring-primary/50 
+            cursor-pointer 
+            ${isSelected ? "ring-2 ring-primary shadow-xl transform scale-[1.02]" : ""}
+            ${isDarkSquare ? "file-card-I" : "file-card-II"}
+          `}
                     onDoubleClick={(e) => {
                         e.preventDefault()
                         setIsPressed(false)
@@ -148,11 +202,18 @@ export default function FileCard({
                 >
                     <CardContent className="p-0">
                         <div className="relative aspect-[2/3] rounded-t-lg overflow-hidden">
-                            {isSelected && (
-                                <div className="absolute top-2 right-2 z-10 bg-primary text-primary-foreground rounded-full p-1 shadow-lg">
-                                    <CheckCircle className="h-5 w-5" />
-                                </div>
-                            )}
+                            {selectedStyle.backgroundEffect && isSelected && <div className={selectedStyle.backgroundEffect}></div>}
+
+                            <div className={selectedStyle.container}>
+                                {selectedStyle === selectionStyles.crossline
+                                    ? selectedStyle.icon({ isSelected })
+                                    : isSelected && (
+                                    <motion.div className={selectedStyle.indicator} {...selectedStyle.animation}>
+                                        {selectedStyle.icon({})}
+                                    </motion.div>
+                                )}
+                            </div>
+
                             <BatchOptimizedImage
                                 src={file.filepath}
                                 alt={file.name}
@@ -164,11 +225,11 @@ export default function FileCard({
                             />
                             <div
                                 className={`
-                                    absolute inset-0 bg-black/0
-                                    transition-all duration-200
-                                    ${isPressed ? "bg-black/20" : ""}
-                                    ${isSelected ? "bg-primary/10" : ""}
-                                `}
+                  absolute inset-0 
+                  transition-all duration-300
+                  ${isPressed ? "bg-black/20" : ""}
+                  ${isSelected && selectedStyle !== selectionStyles.crossline ? "ring-2 ring-primary ring-inset" : ""}
+                `}
                             />
                         </div>
 
@@ -201,10 +262,10 @@ export default function FileCard({
                                                     key={tag.name}
                                                     variant="secondary"
                                                     className={`
-                                                        text-xs px-1.5 py-0 
-                                                        transition-colors duration-200
-                                                        ${getTagColor(tag)}
-                                                    `}
+                            text-xs px-1.5 py-0 
+                            transition-colors duration-200
+                            ${getTagColor(tag)}
+                          `}
                                                 >
                                                     {tag.name}
                                                 </Badge>
@@ -213,7 +274,7 @@ export default function FileCard({
                                                 <Badge
                                                     variant="secondary"
                                                     className="text-xs px-1.5 py-0 bg-muted text-muted-foreground
-                                                        cursor-pointer hover:bg-muted/80"
+                            cursor-pointer hover:bg-muted/80"
                                                     onClick={toggleTags}
                                                 >
                                                     <Plus className="w-3 h-3 mr-0.5" />
