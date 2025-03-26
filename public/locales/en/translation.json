@@ -145,6 +145,22 @@
         "tags": "Tags"
       }
     },
+    "selection": {
+      "count": "{{count}} selected",
+      "tag": "Tag",
+      "move": "Move",
+      "delete": "Delete",
+      "clear": "Clear"
+    },
+    "bulk": {
+      "deleteTitle": "Delete multiple files",
+      "deleteDescription": "Are you sure you want to delete {{count}} files? This action cannot be undone.",
+      "deleteSuccess": "Successfully deleted {{count}} files",
+      "deleteError": "Failed to delete some files",
+      "moveTitle": "Move {{count}} files",
+      "moveSuccess": "Successfully moved {{count}} files to {{category}}",
+      "moveError": "Failed to move some files"
+    },
     "tags": {
       "dialog": {
         "title": "Manage Tags",
