@@ -24,3 +24,13 @@ export interface Category {
     file_count: number
     size: number
 }
+
+export interface Settings {
+    folderPath: string;
+    rememberCategory: boolean;
+    lang: string;
+    imageQuality: number;
+    imageWidth: number;
+    imageHeight: number;
+    batch_process?: number;
+}

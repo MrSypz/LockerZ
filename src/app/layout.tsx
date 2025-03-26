@@ -14,15 +14,7 @@ import {invoke} from "@tauri-apps/api/core";
 // @ts-ignore
 import { WebviewWindow } from "@tauri-apps/api/window"
 import UploadProgress from "@/components/widget/ProgressInfo";
-
-interface Settings {
-    folderPath: string;
-    rememberCategory: boolean;
-    lang: string;
-    imageQuality: number;
-    imageWidth: number;
-    imageHeight: number;
-}
+import {Settings} from "@/types/file";
 
 export default function RootLayout({
                                        children,

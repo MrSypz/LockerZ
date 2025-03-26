@@ -2,16 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import {invoke} from "@tauri-apps/api/core";
 import {t} from "i18next";
+import {Settings} from "@/types/file";
 
-interface Settings {
-    folderPath: string;
-    rememberCategory: boolean;
-    lang: string;
-    imageQuality: number;
-    imageWidth: number;
-    imageHeight: number;
-    batch_process: number;
-}
 export function useSettings() {
     const [settings, setSettings] = useState<Settings | null>(null);
 
