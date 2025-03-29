@@ -126,6 +126,8 @@ export const FileGrid = forwardRef<{ clearSelection: () => void }, FileGridProps
         },
         ref,
     ) => {
+        FileGrid.displayName = "FileGrid";
+
         const totalColumns = useColumnCount()
         const { t } = useTranslation()
 
