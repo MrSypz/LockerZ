@@ -41,6 +41,14 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
         initializeImage()
     }, [file, isOpen])
 
+    const handleTagsComplete = (success: boolean) => {
+        if (success) {
+            setTimeout(() => {
+                onClose()
+            }, 1000)
+        }
+    }
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-5xl h-[80vh] flex flex-col overflow-hidden">
@@ -57,7 +65,7 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
                     </div>
 
                     <div className="md:col-span-2 h-full overflow-hidden">
-                        {imageId && <TagPanel imageId={imageId} />}
+                        {imageId && <TagPanel imageId={imageId} onComplete={handleTagsComplete} />}
                     </div>
                 </div>
             </DialogContent>
