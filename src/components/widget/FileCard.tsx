@@ -28,79 +28,72 @@ interface FileCardProps {
     onToggleSelect: () => void
 }
 
+// Simplify the selectionStyles object to remove redundancy
 const selectionStyles = {
-    crossline: {
-        container: "absolute inset-0 flex items-center justify-center z-10 overflow-hidden",
-        indicator: "relative w-full h-full",
-        icon: ({ isSelected }: { isSelected: boolean }) => {
-            return (
-                <AnimatePresence>
-                    {isSelected && (
-                        <>
-                            <motion.div
-                                className="absolute inset-0 bg-black/30 backdrop-blur-[1px]"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                            />
+    container: "absolute inset-0 flex items-center justify-center z-10 overflow-hidden",
+    icon: ({ isSelected }: { isSelected: boolean }) => {
+        return (
+            <AnimatePresence>
+                {isSelected && (
+                    <>
+                        <motion.div
+                            className="absolute inset-0 bg-black/30 backdrop-blur-[1px]"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                        />
 
+                        <motion.div
+                            className="absolute top-1/2 left-0 w-full h-14 bg-primary/90 flex items-center justify-center shadow-lg transform -translate-y-1/2"
+                            initial={{ scaleX: 0, opacity: 0 }}
+                            animate={{ scaleX: 1, opacity: 1 }}
+                            exit={{ scaleX: 0, opacity: 0 }}
+                            transition={{
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 25,
+                                opacity: { duration: 0.2 },
+                            }}
+                        >
                             <motion.div
-                                className="absolute top-1/2 left-0 w-full h-14 bg-primary/90 flex items-center justify-center shadow-lg transform -translate-y-1/2"
-                                initial={{ scaleX: 0, opacity: 0 }}
-                                animate={{ scaleX: 1, opacity: 1 }}
-                                exit={{ scaleX: 0, opacity: 0 }}
-                                transition={{
-                                    type: "spring",
-                                    stiffness: 300,
-                                    damping: 25,
-                                    opacity: { duration: 0.2 },
-                                }}
+                                className="flex items-center gap-2"
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                transition={{ delay: 0.15, duration: 0.2 }}
                             >
-                                <motion.div
-                                    className="flex items-center gap-2"
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.8 }}
-                                    transition={{ delay: 0.15, duration: 0.2 }}
-                                >
-                                    <Check className="h-6 w-6 text-green-400" strokeWidth={3} />
-                                    <span className="font-bold text-lg text-gray-900 tracking-wider">SELECTED</span>
-                                </motion.div>
+                                <Check className="h-6 w-6 text-green-400" strokeWidth={3} />
+                                <span className="font-bold text-lg text-gray-900 tracking-wider">SELECTED</span>
                             </motion.div>
-                        </>
-                    )}
-                </AnimatePresence>
-            )
-        },
-        animation: {
-            initial: {},
-            animate: {},
-            transition: {},
-        },
-        backgroundEffect: "",
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+        )
     },
 }
 
+// Simplify animations object
 const animations = {
     fadeInRotate: {
-        initial: { opacity: 0, rotate: -5 }, // Slight rotation for a dynamic entrance
-        animate: { opacity: 1, rotate: 0 }, // Fade in and straighten
+        initial: { opacity: 0, rotate: -5 },
+        animate: { opacity: 1, rotate: 0 },
         transition: {
             type: "spring",
-            stiffness: 400, // Increased stiffness for faster response
-            damping: 20, // Slightly higher damping to reduce overshoot
-            delay: 0, // Delay will be added dynamically in the component
+            stiffness: 400,
+            damping: 20,
+            delay: 0,
         },
     },
     hover: {
-        y: -5, // Slight upward movement on hover
-        rotate: 2, // Slight rotation on hover
-        transition: { type: "spring", stiffness: 500, damping: 10 }, // Faster and snappier
+        y: -5,
+        rotate: 2,
+        transition: { type: "spring", stiffness: 500, damping: 10 },
     },
     tap: {
         scale: 0.95,
-        transition: { type: "spring", stiffness: 500, damping: 15 }, // Faster and snappier
+        transition: { type: "spring", stiffness: 500, damping: 15 },
     },
 }
 
@@ -124,7 +117,7 @@ export default function FileCard({
     const { optimizedImages, imageStatus } = useBatchProcessing()
     const { settings } = useSharedSettings()
 
-    const selectedStyle = selectionStyles.crossline
+    const selectedStyle = selectionStyles
 
     const row = Math.floor(index / totalColumns)
     const isDarkSquare = (row + column) % 2 === 0
@@ -144,12 +137,14 @@ export default function FileCard({
         return "tag-colour-II"
     }
 
-    const toggleTags = (e: { preventDefault: () => void; stopPropagation: () => void }) => {
+    // Simplify the toggleTags function
+    const toggleTags = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
         setShowAllTags(!showAllTags)
     }
 
+    // Simplify the handleClick function
     const handleClick = (e: React.MouseEvent) => {
         e.preventDefault()
         onToggleSelect()
@@ -205,7 +200,7 @@ export default function FileCard({
                             {selectedStyle.backgroundEffect && isSelected && <div className={selectedStyle.backgroundEffect}></div>}
 
                             <div className={selectedStyle.container}>
-                                {selectedStyle === selectionStyles.crossline
+                                {selectedStyle === selectionStyles
                                     ? selectedStyle.icon({ isSelected })
                                     : isSelected && (
                                     <motion.div className={selectedStyle.indicator} {...selectedStyle.animation}>
@@ -228,7 +223,7 @@ export default function FileCard({
                   absolute inset-0 
                   transition-all duration-300
                   ${isPressed ? "bg-black/20" : ""}
-                  ${isSelected && selectedStyle !== selectionStyles.crossline ? "ring-2 ring-primary ring-inset" : ""}
+                  ${isSelected && selectedStyle !== selectionStyles ? "ring-2 ring-primary ring-inset" : ""}
                 `}
                             />
                         </div>
