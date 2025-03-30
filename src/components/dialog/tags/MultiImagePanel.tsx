@@ -19,7 +19,6 @@ export function MultiImagePanel({ files }: MultiImagePanelProps) {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
     const selectedFile = files[selectedImageIndex]
 
-    // Calculate some statistics about the selected files
     const totalSize = files.reduce((sum, file) => sum + file.size, 0)
     const categories = [...new Set(files.map((file) => file.category))]
 

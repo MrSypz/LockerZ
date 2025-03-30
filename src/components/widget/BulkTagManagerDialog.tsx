@@ -27,13 +27,11 @@ export function BulkTagManagerDialog({ files, isOpen, onClose }: BulkTagManagerD
 
             setIsInitializing(true)
             try {
-                // Initialize all images and get their IDs
                 const ids = await Promise.all(
                     files.map(async (file) => {
                         try {
                             return await db.addImage(file.filepath, file.category)
                         } catch (error) {
-                            // If the image already exists, get its ID
                             return await db.getImageId(file.filepath, file.category)
                         }
                     }),

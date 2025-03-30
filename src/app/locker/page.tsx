@@ -1,8 +1,7 @@
 "use client"
-
 import { useState, useEffect, useCallback, useRef } from "react"
 import { toast } from "@/hooks/use-toast"
-import { Loader2, AlertCircle, Upload } from "lucide-react"
+import { Loader2, AlertCircle, Upload, Trash2, Info } from "lucide-react"
 import { open } from "@tauri-apps/plugin-dialog"
 import { invoke } from "@tauri-apps/api/core"
 import { MoveDialog } from "@/components/widget/Move-dialog"
@@ -29,6 +28,7 @@ import { BatchProcessingProvider } from "@/components/widget/BatchProcessingProv
 import { DragAndDropProvider } from "@/components/widget/DragAndDropProvider"
 import { DragDropZone } from "@/components/widget/DragDropZone"
 import { motion } from "framer-motion"
+import { BulkActionStatistics } from "@/components/widget/BulkActionStatistics"
 
 interface FileMoveResponse {
     success: boolean
@@ -249,7 +249,7 @@ export default function Locker() {
             )
             toast({
                 title: t("toast.titleType.success"),
-                description: `File ${selectedFile.name} moved to ${newCategory}successfully`,
+                description: `File ${selectedFile.name} moved to ${newCategory} successfully`,
             })
         } catch (error) {
             toast({
@@ -321,9 +321,6 @@ export default function Locker() {
 
                 // Calculate total pages
                 setTotalPages(Math.ceil(data.files.length / imagesPerPage))
-
-                // Calculate total pages
-                setTotalPages(Math.ceil(data.files.length / imagesPerPage))
             } catch (error) {
                 console.error("Error changing category:", error)
                 setAllFiles([])
@@ -374,7 +371,6 @@ export default function Locker() {
 
             await Promise.all(deletePromises)
 
-            // Update the files state to remove deleted files
             const deletedFileKeys = new Set(selectedFilesForBulkAction.map((file) => `${file.category}-${file.name}`))
 
             setFiles((prevFiles) => prevFiles.filter((file) => !deletedFileKeys.has(`${file.category}-${file.name}`)))
@@ -606,19 +602,36 @@ export default function Locker() {
                     />
 
                     <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
-                        <AlertDialogContent>
+                        <AlertDialogContent className="max-w-md">
                             <AlertDialogHeader>
-                                <AlertDialogTitle>{t("locker.bulk.deleteTitle")}</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    {t("locker.bulk.deleteDescription", { count: selectedFilesForBulkAction.length })}
-                                </AlertDialogDescription>
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="flex items-center gap-2 mb-2"
+                                >
+                                    <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-full">
+                                        <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
+                                    </div>
+                                    <AlertDialogTitle>{t("locker.bulk.deleteTitle")}</AlertDialogTitle>
+                                </motion.div>
+
+                                {/* Fix: Use a div instead of AlertDialogDescription to avoid nesting p tags */}
+                                <div className="space-y-4 text-sm text-muted-foreground">
+                                    <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 rounded-md">
+                                        <Info className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                                        <span>{t("locker.bulk.deleteDescription", { count: selectedFilesForBulkAction.length })}</span>
+                                    </div>
+
+                                    <BulkActionStatistics files={selectedFilesForBulkAction} />
+                                </div>
                             </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                            <AlertDialogFooter className="mt-4 gap-2">
+                                <AlertDialogCancel className="flex-1">{t("common.cancel")}</AlertDialogCancel>
                                 <AlertDialogAction
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2 flex-1"
                                     onClick={confirmBulkDelete}
                                 >
+                                    <Trash2 className="h-4 w-4" />
                                     {t("common.delete")}
                                 </AlertDialogAction>
                             </AlertDialogFooter>
@@ -629,4 +642,3 @@ export default function Locker() {
         </BatchProcessingProvider>
     )
 }
-
