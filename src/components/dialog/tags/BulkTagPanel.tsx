@@ -9,9 +9,7 @@ import { TagEditor } from "./TagEditor"
 import { DatabaseService, type TagInfo } from "@/hooks/use-database"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, XCircle, Loader2 } from "lucide-react"
-import { Progress } from "@/components/ui/progress"
-import { motion, AnimatePresence } from "framer-motion"
+import { CheckCircle, XCircle } from "lucide-react"
 
 interface BulkTagPanelProps {
   imageIds: number[]
@@ -25,8 +23,7 @@ export function BulkTagPanel({ imageIds, onComplete }: BulkTagPanelProps) {
   const [availableTags, setAvailableTags] = useState<TagInfo[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [commonTags, setCommonTags] = useState<TagInfo[]>([])
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [processedCount, setProcessedCount] = useState(0)
+  const [initialTags, setInitialTags] = useState<TagInfo[]>([])
   const [success, setSuccess] = useState<boolean | null>(null)
   const db = new DatabaseService()
 
@@ -46,11 +43,13 @@ export function BulkTagPanel({ imageIds, onComplete }: BulkTagPanelProps) {
       if (tagsPerImage.length > 0) {
         const firstImageTags = new Set(tagsPerImage[0].map((tag) => tag.name))
         const common = [...firstImageTags].filter((tagName) =>
-          tagsPerImage.every((imageTags) => imageTags.some((tag) => tag.name === tagName)),
+            tagsPerImage.every((imageTags) => imageTags.some((tag) => tag.name === tagName)),
         )
 
-        setCommonTags(common.map((name) => ({ name, is_category: false })))
-        setSelectedTags(common.map((name) => ({ name, is_category: false })))
+        const commonTagObjects = common.map((name) => ({ name, is_category: false }))
+        setCommonTags(commonTagObjects)
+        setSelectedTags(commonTagObjects)
+        setInitialTags(commonTagObjects)
       }
     } catch (error) {
       toast({
@@ -132,11 +131,20 @@ export function BulkTagPanel({ imageIds, onComplete }: BulkTagPanelProps) {
     })
   }
 
-  const applyTagsToAllImages = async () => {
-    setIsProcessing(true)
-    setProcessedCount(0)
-    setSuccess(null)
+  const hasChanges = () => {
+    if (selectedTags.length !== initialTags.length) return true
 
+    // Check if any tags are different
+    for (const tag of selectedTags) {
+      if (!initialTags.some((t) => t.name === tag.name)) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  const applyTagsToAllImages = async () => {
     try {
       // For each image
       for (let i = 0; i < imageIds.length; i++) {
@@ -165,26 +173,19 @@ export function BulkTagPanel({ imageIds, onComplete }: BulkTagPanelProps) {
             }
           }
         }
-
-        setProcessedCount(i + 1)
       }
 
       const message =
-        selectedTags.length === 0
-          ? `Successfully removed all tags from ${imageIds.length} images.`
-          : `Successfully updated tags for ${imageIds.length} images.`
+          selectedTags.length === 0
+              ? `Successfully removed all tags from ${imageIds.length} images.`
+              : `Successfully updated tags for ${imageIds.length} images.`
 
       toast({
         title: "Tags updated",
         description: message,
       })
       setSuccess(true)
-
-      if (onComplete) {
-        setTimeout(() => {
-          onComplete()
-        }, 1500)
-      }
+      setInitialTags([...selectedTags])
     } catch (error) {
       toast({
         title: "Error updating tags",
@@ -192,107 +193,70 @@ export function BulkTagPanel({ imageIds, onComplete }: BulkTagPanelProps) {
         variant: "destructive",
       })
       setSuccess(false)
-    } finally {
-      setTimeout(() => {
-        setIsProcessing(false)
-      }, 500)
     }
   }
 
   return (
-    <Card className="h-full">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-        <TabsList className="grid grid-cols-4">
-          <TabsTrigger value="current">Current ({selectedTags.length})</TabsTrigger>
-          <TabsTrigger value="add">Add</TabsTrigger>
-          <TabsTrigger value="create">Create</TabsTrigger>
-          <TabsTrigger value="edit">Manage</TabsTrigger>
-        </TabsList>
+      <Card className="h-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+          <TabsList className="grid grid-cols-4">
+            <TabsTrigger value="current">Current ({selectedTags.length})</TabsTrigger>
+            <TabsTrigger value="add">Add</TabsTrigger>
+            <TabsTrigger value="create">Create</TabsTrigger>
+            <TabsTrigger value="edit">Manage</TabsTrigger>
+          </TabsList>
 
-        <div className="p-4 h-[calc(100%-40px)] overflow-hidden flex flex-col">
-          <div className="flex-1 overflow-hidden">
-            <TabsContent value="current" className="h-full m-0">
-              <TagList
-                tags={selectedTags}
-                selectedTags={selectedTags}
-                onTagToggle={handleTagToggle}
-                isLoading={isLoading}
-              />
-            </TabsContent>
+          <div className="p-4 h-[calc(100%-40px)] overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-hidden">
+              <TabsContent value="current" className="h-full m-0">
+                <TagList
+                    tags={selectedTags}
+                    selectedTags={selectedTags}
+                    onTagToggle={handleTagToggle}
+                    isLoading={isLoading}
+                />
+              </TabsContent>
 
-            <TabsContent value="add" className="h-full m-0">
-              <TagSearch
-                availableTags={availableTags}
-                selectedTags={selectedTags}
-                onTagToggle={handleTagToggle}
-                isLoading={isLoading}
-              />
-            </TabsContent>
+              <TabsContent value="add" className="h-full m-0">
+                <TagSearch
+                    availableTags={availableTags}
+                    selectedTags={selectedTags}
+                    onTagToggle={handleTagToggle}
+                    isLoading={isLoading}
+                />
+              </TabsContent>
 
-            <TabsContent value="create" className="h-full m-0">
-              <TagCreator onTagCreate={handleTagCreate} isLoading={isLoading} />
-            </TabsContent>
+              <TabsContent value="create" className="h-full m-0">
+                <TagCreator onTagCreate={handleTagCreate} isLoading={isLoading} />
+              </TabsContent>
 
-            <TabsContent value="edit" className="h-full m-0">
-              <TagEditor tags={availableTags} onEdit={handleTagEdit} onDelete={handleTagDelete} isLoading={isLoading} />
-            </TabsContent>
-          </div>
+              <TabsContent value="edit" className="h-full m-0">
+                <TagEditor tags={availableTags} onEdit={handleTagEdit} onDelete={handleTagDelete} isLoading={isLoading} />
+              </TabsContent>
+            </div>
 
-          {/* Apply Button and Progress */}
-          <div className="mt-4 pt-4 border-t">
-            <AnimatePresence mode="wait">
-              {isProcessing ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="space-y-2"
-                >
-                  <div className="flex justify-between text-sm">
-                    <span className="flex items-center">
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Processing images...
-                    </span>
-                    <span>
-                      {processedCount} / {imageIds.length}
-                    </span>
+            {/* Apply Button and Progress */}
+            <div className="mt-4 pt-4 border-t">
+              {success === true ? (
+                  <div className="flex items-center justify-center p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-md">
+                    <CheckCircle className="h-5 w-5 mr-2" />
+                    <span>Tags successfully applied to all images!</span>
                   </div>
-                  <Progress value={(processedCount / imageIds.length) * 100} className="h-2" />
-                </motion.div>
-              ) : success === true ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center justify-center p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-md"
-                >
-                  <CheckCircle className="h-5 w-5 mr-2" />
-                  <span>Tags successfully applied to all images!</span>
-                </motion.div>
               ) : success === false ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center justify-center p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-md"
-                >
-                  <XCircle className="h-5 w-5 mr-2" />
-                  <span>Error applying tags. Please try again.</span>
-                </motion.div>
+                  <div className="flex items-center justify-center p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-md">
+                    <XCircle className="h-5 w-5 mr-2" />
+                    <span>Error applying tags. Please try again.</span>
+                  </div>
               ) : (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <Button className="w-full" onClick={applyTagsToAllImages} disabled={isLoading}>
+                  <Button className="w-full" onClick={applyTagsToAllImages} disabled={isLoading || !hasChanges()}>
                     {selectedTags.length === 0
-                      ? `Remove All Tags from ${imageIds.length} Images`
-                      : `Apply Tags to All ${imageIds.length} Images`}
+                        ? `Remove All Tags from ${imageIds.length} Images`
+                        : `Apply Tags to All ${imageIds.length} Images`}
                   </Button>
-                </motion.div>
               )}
-            </AnimatePresence>
+            </div>
           </div>
-        </div>
-      </Tabs>
-    </Card>
+        </Tabs>
+      </Card>
   )
 }
-

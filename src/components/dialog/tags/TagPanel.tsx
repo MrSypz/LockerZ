@@ -10,8 +10,8 @@ import { TagEditor } from "./TagEditor"
 import { DatabaseService, type TagInfo } from "@/hooks/use-database"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, XCircle, Loader2, Tag, Plus, Settings, Search } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { CheckCircle, XCircle, Tag, Plus, Settings, Search } from "lucide-react"
+import { motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 
 interface TagPanelProps {
@@ -26,7 +26,6 @@ export function TagPanel({ imageId, onComplete }: TagPanelProps) {
     const [initialTags, setInitialTags] = useState<TagInfo[]>([])
     const [availableTags, setAvailableTags] = useState<TagInfo[]>([])
     const [isLoading, setIsLoading] = useState(false)
-    const [isProcessing, setIsProcessing] = useState(false)
     const [success, setSuccess] = useState<boolean | null>(null)
     const db = new DatabaseService()
 
@@ -119,9 +118,6 @@ export function TagPanel({ imageId, onComplete }: TagPanelProps) {
     }
 
     const applyTagsToImage = async () => {
-        setIsProcessing(true)
-        setSuccess(null)
-
         try {
             // Get current tags for this image
             const currentTags = await db.getImageTags(imageId)
@@ -158,12 +154,6 @@ export function TagPanel({ imageId, onComplete }: TagPanelProps) {
             })
             setSuccess(true)
             setInitialTags([...selectedTags])
-
-            if (onComplete) {
-                setTimeout(() => {
-                    onComplete(true)
-                }, 1500)
-            }
         } catch (error) {
             toast({
                 title: "Error updating tags",
@@ -174,10 +164,6 @@ export function TagPanel({ imageId, onComplete }: TagPanelProps) {
             if (onComplete) {
                 onComplete(false)
             }
-        } finally {
-            setTimeout(() => {
-                setIsProcessing(false)
-            }, 500)
         }
     }
 
@@ -291,97 +277,48 @@ export function TagPanel({ imageId, onComplete }: TagPanelProps) {
 
                     {/* Apply Button and Progress */}
                     <div className="mt-4 pt-4 border-t">
-                        <AnimatePresence mode="wait">
-                            {isProcessing ? (
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="space-y-2"
-                                >
-                                    <div className="flex justify-between text-sm items-center">
-                    <span className="flex items-center">
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin text-primary" />
-                      <span>Processing image...</span>
-                    </span>
-                                    </div>
-                                    <div className="relative pt-1">
-                                        <motion.div
-                                            initial={{ width: "0%" }}
-                                            animate={{ width: "100%" }}
-                                            transition={{ duration: 1 }}
-                                            className="h-2 overflow-hidden bg-primary rounded-full"
-                                        />
-                                        <motion.div
-                                            className="absolute top-0 left-0 w-full h-2 rounded-full bg-primary/20"
-                                            initial={{ opacity: 0 }}
-                                            animate={[
-                                                { opacity: 0.2, transition: { duration: 0.3 } },
-                                                { opacity: 0, transition: { duration: 0.5, delay: 0.3 } },
-                                            ]}
-                                            transition={{
-                                                repeat: Number.POSITIVE_INFINITY,
-                                                repeatType: "loop",
-                                            }}
-                                        />
-                                    </div>
-                                </motion.div>
-                            ) : success === true ? (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="flex items-center justify-center p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-md"
-                                >
-                                    <CheckCircle className="h-5 w-5 mr-2" />
-                                    <span>Tags successfully applied to image!</span>
-                                </motion.div>
-                            ) : success === false ? (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="flex items-center justify-center p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-md"
-                                >
-                                    <XCircle className="h-5 w-5 mr-2" />
-                                    <span>Error applying tags. Please try again.</span>
-                                </motion.div>
-                            ) : (
-                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                                    <Button
-                                        className="w-full group relative overflow-hidden"
-                                        onClick={applyTagsToImage}
-                                        disabled={isLoading || !hasChanges()}
-                                        size="lg"
-                                    >
-                                        <motion.span
-                                            className="absolute inset-0 bg-primary/10"
-                                            initial={{ scaleX: 0 }}
-                                            whileHover={{ scaleX: 1 }}
-                                            transition={{ duration: 0.3 }}
-                                            style={{ transformOrigin: "left" }}
-                                        />
-                                        <span className="relative z-10 flex items-center gap-2">
-                      {selectedTags.length === 0 ? (
-                          <>
-                              <XCircle className="h-5 w-5" />
-                              Remove All Tags
-                          </>
-                      ) : (
-                          <>
-                              <CheckCircle className="h-5 w-5" />
-                              {`Apply ${selectedTags.length} Tags`}
-                          </>
-                      )}
-                    </span>
-                                    </Button>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                        {success === true ? (
+                            <div className="flex items-center justify-center p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-md">
+                                <CheckCircle className="h-5 w-5 mr-2" />
+                                <span>Tags successfully applied to image!</span>
+                            </div>
+                        ) : success === false ? (
+                            <div className="flex items-center justify-center p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-md">
+                                <XCircle className="h-5 w-5 mr-2" />
+                                <span>Error applying tags. Please try again.</span>
+                            </div>
+                        ) : (
+                            <Button
+                                className="w-full group relative overflow-hidden"
+                                onClick={applyTagsToImage}
+                                disabled={isLoading || !hasChanges()}
+                                size="lg"
+                            >
+                                <motion.span
+                                    className="absolute inset-0 bg-primary/10"
+                                    initial={{ scaleX: 0 }}
+                                    whileHover={{ scaleX: 1 }}
+                                    transition={{ duration: 0.3 }}
+                                    style={{ transformOrigin: "left" }}
+                                />
+                                <span className="relative z-10 flex items-center gap-2">
+                  {selectedTags.length === 0 ? (
+                      <>
+                          <XCircle className="h-5 w-5" />
+                          Remove All Tags
+                      </>
+                  ) : (
+                      <>
+                          <CheckCircle className="h-5 w-5" />
+                          {`Apply ${selectedTags.length} Tags`}
+                      </>
+                  )}
+                </span>
+                            </Button>
+                        )}
                     </div>
                 </div>
             </Tabs>
         </Card>
     )
 }
-
