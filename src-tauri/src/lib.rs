@@ -37,6 +37,9 @@ use modules::{
 use tauri::Manager;
 use window_vibrancy::apply_acrylic;
 
+use crate::modules::imagedupe::initialize_duplicate_detection;
+
+
 #[tauri::command]
 fn show_in_folder(path: String) {
     #[cfg(target_os = "windows")]
@@ -78,6 +81,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
         log_error!("Failed to create category tags: {}", e);
     }
     start_cache_cleanup();
+    initialize_duplicate_detection();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
