@@ -1,12 +1,14 @@
 use crate::modules::config::get_config;
 use opencv::{
-    core::{Mat, Rect, Size},
+    core::{Mat, Size},
     imgcodecs, imgproc,
     prelude::*,
 };
 use rayon::prelude::*;
 use serde::Serialize;
-use std::collections::HashSet;
+use sha2::{Sha256, Digest};
+use std::collections::{HashMap, HashSet};
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
@@ -16,26 +18,35 @@ use tauri::Emitter;
 
 const BATCH_SIZE: usize = 200;
 
-const PHASE_INIT: &str = "Initializing";
-const PHASE_COLLECTING: &str = "Collecting Images";
-const PHASE_HASHING: &str = "Computing Image Hashes";
-const PHASE_COMPARING: &str = "Comparing Images";
-const PHASE_FINALIZING: &str = "Finalizing Results";
-const PHASE_COMPLETE: &str = "Complete";
-
-#[derive(Debug, Serialize, Clone)]
-pub struct DuplicateImage {
-    pub path: String,
-    pub category: String,
-    pub similarity: f64,
-    pub duplicates: Vec<DuplicateMatch>,
+// Enhanced similarity levels
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum SimilarityLevel {
+    Identical,      // 1.0 - Exact visual match
+    NearIdentical,  // 0.98-0.99 - Almost identical
+    VerySimilar,    // 0.95-0.97 - Very similar
+    Similar,        // 0.90-0.94 - Clearly related
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct DuplicateMatch {
+pub struct EnhancedDuplicateImage {
     pub path: String,
     pub category: String,
+    pub file_size: u64,
+    pub file_hash: Option<String>, // SHA256 for exact file matches
     pub similarity: f64,
+    pub similarity_level: String,
+    pub duplicates: Vec<EnhancedDuplicateMatch>,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct EnhancedDuplicateMatch {
+    pub path: String,
+    pub category: String,
+    pub file_size: u64,
+    pub file_hash: Option<String>,
+    pub similarity: f64,
+    pub similarity_level: String,
+    pub match_type: String, // "identical_file", "identical_visual", "similar"
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -46,7 +57,6 @@ pub struct ProgressInfo {
     pub phase: String,
     pub current_file: Option<String>,
     pub target_file: Option<String>,
-    // Add additional fields for more detailed progress reporting
     pub processed_files: usize,
     pub total_files: usize,
     pub estimated_time_remaining: Option<String>,
@@ -54,79 +64,133 @@ pub struct ProgressInfo {
 }
 
 #[derive(Clone)]
-struct ImageHash {
+struct EnhancedImageHash {
     path: PathBuf,
     category: String,
-    hash: Arc<Mat>,
+    visual_hash: Arc<Mat>,      // dHash for visual similarity
+    file_size: u64,
+    file_hash: Option<String>,  // SHA256 for exact file matching
 }
 
-// Use faster algorithm for pHash computation
-fn compute_phash(image_path: &Path) -> Result<Mat, Box<dyn std::error::Error + Send + Sync>> {
-    let img = match imgcodecs::imread(
+// Fast file hash computation (only for potentially identical files)
+fn compute_file_hash(path: &Path) -> Option<String> {
+    if let Ok(contents) = fs::read(path) {
+        let mut hasher = Sha256::new();
+        hasher.update(&contents);
+        Some(format!("{:x}", hasher.finalize()))
+    } else {
+        None
+    }
+}
+
+// Enhanced visual hash (your existing dHash)
+fn compute_visual_hash(image_path: &Path) -> Result<Mat, Box<dyn std::error::Error + Send + Sync>> {
+    let img = imgcodecs::imread(
         image_path.to_str().ok_or("Invalid path")?,
         imgcodecs::IMREAD_GRAYSCALE,
-    ) {
-        Ok(img) => img,
-        Err(e) => return Err(format!("Failed to read image: {}", e).into()),
-    };
-
-    let mut resized = Mat::default();
-    imgproc::resize(
-        &img,
-        &mut resized,
-        Size::new(32, 32),
-        0.0,
-        0.0,
-        imgproc::INTER_LINEAR,
     )?;
 
-    let mut float_img = Mat::default();
-    resized.convert_to(&mut float_img, opencv::core::CV_32F, 1.0, 0.0)?;
+    let mut resized = Mat::default();
+    imgproc::resize(&img, &mut resized, Size::new(9, 8), 0.0, 0.0, imgproc::INTER_LINEAR)?;
 
-    let mut dct = Mat::default();
-    opencv::core::dct(&float_img, &mut dct, 0)?;
+    let mut hash = Mat::zeros(8, 8, opencv::core::CV_8U)?.to_mat()?;
 
-    // Use a smaller ROI for faster comparison (8x8 vs original 8x8)
-    let roi = dct.roi(Rect::new(0, 0, 8, 8))?;
-    let mut hash = Mat::default();
-    roi.copy_to(&mut hash)?;
+    for y in 0..8 {
+        for x in 0..8 {
+            let left_pixel: u8 = *resized.at_2d::<u8>(y, x)?;
+            let right_pixel: u8 = *resized.at_2d::<u8>(y, x + 1)?;
+            let hash_value: u8 = if left_pixel > right_pixel { 1 } else { 0 };
+            *hash.at_2d_mut::<u8>(y, x)? = hash_value;
+        }
+    }
 
     Ok(hash)
 }
 
-// Optimized similarity computation
-fn compute_similarity(
+// Enhanced similarity computation with detailed levels
+fn compute_enhanced_similarity(
     hash1: &Mat,
     hash2: &Mat,
 ) -> Result<f64, Box<dyn std::error::Error + Send + Sync>> {
-    let mut diff = Mat::default();
-    opencv::core::absdiff(hash1, hash2, &mut diff)?;
-    let sum = opencv::core::sum_elems(&diff)?;
-    // Adjusted max_diff for 8x8 ROI
-    let max_diff = 255.0 * 64.0;
-    let similarity = 1.0 - (sum[0] / max_diff);
+    let mut xor_result = Mat::default();
+    opencv::core::bitwise_xor(hash1, hash2, &mut xor_result, &opencv::core::no_array())?;
+
+    let different_bits = opencv::core::count_non_zero(&xor_result)?;
+    let total_bits = hash1.rows() * hash1.cols();
+
+    let similarity = 1.0 - (different_bits as f64 / total_bits as f64);
     Ok(similarity)
 }
 
-// Helper function to format time
+// Determine similarity level and match type
+fn analyze_similarity(
+    similarity: f64,
+    file1_size: u64,
+    file2_size: u64,
+    file1_hash: &Option<String>,
+    file2_hash: &Option<String>,
+) -> (SimilarityLevel, String) {
+    // Check for exact file match first
+    if let (Some(hash1), Some(hash2)) = (file1_hash, file2_hash) {
+        if hash1 == hash2 {
+            return (SimilarityLevel::Identical, "identical_file".to_string());
+        }
+    }
+
+    // Check file sizes for quick identical detection
+    if file1_size == file2_size && similarity >= 1.0 {
+        return (SimilarityLevel::Identical, "identical_visual".to_string());
+    }
+
+    // Classify based on similarity score
+    let level = if similarity >= 1.0 {
+        SimilarityLevel::Identical
+    } else if similarity >= 0.98 {
+        SimilarityLevel::NearIdentical
+    } else if similarity >= 0.95 {
+        SimilarityLevel::VerySimilar
+    } else {
+        SimilarityLevel::Similar
+    };
+
+    let match_type = if similarity >= 0.98 {
+        "identical_visual"
+    } else {
+        "similar"
+    }.to_string();
+
+    (level, match_type)
+}
+
+fn similarity_level_to_string(level: SimilarityLevel) -> String {
+    match level {
+        SimilarityLevel::Identical => "Identical".to_string(),
+        SimilarityLevel::NearIdentical => "Near Identical".to_string(),
+        SimilarityLevel::VerySimilar => "Very Similar".to_string(),
+        SimilarityLevel::Similar => "Similar".to_string(),
+    }
+}
+
 fn format_time(seconds: f64) -> String {
     if seconds < 60.0 {
-        return format!("{:.0} seconds", seconds);
+        format!("{:.0} seconds", seconds)
     } else if seconds < 3600.0 {
-        return format!("{:.1} minutes", seconds / 60.0);
+        format!("{:.1} minutes", seconds / 60.0)
     } else {
         let hours = (seconds / 3600.0).floor();
         let minutes = ((seconds % 3600.0) / 60.0).floor();
-        return format!("{:.0}h {:.0}m", hours, minutes);
+        format!("{:.0}h {:.0}m", hours, minutes)
     }
 }
 
 #[tauri::command]
-pub async fn find_duplicates(
+pub async fn find_duplicates_enhanced(
     similarity_threshold: Option<f64>,
+    include_file_hash: Option<bool>, // Whether to compute file hashes for exact matching
     window: tauri::Window,
-) -> Result<Vec<DuplicateImage>, String> {
+) -> Result<Vec<EnhancedDuplicateImage>, String> {
     let threshold = similarity_threshold.unwrap_or(0.95);
+    let compute_file_hashes = include_file_hash.unwrap_or(true);
     let config = get_config();
     let root_path = config.folderPath;
     let start_time = std::time::Instant::now();
@@ -135,10 +199,10 @@ pub async fn find_duplicates(
     let _ = window.emit(
         "dupe-check-started",
         ProgressInfo {
-            filename: "Duplicate Check".to_string(),
+            filename: "Enhanced Duplicate Check".to_string(),
             progress: 0.0,
             status: "starting".to_string(),
-            phase: PHASE_INIT.to_string(),
+            phase: "Initializing".to_string(),
             current_file: None,
             target_file: None,
             processed_files: 0,
@@ -149,23 +213,6 @@ pub async fn find_duplicates(
     );
 
     task::spawn_blocking(move || {
-        // Phase: Collecting image paths
-        window.emit(
-            "dupe-check-progress",
-            ProgressInfo {
-                filename: "Duplicate Check".to_string(),
-                progress: 5.0,
-                status: "processing".to_string(),
-                phase: PHASE_COLLECTING.to_string(),
-                current_file: Some(root_path.to_string_lossy().to_string()),
-                target_file: None,
-                processed_files: 0,
-                total_files: 0,
-                estimated_time_remaining: None,
-                elapsed_time: Some(format_time(start_time.elapsed().as_secs_f64())),
-            },
-        ).unwrap_or_default();
-
         // Collect image paths
         let image_paths = match collect_image_paths(&root_path) {
             Ok(paths) => paths,
@@ -176,14 +223,24 @@ pub async fn find_duplicates(
         let processed_count = Arc::new(AtomicUsize::new(0));
         let window = Arc::new(window);
 
-        // Report image collection completed
+        // Phase 1: Group by file size for quick identical file detection
+        let mut size_groups: HashMap<u64, Vec<(PathBuf, String)>> = HashMap::new();
+
+        for (path, category) in &image_paths {
+            if let Ok(metadata) = fs::metadata(path) {
+                let size = metadata.len();
+                size_groups.entry(size).or_insert_with(Vec::new).push((path.clone(), category.clone()));
+            }
+        }
+
+        // Phase 2: Compute hashes with enhanced progress reporting
         let _ = window.emit(
             "dupe-check-progress",
             ProgressInfo {
-                filename: "Duplicate Check".to_string(),
+                filename: "Enhanced Duplicate Check".to_string(),
                 progress: 10.0,
                 status: "processing".to_string(),
-                phase: PHASE_HASHING.to_string(),
+                phase: "Computing Hashes".to_string(),
                 current_file: None,
                 target_file: None,
                 processed_files: 0,
@@ -193,47 +250,49 @@ pub async fn find_duplicates(
             },
         );
 
-        // Compute hashes in parallel with better progress reporting
-        let hash_start_time = std::time::Instant::now();
-        let image_hashes: Vec<ImageHash> = image_paths
+        let image_hashes: Vec<EnhancedImageHash> = image_paths
             .par_chunks(BATCH_SIZE)
             .flat_map(|batch| {
                 let mut batch_results = Vec::with_capacity(batch.len());
                 for (path, category) in batch {
-                    if let Ok(hash) = compute_phash(path) {
-                        let count = processed_count.fetch_add(1, Ordering::Relaxed);
+                    let count = processed_count.fetch_add(1, Ordering::Relaxed);
 
-                        // Update progress more frequently for better UI feedback
-                        if count % 5 == 0 || count == total_images - 1 {
-                            // Calculate more accurate progress and timing estimates
-                            let progress = (count as f32 / total_images as f32) * 40.0 + 10.0;
-                            let elapsed = hash_start_time.elapsed().as_secs_f64();
-                            let estimated_remaining = if count > 0 {
-                                Some(format_time((elapsed / count as f64) * (total_images - count) as f64))
-                            } else {
-                                None
-                            };
+                    // Update progress
+                    if count % 10 == 0 {
+                        let progress = (count as f32 / total_images as f32) * 40.0 + 10.0;
+                        let _ = window.emit(
+                            "dupe-check-progress",
+                            ProgressInfo {
+                                filename: "Enhanced Duplicate Check".to_string(),
+                                progress,
+                                status: "processing".to_string(),
+                                phase: "Computing Hashes".to_string(),
+                                current_file: Some(path.to_string_lossy().to_string()),
+                                target_file: None,
+                                processed_files: count,
+                                total_files: total_images,
+                                estimated_time_remaining: None,
+                                elapsed_time: Some(format_time(start_time.elapsed().as_secs_f64())),
+                            },
+                        );
+                    }
 
-                            let _ = window.emit(
-                                "dupe-check-progress",
-                                ProgressInfo {
-                                    filename: "Duplicate Check".to_string(),
-                                    progress,
-                                    status: "processing".to_string(),
-                                    phase: PHASE_HASHING.to_string(),
-                                    current_file: Some(path.to_string_lossy().to_string()),
-                                    target_file: None,
-                                    processed_files: count,
-                                    total_files: total_images,
-                                    estimated_time_remaining: estimated_remaining,
-                                    elapsed_time: Some(format_time(start_time.elapsed().as_secs_f64())),
-                                },
-                            );
-                        }
-                        batch_results.push(ImageHash {
+                    if let Ok(visual_hash) = compute_visual_hash(path) {
+                        let file_size = fs::metadata(path).map(|m| m.len()).unwrap_or(0);
+
+                        // Only compute file hash if requested and file size matches other files
+                        let file_hash = if compute_file_hashes && size_groups.get(&file_size).map_or(false, |v| v.len() > 1) {
+                            compute_file_hash(path)
+                        } else {
+                            None
+                        };
+
+                        batch_results.push(EnhancedImageHash {
                             path: path.clone(),
                             category: category.clone(),
-                            hash: Arc::new(hash),
+                            visual_hash: Arc::new(visual_hash),
+                            file_size,
+                            file_hash,
                         });
                     }
                 }
@@ -241,14 +300,14 @@ pub async fn find_duplicates(
             })
             .collect();
 
-        // Start comparison phase
+        // Phase 3: Enhanced comparison with multiple similarity levels
         let _ = window.emit(
             "dupe-check-progress",
             ProgressInfo {
-                filename: "Duplicate Check".to_string(),
+                filename: "Enhanced Duplicate Check".to_string(),
                 progress: 50.0,
                 status: "processing".to_string(),
-                phase: PHASE_COMPARING.to_string(),
+                phase: "Comparing Images".to_string(),
                 current_file: None,
                 target_file: None,
                 processed_files: 0,
@@ -261,15 +320,11 @@ pub async fn find_duplicates(
         let duplicates = Arc::new(Mutex::new(Vec::new()));
         let processed = Arc::new(Mutex::new(HashSet::<PathBuf>::new()));
         let comparison_count = Arc::new(AtomicUsize::new(0));
-
-        // Calculate total potential comparisons for better progress reporting
         let total_comparisons = image_hashes.len() * (image_hashes.len() - 1) / 2;
-        let compare_start = std::time::Instant::now();
 
-        // Process image chunks in parallel more efficiently
-        image_hashes.par_chunks(BATCH_SIZE / 4).enumerate().for_each(|(chunk_idx, chunk)| {
+        image_hashes.par_chunks(50).enumerate().for_each(|(chunk_idx, chunk)| {
             for (idx, img1) in chunk.iter().enumerate() {
-                let global_idx = chunk_idx * (BATCH_SIZE / 4) + idx;
+                let global_idx = chunk_idx * 50 + idx;
 
                 if processed.lock().unwrap().contains(&img1.path) {
                     continue;
@@ -277,7 +332,6 @@ pub async fn find_duplicates(
 
                 let mut current_duplicates = Vec::new();
 
-                // Only compare with remaining images to avoid duplicate work
                 for img2 in image_hashes.iter().skip(global_idx + 1) {
                     if processed.lock().unwrap().contains(&img2.path) {
                         continue;
@@ -285,83 +339,81 @@ pub async fn find_duplicates(
 
                     let comp_count = comparison_count.fetch_add(1, Ordering::Relaxed);
 
-                    // Update progress more frequently for very large collections
-                    if comp_count % 500 == 0 || (comp_count < 1000 && comp_count % 100 == 0) {
-                        let elapsed = compare_start.elapsed().as_secs_f64();
-                        let estimated_remaining = if comp_count > 0 {
-                            Some(format_time((elapsed / comp_count as f64) * (total_comparisons - comp_count) as f64))
-                        } else {
-                            None
-                        };
-
-                        let progress = 50.0 + (comp_count as f32 / total_comparisons as f32) * 49.0;
-
+                    // Progress reporting
+                    if comp_count % 1000 == 0 {
+                        let progress = 50.0 + (comp_count as f32 / total_comparisons as f32) * 45.0;
                         let _ = window.emit(
                             "dupe-check-progress",
                             ProgressInfo {
-                                filename: "Duplicate Check".to_string(),
-                                progress: progress.min(99.0),
+                                filename: "Enhanced Duplicate Check".to_string(),
+                                progress: progress.min(95.0),
                                 status: "processing".to_string(),
-                                phase: PHASE_COMPARING.to_string(),
+                                phase: "Comparing Images".to_string(),
                                 current_file: Some(img1.path.file_name().unwrap_or_default().to_string_lossy().to_string()),
                                 target_file: Some(img2.path.file_name().unwrap_or_default().to_string_lossy().to_string()),
                                 processed_files: comp_count,
                                 total_files: total_comparisons,
-                                estimated_time_remaining: estimated_remaining,
+                                estimated_time_remaining: None,
                                 elapsed_time: Some(format_time(start_time.elapsed().as_secs_f64())),
                             },
                         );
                     }
 
-                    if let Ok(similarity) = compute_similarity(&img1.hash, &img2.hash) {
+                    if let Ok(similarity) = compute_enhanced_similarity(&img1.visual_hash, &img2.visual_hash) {
                         if similarity >= threshold {
+                            let (similarity_level, match_type) = analyze_similarity(
+                                similarity,
+                                img1.file_size,
+                                img2.file_size,
+                                &img1.file_hash,
+                                &img2.file_hash,
+                            );
+
                             processed.lock().unwrap().insert(img2.path.clone());
-                            current_duplicates.push(DuplicateMatch {
+                            current_duplicates.push(EnhancedDuplicateMatch {
                                 path: img2.path.to_string_lossy().to_string(),
                                 category: img2.category.clone(),
+                                file_size: img2.file_size,
+                                file_hash: img2.file_hash.clone(),
                                 similarity,
+                                similarity_level: similarity_level_to_string(similarity_level),
+                                match_type,
                             });
                         }
                     }
                 }
 
                 if !current_duplicates.is_empty() {
-                    duplicates.lock().unwrap().push(DuplicateImage {
+                    let (similarity_level, _) = analyze_similarity(
+                        1.0,
+                        img1.file_size,
+                        img1.file_size,
+                        &img1.file_hash,
+                        &img1.file_hash,
+                    );
+
+                    duplicates.lock().unwrap().push(EnhancedDuplicateImage {
                         path: img1.path.to_string_lossy().to_string(),
                         category: img1.category.clone(),
+                        file_size: img1.file_size,
+                        file_hash: img1.file_hash.clone(),
                         similarity: 1.0,
+                        similarity_level: similarity_level_to_string(similarity_level),
                         duplicates: current_duplicates,
                     });
                 }
             }
         });
 
-        // Finalizing phase
-        let _ = window.emit(
-            "dupe-check-progress",
-            ProgressInfo {
-                filename: "Duplicate Check".to_string(),
-                progress: 99.0,
-                status: "finalizing".to_string(),
-                phase: PHASE_FINALIZING.to_string(),
-                current_file: None,
-                target_file: None,
-                processed_files: total_comparisons,
-                total_files: total_comparisons,
-                estimated_time_remaining: Some("Almost done".to_string()),
-                elapsed_time: Some(format_time(start_time.elapsed().as_secs_f64())),
-            },
-        );
-
-        // Complete phase
+        // Complete
         let final_results = Arc::try_unwrap(duplicates).unwrap().into_inner().unwrap();
         let _ = window.emit(
             "dupe-check-finished",
             ProgressInfo {
-                filename: "Duplicate Check".to_string(),
+                filename: "Enhanced Duplicate Check".to_string(),
                 progress: 100.0,
                 status: "complete".to_string(),
-                phase: PHASE_COMPLETE.to_string(),
+                phase: "Complete".to_string(),
                 current_file: None,
                 target_file: None,
                 processed_files: final_results.len(),
@@ -380,18 +432,15 @@ pub async fn find_duplicates(
 fn collect_image_paths(root_path: &Path) -> Result<Vec<(PathBuf, String)>, String> {
     let mut image_paths = Vec::new();
 
-    // Check if the root path exists
     if !root_path.exists() {
         return Err(format!("Root path does not exist: {}", root_path.display()));
     }
 
-    // Read directory entries in parallel for better performance
     let entries = match std::fs::read_dir(root_path) {
         Ok(entries) => entries.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())?,
         Err(e) => return Err(format!("Failed to read root directory: {}", e)),
     };
 
-    // Process each category directory in parallel
     let paths: Vec<(PathBuf, String)> = entries.par_iter()
         .filter_map(|entry| {
             let category_path = entry.path();
@@ -409,7 +458,7 @@ fn collect_image_paths(root_path: &Path) -> Result<Vec<(PathBuf, String)>, Strin
                 return None;
             }
 
-            let files = match std::fs::read_dir(&category_path) {
+            let files = match fs::read_dir(&category_path) {
                 Ok(files) => files.collect::<Result<Vec<_>, _>>().ok()?,
                 Err(_) => return None,
             };
@@ -431,6 +480,5 @@ fn collect_image_paths(root_path: &Path) -> Result<Vec<(PathBuf, String)>, Strin
         .collect();
 
     image_paths.extend(paths);
-
     Ok(image_paths)
 }

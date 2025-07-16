@@ -1,6 +1,6 @@
 [package]
 name = "lockerz"
-version = "0.4.0"
+version = "0.4.1"
 description = "Let's organize your refernce"
 authors = ["MrSypz"]
 license = "MIT"
@@ -8,14 +8,9 @@ repository = "https://github.com/MrSypz/LockerZ/"
 edition = "2021"
 rust-version = "1.77.2"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.
-
-#[profile.release.package.wry]
-#debug = true
-#debug-assertions = true
 
 [profile.release]
 codegen-units = 1 # Allows LLVM to perform better optimization.
@@ -52,3 +47,4 @@ rayon = "1.10.0"
 num_cpus = "1.16.0"
 dashmap = "6.1.0"
 tauri-plugin-clipboard-manager = "2.2.1"
+blake3 = "1.8.2"
