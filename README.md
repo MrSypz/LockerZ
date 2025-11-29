@@ -1,7 +1,3 @@
-<div style="display: flex; justify-content: center; width: 100%">
-    <image src="./src-tauri/icons/icon.png" width="200px" height="200px"/>
-</div>
-
 # LockerZ 🔒🖼️
 
 LockerZ is a simple tool designed for helping manage and organize images for reference or idea gathering. It aims to significantly reduce the time spent searching for image references on your own PC.
