@@ -48,3 +48,5 @@ next-env.d.ts
 
 # Vite build output
 /dist
+
+pnpm-lock.yaml
