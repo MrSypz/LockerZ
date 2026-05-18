@@ -20,7 +20,7 @@ export function TitleBar() {
      */
     <div
       data-tauri-drag-region
-      className="h-8 flex items-center justify-between flex-shrink-0 bg-black/20 select-none"
+      className="h-8 flex items-center justify-between shrink-0 bg-black/20 select-none"
     >
       {/* App name — drags the window */}
       <span
