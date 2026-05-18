@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect, useCallback, useRef } from "react"
 import { toast } from "@/hooks/use-toast"
 import { Loader2, AlertCircle, Upload, Trash2, Info } from "lucide-react"

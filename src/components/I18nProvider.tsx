@@ -34,10 +34,17 @@ export default function I18nProvider({ children, initialLang, onLanguageChange }
     const [isInitialized, setIsInitialized] = useState(false)
 
     useEffect(() => {
-        initI18n(initialLang).then(() => setIsInitialized(true))
+        initI18n(initialLang).then(() => {
+            document.documentElement.setAttribute('data-lang', initialLang)
+            setIsInitialized(true)
+        })
 
-        i18n.on('languageChanged', onLanguageChange)
-        return () => { i18n.off('languageChanged', onLanguageChange) }
+        const handleLangChanged = (lang: string) => {
+            document.documentElement.setAttribute('data-lang', lang)
+            onLanguageChange(lang)
+        }
+        i18n.on('languageChanged', handleLangChanged)
+        return () => { i18n.off('languageChanged', handleLangChanged) }
     }, [initialLang, onLanguageChange])
 
     if (!isInitialized) return null

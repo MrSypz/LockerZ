@@ -10,6 +10,8 @@
     "tauri": "tauri dev"
   },
   "dependencies": {
+    "@fontsource/noto-sans-jp": "^5.2.9",
+    "@fontsource/noto-sans-thai": "^5.2.8",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-context-menu": "^2.2.16",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -35,6 +37,8 @@
     "cmdk": "^1.1.1",
     "framer-motion": "^12.38.0",
     "i18next": "^26.2.0",
+    "i18next-browser-languagedetector": "^8.2.1",
+    "i18next-resources-to-backend": "^1.2.1",
     "lucide-react": "^1.16.0",
     "radix-ui": "^1.4.3",
     "react": "^19.0.0",

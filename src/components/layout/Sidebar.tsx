@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom"
 import { Home, FolderOpen, Image, Settings, Menu, Info, CheckSquare } from "lucide-react"
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -8,18 +9,19 @@ import { getVersion } from "@tauri-apps/api/app"
 import { cn } from "@/lib/utils"
 
 const menuItems = [
-  { icon: Home,        label: "Home",           to: "/" },
-  { icon: Image,       label: "Locker",         to: "/locker" },
-  { icon: FolderOpen,  label: "Category",       to: "/category" },
-  { icon: Settings,    label: "Settings",       to: "/settings" },
-  { icon: CheckSquare, label: "Dupe Checker",   to: "/feature/imagedupe" },
-  { icon: Info,        label: "About",          to: "/about" },
+  { icon: Home,        labelKey: "sidebar.home",           to: "/" },
+  { icon: Image,       labelKey: "sidebar.image",          to: "/locker" },
+  { icon: FolderOpen,  labelKey: "sidebar.folder",         to: "/category" },
+  { icon: Settings,    labelKey: "settings.title",         to: "/settings" },
+  { icon: CheckSquare, labelKey: "sidebar.feature.imagedupe", to: "/feature/imagedupe" },
+  { icon: Info,        labelKey: "about.title",            to: "/about" },
 ]
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [appVersion, setAppVersion] = useState("0.0.0")
   const { pathname } = useLocation()
+  const { t } = useTranslation()
 
   useEffect(() => {
     getVersion().then(setAppVersion).catch(() => setAppVersion("Unknown"))
@@ -33,7 +35,6 @@ export function Sidebar() {
         isCollapsed ? "w-16" : "w-64",
       )}
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         {!isCollapsed && (
           <h1 className="text-2xl font-bold gradient-text-header">LockerZ</h1>
@@ -43,7 +44,6 @@ export function Sidebar() {
         </Button>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1">
         <ul className="space-y-2">
           {menuItems.map((item) => (
@@ -57,7 +57,7 @@ export function Sidebar() {
               >
                 <item.icon size={24} className="text-primary shrink-0" />
                 {!isCollapsed && (
-                  <span className="ml-4 text-foreground">{item.label}</span>
+                  <span className="ml-4 text-foreground">{t(item.labelKey)}</span>
                 )}
               </Link>
             </li>
@@ -65,7 +65,6 @@ export function Sidebar() {
         </ul>
       </nav>
 
-      {/* Footer */}
       <Separator className="my-4" />
       <div className="text-xs text-muted-foreground">
         {isCollapsed ? appVersion : `LockerZ ${appVersion}`}

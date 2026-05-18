@@ -1,4 +1,3 @@
-// @ts-nocheck
 import DuplicateChecker from "@/components/widget/DuplicateChecker"
 
 export default function DupeCheckerPage() {

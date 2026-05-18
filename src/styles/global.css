@@ -1,5 +1,10 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
+@import "@fontsource/noto-sans-thai/400.css";
+@import "@fontsource/noto-sans-thai/600.css";
+@import "@fontsource/noto-sans-thai/700.css";
+@import "@fontsource/noto-sans-jp/400.css";
+@import "@fontsource/noto-sans-jp/700.css";
 
 /*
  * Tailwind v4: @theme inline maps CSS variables to utility classes.
@@ -69,7 +74,7 @@
     overflow: hidden;
     background: transparent;
     color: hsl(var(--foreground));
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans Thai", "Noto Sans JP", sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -82,6 +87,10 @@
   ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
   * { scrollbar-width: thin; scrollbar-color: hsl(var(--muted)) transparent; }
 }
+
+/* Per-language font priority — set via data-lang on <html> */
+[data-lang="th"] body { font-family: "Noto Sans Thai", system-ui, sans-serif; }
+[data-lang="jp"] body { font-family: "Noto Sans JP", system-ui, sans-serif; }
 
 .gradient-text-header {
   background: linear-gradient(to right, #3b82f6, #a855f7);
