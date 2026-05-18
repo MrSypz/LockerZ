@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { getVersion } from "@tauri-apps/api/app"
-import { Github } from "lucide-react"
+import { ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -30,7 +30,7 @@ export default function AboutPage() {
           <CardFooter>
             <Button asChild className="w-full">
               <a href="https://github.com/MrSypz/LockerZ/issues/new" target="_blank" rel="noopener noreferrer">
-                <Github className="mr-2 h-4 w-4" />
+                <ExternalLink className="mr-2 h-4 w-4" />
                 Report an Issue
               </a>
             </Button>
