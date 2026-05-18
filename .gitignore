@@ -48,6 +48,3 @@ next-env.d.ts
 
 # Vite build output
 /dist
-
-.claude/
-CLAUDE.md
