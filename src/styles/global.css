@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
 /*
  * Tailwind v4: @theme inline maps CSS variables to utility classes.
