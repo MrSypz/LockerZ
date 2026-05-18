@@ -417,77 +417,78 @@ export default function LockerPage() {
                                     onImagesPerPageChange={handleImagesPerPageChange}
                                 />
                     </div>
+                </div>
 
-                    <MoveDialog
-                        isOpen={moveDialogOpen}
-                        onCloseAction={() => setMoveDialogOpen(false)}
-                        onMoveAction={handleMove}
-                        categories={categories}
-                        currentCategory={selectedFile?.category || ""}
-                    />
+                <MoveDialog
+                    isOpen={moveDialogOpen}
+                    onCloseAction={() => setMoveDialogOpen(false)}
+                    onMoveAction={handleMove}
+                    categories={categories}
+                    currentCategory={selectedFile?.category || ""}
+                />
 
-                    <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the file.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    onClick={() => selectedFile && handleDelete(selectedFile)}
-                                >
-                                    Delete
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the file.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => selectedFile && handleDelete(selectedFile)}
+                            >
+                                Delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
 
-                    <MoveDialog
-                        isOpen={bulkMoveDialogOpen}
-                        onCloseAction={() => setBulkMoveDialogOpen(false)}
-                        onMoveAction={handleBulkMoveConfirm}
-                        categories={categories}
-                        currentCategory={selectedFilesForBulkAction[0]?.category || ""}
-                        title={t("locker.bulk.moveTitle", { count: selectedFilesForBulkAction.length })}
-                    />
+                <MoveDialog
+                    isOpen={bulkMoveDialogOpen}
+                    onCloseAction={() => setBulkMoveDialogOpen(false)}
+                    onMoveAction={handleBulkMoveConfirm}
+                    categories={categories}
+                    currentCategory={selectedFilesForBulkAction[0]?.category || ""}
+                    title={t("locker.bulk.moveTitle", { count: selectedFilesForBulkAction.length })}
+                />
 
-                    <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
-                        <AlertDialogContent className="max-w-md">
-                            <AlertDialogHeader>
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className="flex items-center gap-2 mb-2"
-                                >
-                                    <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-full">
-                                        <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
-                                    </div>
-                                    <AlertDialogTitle>{t("locker.bulk.deleteTitle")}</AlertDialogTitle>
-                                </motion.div>
-                                <div className="space-y-4 text-sm text-muted-foreground">
-                                    <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 rounded-md">
-                                        <Info className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                                        <span>{t("locker.bulk.deleteDescription", { count: selectedFilesForBulkAction.length })}</span>
-                                    </div>
-                                    <BulkActionStatistics files={selectedFilesForBulkAction} />
+                <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+                    <AlertDialogContent className="max-w-md">
+                        <AlertDialogHeader>
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="flex items-center gap-2 mb-2"
+                            >
+                                <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-full">
+                                    <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
                                 </div>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter className="mt-4 gap-2">
-                                <AlertDialogCancel className="flex-1">{t("common.cancel")}</AlertDialogCancel>
-                                <AlertDialogAction
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2 flex-1"
-                                    onClick={confirmBulkDelete}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                    {t("common.delete")}
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                                <AlertDialogTitle>{t("locker.bulk.deleteTitle")}</AlertDialogTitle>
+                            </motion.div>
+                            <div className="space-y-4 text-sm text-muted-foreground">
+                                <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 rounded-md">
+                                    <Info className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                                    <span>{t("locker.bulk.deleteDescription", { count: selectedFilesForBulkAction.length })}</span>
+                                </div>
+                                <BulkActionStatistics files={selectedFilesForBulkAction} />
+                            </div>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter className="mt-4 gap-2">
+                            <AlertDialogCancel className="flex-1">{t("common.cancel")}</AlertDialogCancel>
+                            <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2 flex-1"
+                                onClick={confirmBulkDelete}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                                {t("common.delete")}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </DragAndDropProvider>
         </BatchProcessingProvider>
     )
