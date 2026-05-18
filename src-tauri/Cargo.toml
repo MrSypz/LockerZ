@@ -10,7 +10,28 @@ rust-version = "1.77.2"
 
 
 [profile.dev]
-incremental = true # Compile your binary in smaller steps.
+incremental = true
+
+# Keep image processing crates fully optimized in debug builds.
+# Without this, zune-jpeg/fast_image_resize run scalar loops — 10-20x slower than
+# the pre-compiled OpenCV DLL they replaced.
+[profile.dev.package.fast_image_resize]
+opt-level = 3
+
+[profile.dev.package.image]
+opt-level = 3
+
+[profile.dev.package.zune-jpeg]
+opt-level = 3
+
+[profile.dev.package.zune-core]
+opt-level = 3
+
+[profile.dev.package.rayon]
+opt-level = 3
+
+[profile.dev.package.rayon-core]
+opt-level = 3
 
 [profile.release]
 codegen-units = 1 # Allows LLVM to perform better optimization.
@@ -31,7 +52,8 @@ serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "2.1.0", features = ["protocol-asset"] }
 tauri-plugin-dialog = "2"
-opencv = { version = "0.93.5", default-features = false, features = ["imgproc", "imgcodecs"] }
+image = { version = "0.25", features = ["jpeg", "png", "gif", "bmp", "tiff", "webp"] }
+fast_image_resize = "6.0.0"
 base64 = "0.22.1"
 lazy_static = "1.5.0"
 once_cell = "1.9"
@@ -47,4 +69,3 @@ rayon = "1.10.0"
 num_cpus = "1.16.0"
 dashmap = "6.1.0"
 tauri-plugin-clipboard-manager = "2.2.1"
-blake3 = "1.8.2"

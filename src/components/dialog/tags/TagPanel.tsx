@@ -9,6 +9,7 @@ import { TagCreator } from "./TagCreator"
 import { TagEditor } from "./TagEditor"
 import { DatabaseService, type TagInfo } from "@/hooks/use-database"
 import { useToast } from "@/hooks/use-toast"
+import { useTagOperations } from "@/hooks/use-tag-operations"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, XCircle, Tag, Plus, Settings, Search } from "lucide-react"
 import { motion } from "framer-motion"
@@ -32,78 +33,25 @@ export function TagPanel({ imageId, onComplete }: TagPanelProps) {
     const loadTags = async () => {
         setIsLoading(true)
         try {
-            const imageTags = await db.getImageTags(imageId)
-            setSelectedTags(imageTags)
-            setInitialTags(imageTags)
-            const allTags = await db.getAllTags()
-            setAvailableTags(allTags)
+            const [imageTags, allTags] = await Promise.all([
+                db.getImageTags(imageId),
+                db.getAllTags(),
+            ])
+            setSelectedTags(imageTags as unknown as TagInfo[])
+            setInitialTags(imageTags as unknown as TagInfo[])
+            setAvailableTags(allTags as unknown as TagInfo[])
         } catch (error) {
-            toast({
-                title: "Error loading tags",
-                description: String(error),
-                variant: "destructive",
-            })
+            toast({ title: "Error loading tags", description: String(error), variant: "destructive" })
         } finally {
             setIsLoading(false)
         }
     }
 
     useEffect(() => {
-        if (imageId) {
-            loadTags()
-        }
+        if (imageId) loadTags()
     }, [imageId])
 
-    const handleTagCreate = async (tagName: string) => {
-        try {
-            await db.addTag(tagName)
-            await loadTags()
-            toast({
-                title: "Tag created",
-                description: `Tag "${tagName}" has been created successfully.`,
-            })
-        } catch (error) {
-            toast({
-                title: "Error creating tag",
-                description: String(error),
-                variant: "destructive",
-            })
-        }
-    }
-
-    const handleTagEdit = async (oldName: string, newName: string) => {
-        try {
-            await db.editTag(oldName, newName)
-            await loadTags()
-            toast({
-                title: "Tag updated",
-                description: `Tag "${oldName}" has been renamed to "${newName}".`,
-            })
-        } catch (error) {
-            toast({
-                title: "Error updating tag",
-                description: String(error),
-                variant: "destructive",
-            })
-        }
-    }
-
-    const handleTagDelete = async (tagName: string) => {
-        try {
-            await db.deleteTag(tagName)
-            await loadTags()
-            toast({
-                title: "Tag deleted",
-                description: `Tag "${tagName}" has been deleted successfully.`,
-            })
-        } catch (error) {
-            toast({
-                title: "Error deleting tag",
-                description: String(error),
-                variant: "destructive",
-            })
-        }
-    }
+    const { handleTagCreate, handleTagEdit, handleTagDelete } = useTagOperations(loadTags)
 
     const handleTagToggle = async (tag: TagInfo) => {
         // Just update the UI state, actual changes will be applied when saving

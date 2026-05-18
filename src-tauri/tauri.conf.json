@@ -49,8 +49,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": [
-      "opencv_world4110.dll"
-    ]
+    "resources": []
   }
 }

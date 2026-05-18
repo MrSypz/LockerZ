@@ -137,33 +137,33 @@ impl Logger {
 }
 #[macro_export]
 macro_rules! log_info {
-    ($($arg:tt)*) => {
-        crate::LOGGER.info(format_args!($($arg)*)).unwrap();
-    };
+    ($($arg:tt)*) => {{
+        crate::LOGGER.info(format_args!($($arg)*)).unwrap()
+    }};
 }
 #[macro_export]
 macro_rules! log_warn {
-    ($($arg:tt)*) => {
-        crate::LOGGER.warn(format_args!($($arg)*)).unwrap();
-    };
+    ($($arg:tt)*) => {{
+        crate::LOGGER.warn(format_args!($($arg)*)).unwrap()
+    }};
 }
 #[macro_export]
 macro_rules! log_error {
-    ($($arg:tt)*) => {
-        crate::LOGGER.error(format_args!($($arg)*)).unwrap();
-    };
+    ($($arg:tt)*) => {{
+        crate::LOGGER.error(format_args!($($arg)*)).unwrap()
+    }};
 }
 #[macro_export]
 macro_rules! log_debug {
-    ($($arg:tt)*) => {
-        crate::LOGGER.debug(format_args!($($arg)*)).unwrap();
-    };
+    ($($arg:tt)*) => {{
+        crate::LOGGER.debug(format_args!($($arg)*)).unwrap()
+    }};
 }
 #[macro_export]
 macro_rules! log_pre {
-    ($($arg:tt)*) => {
-        crate::LOGGER.pre(format_args!($($arg)*)).unwrap();
-    };
+    ($($arg:tt)*) => {{
+        crate::LOGGER.pre(format_args!($($arg)*)).unwrap()
+    }};
 }
 // Declare a global static instance of Logger using Lazy
 pub static LOGGER: Lazy<Logger> = Lazy::new(|| Logger::new().expect("Failed to initialize logger"));

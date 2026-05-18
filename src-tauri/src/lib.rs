@@ -28,7 +28,7 @@ use modules::{
     filehandler::move_file,
     filehandler::move_file_category,
     filehandler::save_and_move_file,
-    imagedupe::find_duplicates, // Add this line
+    imagedupe::find_duplicates,
     imgoptimize::batch_optimize_images,
     imgoptimize::handle_optimize_image_request,
     logger::LOGGER,
@@ -36,8 +36,6 @@ use modules::{
 };
 use tauri::Manager;
 use window_vibrancy::apply_acrylic;
-
-use crate::modules::imagedupe::initialize_duplicate_detection;
 
 
 #[tauri::command]
@@ -81,7 +79,6 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
         log_error!("Failed to create category tags: {}", e);
     }
     start_cache_cleanup();
-    initialize_duplicate_detection();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
