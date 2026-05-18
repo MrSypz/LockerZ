@@ -14,7 +14,7 @@ export default function LockerPage() {
   const totalPages = 1
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-2rem)] overflow-hidden">
       {/* Toolbar */}
       <div className="flex items-center gap-3 px-6 py-3 border-b bg-background/50 backdrop-blur-sm shrink-0">
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>

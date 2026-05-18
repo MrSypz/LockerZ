@@ -14,7 +14,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
 
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>

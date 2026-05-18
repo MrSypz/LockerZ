@@ -24,7 +24,7 @@ export default function SettingsPage() {
   const [lang, setLang] = useState("en")
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
+    <div className="p-6">
       <h1 className="text-3xl font-bold mb-6 gradient-text-header">Settings</h1>
 
       <Card className="w-full max-w-2xl mx-auto">
