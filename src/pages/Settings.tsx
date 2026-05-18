@@ -72,9 +72,7 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="flex h-screen">
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <main className="flex-1 overflow-y-auto p-6">
+        <div className="p-6">
                     <h1 className="text-3xl font-bold mb-6 gradient-text-header">{t('settings.title')}</h1>
 
                     <Card className="w-full max-w-2xl mx-auto">
@@ -182,8 +180,6 @@ export default function SettingsPage() {
                             </div>
                         </CardContent>
                     </Card>
-                </main>
-            </div>
         </div>
     )
 }

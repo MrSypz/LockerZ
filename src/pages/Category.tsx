@@ -102,9 +102,7 @@ export default function CategoryPage() {
     )
 
     return (
-        <div className="flex h-screen">
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <main className="flex-1 overflow-y-auto p-6">
+        <div className="p-6">
                     <div className="flex justify-between items-center mb-6">
                         <h1 className="text-3xl font-bold gradient-text-header">
                             {t('categories.page.head')}
@@ -172,8 +170,6 @@ export default function CategoryPage() {
                             </AnimatePresence>
                         </div>
                     )}
-                </main>
-            </div>
         </div>
     )
 }

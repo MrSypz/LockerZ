@@ -49,7 +49,7 @@ export default function LockerPage() {
     const [allFiles, setAllFiles] = useState<File[]>([])
     const [categories, setCategories] = useState<Category[]>([])
     const [selectedCategory, setSelectedCategory] = useState<string>(() => {
-        if (typeof window !== "undefined" && settings.rememberCategory)
+        if (typeof window !== "undefined" && settings?.rememberCategory)
             return localStorage.getItem("lastSelectedCategory") || "all"
         return "all"
     })
@@ -64,7 +64,7 @@ export default function LockerPage() {
         const savedImagesPerPage = localStorage.getItem(IMAGES_PER_PAGE_STORAGE_KEY)
         return savedImagesPerPage ? Number.parseInt(savedImagesPerPage, 10) : 10
     })
-    const [rememberCategory] = useState(settings.rememberCategory)
+    const [rememberCategory] = useState(settings?.rememberCategory ?? true)
 
     const [tagManagerOpen, setTagManagerOpen] = useState(false)
     const [selectedFileForTags, setSelectedFileForTags] = useState<File | null>(null)
@@ -330,10 +330,8 @@ export default function LockerPage() {
     return (
         <BatchProcessingProvider>
             <DragAndDropProvider onFilesDrop={handleFileDrop}>
-                <div className="flex h-screen">
-                    <div className="flex-1 flex flex-col overflow-hidden">
-                        <main className="flex-1 overflow-y-auto p-4 md:p-8">
-                            <div className="container mx-auto max-w-[2000px]">
+                <div className="p-4 md:p-8">
+                    <div className="container mx-auto max-w-[2000px]">
                                 <h1 className="text-3xl font-bold">Locker</h1>
                                 <CategorySelector
                                     selectedCategory={selectedCategory}
@@ -418,8 +416,6 @@ export default function LockerPage() {
                                     onPageChange={handlePageChange}
                                     onImagesPerPageChange={handleImagesPerPageChange}
                                 />
-                            </div>
-                        </main>
                     </div>
 
                     <MoveDialog
@@ -492,7 +488,6 @@ export default function LockerPage() {
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
-                </div>
             </DragAndDropProvider>
         </BatchProcessingProvider>
     )
