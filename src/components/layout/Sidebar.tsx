@@ -1,0 +1,75 @@
+import { Link, useLocation } from "react-router-dom"
+import { Home, FolderOpen, Image, Settings, Menu, Info, CheckSquare } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { getVersion } from "@tauri-apps/api/app"
+import { cn } from "@/lib/utils"
+
+const menuItems = [
+  { icon: Home,        label: "Home",           to: "/" },
+  { icon: Image,       label: "Locker",         to: "/locker" },
+  { icon: FolderOpen,  label: "Category",       to: "/category" },
+  { icon: Settings,    label: "Settings",       to: "/settings" },
+  { icon: CheckSquare, label: "Dupe Checker",   to: "/feature/imagedupe" },
+  { icon: Info,        label: "About",          to: "/about" },
+]
+
+export function Sidebar() {
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [appVersion, setAppVersion] = useState("0.0.0")
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    getVersion().then(setAppVersion).catch(() => setAppVersion("Unknown"))
+  }, [])
+
+  return (
+    <Card
+      className={cn(
+        "flex flex-col h-full rounded-none border-y-0 border-l-0 bg-secondary p-4",
+        "transition-all duration-300",
+        isCollapsed ? "w-16" : "w-64",
+      )}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        {!isCollapsed && (
+          <h1 className="text-2xl font-bold gradient-text-header">LockerZ</h1>
+        )}
+        <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)}>
+          <Menu size={24} />
+        </Button>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1">
+        <ul className="space-y-2">
+          {menuItems.map((item) => (
+            <li key={item.to}>
+              <Link
+                to={item.to}
+                className={cn(
+                  "flex items-center p-2 rounded-md hover:bg-primary/20",
+                  pathname === item.to && "bg-primary/20",
+                )}
+              >
+                <item.icon size={24} className="text-primary shrink-0" />
+                {!isCollapsed && (
+                  <span className="ml-4 text-foreground">{item.label}</span>
+                )}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* Footer */}
+      <Separator className="my-4" />
+      <div className="text-xs text-muted-foreground">
+        {isCollapsed ? appVersion : `LockerZ ${appVersion}`}
+      </div>
+    </Card>
+  )
+}
