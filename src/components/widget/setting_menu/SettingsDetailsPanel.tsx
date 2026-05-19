@@ -110,20 +110,23 @@ export default function SettingsDetailsPanel({ field, tab, settings, allTags, al
       )}
 
       {field.control === 'range' && (
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{field.format(field.min)}</span>
-            <span className="text-foreground font-semibold tabular-nums text-base">
+        <div className="space-y-3">
+          <div className="flex justify-between items-baseline">
+            <span className="text-xs text-muted-foreground">{field.format(field.min)}</span>
+            <span className="text-xl font-bold tabular-nums text-foreground">
               {field.format(field.getValue(settings))}
             </span>
-            <span>{field.format(field.max)}</span>
+            <span className="text-xs text-muted-foreground">{field.format(field.max)}</span>
           </div>
-          <div className="relative h-2 bg-muted rounded-full overflow-hidden">
-            <div
-              className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all"
-              style={{ width: `${((field.getValue(settings) - field.min) / (field.max - field.min)) * 100}%` }}
-            />
-          </div>
+          <input
+            type="range"
+            min={field.min}
+            max={field.max}
+            step={field.step}
+            value={field.getValue(settings)}
+            onChange={(e) => onChange(field.toPatch(Number(e.target.value)))}
+            className="w-full accent-primary cursor-pointer"
+          />
         </div>
       )}
     </aside>

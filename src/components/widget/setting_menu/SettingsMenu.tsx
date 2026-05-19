@@ -150,6 +150,7 @@ export default function SettingsMenu({ settings, onChange, onBrowse }: SettingsM
                 active={inputMode === 'keyboard' && activeId === field.id}
                 onKeyboardFocus={(id) => { setInputMode('keyboard'); setActiveId(id) }}
                 onPointerFocus={(id) => { setInputMode('pointer'); setActiveId(id) }}
+                onChange={onChange}
               />
             ))}
           </div>

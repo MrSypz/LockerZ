@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import SettingsMenuIcon from './SettingsMenuIcon'
 import type { Settings } from '@/types/file'
-import type { SettingField } from './settingsMenuTypes'
+import type { OptionField, RangeField, SettingField, ToggleField } from './settingsMenuTypes'
+import { cycleOption } from './settingsMenuUtils'
 import { cn } from '@/lib/utils'
 
 interface SettingsFieldRowProps {
@@ -10,11 +11,19 @@ interface SettingsFieldRowProps {
   active: boolean
   onKeyboardFocus: (id: string) => void
   onPointerFocus: (id: string) => void
+  onChange: (patch: Partial<Settings>) => void
 }
 
-export default function SettingsFieldRow({ field, settings, active, onKeyboardFocus, onPointerFocus }: SettingsFieldRowProps) {
+export default function SettingsFieldRow({ field, settings, active, onKeyboardFocus, onPointerFocus, onChange }: SettingsFieldRowProps) {
   const { t } = useTranslation()
   const label = t(field.titleKey, { defaultValue: field.id })
+
+  const handleRowClick = () => {
+    onPointerFocus(field.id)
+    if (field.control === 'toggle') {
+      onChange((field as ToggleField).toPatch(!(field as ToggleField).getValue(settings)))
+    }
+  }
 
   return (
     <div
@@ -28,60 +37,80 @@ export default function SettingsFieldRow({ field, settings, active, onKeyboardFo
       )}
       onMouseEnter={() => onPointerFocus(field.id)}
       onFocus={() => onKeyboardFocus(field.id)}
-      onClick={() => onPointerFocus(field.id)}
+      onClick={handleRowClick}
     >
       <span className="font-medium">{label}</span>
 
-      <div className="flex items-center gap-1.5 text-muted-foreground shrink-0">
+      <div className="flex items-center gap-1 text-muted-foreground shrink-0">
         {field.control === 'range' && (
           <>
-            <SettingsMenuIcon name="chevronLeft" className="opacity-40" />
-            <div className="relative w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+            <div className="relative w-20 h-1.5 bg-muted rounded-full overflow-hidden mx-1">
               <div
                 className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all"
-                style={{ width: `${((field.getValue(settings) - field.min) / (field.max - field.min)) * 100}%` }}
+                style={{ width: `${(((field as RangeField).getValue(settings) - (field as RangeField).min) / ((field as RangeField).max - (field as RangeField).min)) * 100}%` }}
               />
             </div>
-            <span className="w-12 text-right text-xs tabular-nums">{field.format(field.getValue(settings))}</span>
-            <SettingsMenuIcon name="chevronRight" className="opacity-40" />
+            <span className="w-12 text-right text-xs tabular-nums">
+              {(field as RangeField).format((field as RangeField).getValue(settings))}
+            </span>
           </>
         )}
 
         {field.control === 'toggle' && (
-          <>
-            <SettingsMenuIcon name="chevronLeft" className="opacity-40" />
-            <span className={cn(
-              "text-xs font-semibold w-8 text-center",
-              field.getValue(settings) ? "text-primary" : "text-muted-foreground",
-            )}>
-              {field.getValue(settings) ? 'On' : 'Off'}
-            </span>
-            <SettingsMenuIcon name="chevronRight" className="opacity-40" />
-          </>
+          <span className={cn(
+            "text-xs font-semibold w-8 text-center",
+            (field as ToggleField).getValue(settings) ? "text-primary" : "text-muted-foreground",
+          )}>
+            {(field as ToggleField).getValue(settings) ? 'On' : 'Off'}
+          </span>
         )}
 
         {field.control === 'option' && (
           <>
-            <SettingsMenuIcon name="chevronLeft" className="opacity-40" />
+            <button
+              type="button"
+              className="p-0.5 rounded hover:bg-muted-foreground/10 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation()
+                onPointerFocus(field.id)
+                onChange((field as OptionField).toPatch(
+                  cycleOption((field as OptionField).options, (field as OptionField).getValue(settings), -1)
+                ))
+              }}
+            >
+              <SettingsMenuIcon name="chevronLeft" />
+            </button>
             <span className="text-xs w-16 text-center truncate">
-              {field.options.find(o => o.value === field.getValue(settings))?.label ?? field.getValue(settings)}
+              {(field as OptionField).options.find(o => o.value === (field as OptionField).getValue(settings))?.label ?? (field as OptionField).getValue(settings)}
             </span>
-            <SettingsMenuIcon name="chevronRight" className="opacity-40" />
+            <button
+              type="button"
+              className="p-0.5 rounded hover:bg-muted-foreground/10 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation()
+                onPointerFocus(field.id)
+                onChange((field as OptionField).toPatch(
+                  cycleOption((field as OptionField).options, (field as OptionField).getValue(settings), 1)
+                ))
+              }}
+            >
+              <SettingsMenuIcon name="chevronRight" />
+            </button>
           </>
         )}
 
         {field.control === 'filepath' && (
           <span className="text-xs max-w-40 truncate text-right font-mono opacity-50">
-            {field.getValue(settings) || '—'}
+            {(field as { getValue: (s: Settings) => string }).getValue(settings) || '—'}
           </span>
         )}
 
         {field.control === 'tags' && (
           <span className={cn(
             "text-xs font-medium",
-            field.getValue(settings).length > 0 ? "text-amber-400" : "text-muted-foreground",
+            (field as { getValue: (s: Settings) => string[] }).getValue(settings).length > 0 ? "text-amber-400" : "text-muted-foreground",
           )}>
-            {field.getValue(settings).length} active
+            {(field as { getValue: (s: Settings) => string[] }).getValue(settings).length} active
           </span>
         )}
       </div>
