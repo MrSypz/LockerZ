@@ -66,4 +66,11 @@ export type TagsField = FieldBase & {
   toPatch: (v: string[]) => Partial<Settings>
 }
 
-export type SettingField = RangeField | ToggleField | OptionField | FilepathField | TagsField
+export type TextField = FieldBase & {
+  control: 'text'
+  placeholder?: string
+  getValue: (s: Settings) => string
+  toPatch: (v: string) => Partial<Settings>
+}
+
+export type SettingField = RangeField | ToggleField | OptionField | FilepathField | TagsField | TextField

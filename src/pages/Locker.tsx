@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { toast } from "@/hooks/use-toast"
-import { Loader2, AlertCircle, Upload, Trash2, Info } from "lucide-react"
+import { Loader2, Upload, Trash2, Info } from "lucide-react"
 import { open } from "@tauri-apps/plugin-dialog"
 import { invoke } from "@tauri-apps/api/core"
 import { MoveDialog } from "@/components/widget/Move-dialog"
@@ -345,31 +345,18 @@ export default function LockerPage() {
                                         <p className="text-foreground font-medium">Loading images...</p>
                                     </div>
                                 ) : !files || files.length === 0 ? (
-                                    <DragDropZone className="h-64 mt-8 relative" hasContent={false}>
-                                        <div className="absolute inset-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 opacity-10 pointer-events-none">
-                                            {[...Array(10)].map((_, index) => (
-                                                <motion.div
-                                                    key={index}
-                                                    className="aspect-[2/3] rounded-lg bg-muted"
-                                                    initial={{ opacity: 0, scale: 0.9 }}
-                                                    animate={{ opacity: 1, scale: 1, transition: { delay: index * 0.1, duration: 0.2 } }}
-                                                />
-                                            ))}
-                                        </div>
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.3 }}
-                                                className="flex flex-col items-center space-y-4"
-                                            >
-                                                <AlertCircle className="w-12 h-12 text-muted-foreground" />
-                                                <p className="text-muted-foreground font-medium text-center">
-                                                    {t("categories.imageSelection.noImages")}
-                                                </p>
-                                                <Upload className="h-10 w-10 text-gray-400 animate-bounce" />
-                                            </motion.div>
-                                        </div>
+                                    <DragDropZone className="mt-8" hasContent={false}>
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 16 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                            className="flex flex-col items-center justify-center gap-4 py-20 text-muted-foreground"
+                                        >
+                                            <Upload className="h-12 w-12 opacity-40" />
+                                            <p className="font-medium text-center">
+                                                {t("categories.imageSelection.noImages")}
+                                            </p>
+                                        </motion.div>
                                     </DragDropZone>
                                 ) : (
                                     <FileGrid

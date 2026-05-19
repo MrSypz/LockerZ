@@ -23,6 +23,7 @@ struct CachedImage {
     data: Vec<u8>,
     timestamp: u64,
     access_count: u32,
+    path: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -67,8 +68,12 @@ fn get_cached(key: u64) -> Option<Vec<u8>> {
     None
 }
 
-fn set_cached(key: u64, data: Vec<u8>) {
-    IMAGE_CACHE.insert(key, CachedImage { data, timestamp: now_secs(), access_count: 1 });
+fn set_cached(key: u64, path: &str, data: Vec<u8>) {
+    IMAGE_CACHE.insert(key, CachedImage { data, timestamp: now_secs(), access_count: 1, path: path.to_string() });
+}
+
+pub fn evict_path_prefix(prefix: &str) {
+    IMAGE_CACHE.retain(|_, v| !v.path.starts_with(prefix));
 }
 
 #[tauri::command]
@@ -87,12 +92,13 @@ pub async fn handle_optimize_image_request(
         return Ok(general_purpose::STANDARD.encode(&cached));
     }
 
+    let path_for_cache = src.clone();
     let bytes = task::spawn_blocking(move || process_image(&src, width, height, quality))
         .await
         .map_err(|e| e.to_string())?
         .map_err(|e| e.to_string())?;
 
-    set_cached(key, bytes.clone());
+    set_cached(key, &path_for_cache, bytes.clone());
     Ok(general_purpose::STANDARD.encode(&bytes))
 }
 
@@ -111,7 +117,7 @@ pub async fn batch_optimize_images(request: BatchRequest) -> Result<Vec<BatchRes
             }
             match process_image(&path, width, height, quality) {
                 Ok(bytes) => {
-                    set_cached(key, bytes.clone());
+                    set_cached(key, &path, bytes.clone());
                     BatchResult { path, data: Some(general_purpose::STANDARD.encode(&bytes)), error: None }
                 }
                 Err(e) => BatchResult { path, data: None, error: Some(e.to_string()) },

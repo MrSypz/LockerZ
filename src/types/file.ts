@@ -34,4 +34,5 @@ export interface Settings {
     imageHeight: number;
     batch_process?: number;
     sensitive_tags: string[];
+    owner_name: string;
 }

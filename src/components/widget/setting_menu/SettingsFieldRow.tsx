@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import SettingsMenuIcon from './SettingsMenuIcon'
 import type { Settings } from '@/types/file'
-import type { OptionField, RangeField, SettingField, ToggleField } from './settingsMenuTypes'
+import type { OptionField, RangeField, SettingField, TextField, ToggleField } from './settingsMenuTypes'
 import { cycleOption } from './settingsMenuUtils'
 import { cn } from '@/lib/utils'
 
@@ -20,9 +20,6 @@ export default function SettingsFieldRow({ field, settings, active, onKeyboardFo
 
   const handleRowClick = () => {
     onPointerFocus(field.id)
-    if (field.control === 'toggle') {
-      onChange((field as ToggleField).toPatch(!(field as ToggleField).getValue(settings)))
-    }
   }
 
   return (
@@ -111,6 +108,12 @@ export default function SettingsFieldRow({ field, settings, active, onKeyboardFo
             (field as { getValue: (s: Settings) => string[] }).getValue(settings).length > 0 ? "text-amber-400" : "text-muted-foreground",
           )}>
             {(field as { getValue: (s: Settings) => string[] }).getValue(settings).length} active
+          </span>
+        )}
+
+        {field.control === 'text' && (
+          <span className="text-xs max-w-32 truncate text-right text-muted-foreground">
+            {(field as TextField).getValue(settings) || '—'}
           </span>
         )}
       </div>

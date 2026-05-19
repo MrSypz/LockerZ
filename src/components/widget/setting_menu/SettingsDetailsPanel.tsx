@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { FolderOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Settings } from '@/types/file'
-import type { SettingField, TabId, TagsField } from './settingsMenuTypes'
+import type { SettingField, TabId, TagsField, TextField, ToggleField } from './settingsMenuTypes'
 import { cn } from '@/lib/utils'
 
 function SensitiveChip({ name, field, settings, onChange }: {
@@ -106,6 +106,44 @@ export default function SettingsDetailsPanel({ field, tab, settings, allTags, al
               </p>
             </>
           )}
+        </div>
+      )}
+
+      {field.control === 'toggle' && (
+        <button
+          type="button"
+          onClick={() => onChange((field as ToggleField).toPatch(!(field as ToggleField).getValue(settings)))}
+          className={cn(
+            "flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-colors w-fit",
+            (field as ToggleField).getValue(settings)
+              ? "bg-primary/15 border-primary/30 text-foreground"
+              : "bg-muted/30 border-border text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <div className={cn(
+            "w-10 h-5 rounded-full relative transition-colors",
+            (field as ToggleField).getValue(settings) ? "bg-primary" : "bg-muted-foreground/30",
+          )}>
+            <div className={cn(
+              "absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform",
+              (field as ToggleField).getValue(settings) ? "translate-x-5" : "translate-x-0.5",
+            )} />
+          </div>
+          <span className="text-sm font-medium">
+            {(field as ToggleField).getValue(settings) ? 'On' : 'Off'}
+          </span>
+        </button>
+      )}
+
+      {field.control === 'text' && (
+        <div className="space-y-2">
+          <input
+            type="text"
+            value={(field as TextField).getValue(settings)}
+            placeholder={(field as TextField).placeholder ?? ''}
+            onChange={(e) => onChange((field as TextField).toPatch(e.target.value))}
+            className="w-full rounded-md border bg-muted/30 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          />
         </div>
       )}
 

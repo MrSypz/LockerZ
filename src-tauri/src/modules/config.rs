@@ -20,6 +20,8 @@ pub struct Config {
     pub imageHeight: u32,
     pub batch_process: u8,
     pub sensitive_tags: Vec<String>,
+    #[serde(default)]
+    pub owner_name: String,
 }
 
 pub static CONFIG: Lazy<RwLock<Config>> = Lazy::new(|| {
@@ -115,6 +117,7 @@ impl Default for Config {
             imageHeight: 540,
             batch_process: 32,
             sensitive_tags: vec!["explicit".to_string()],
+            owner_name: String::new(),
         }
     }
 }
@@ -213,6 +216,9 @@ pub async fn update_settings(new_settings: Value) -> Result<Config, String> {
             .iter()
             .filter_map(|v| v.as_str().map(|s| s.to_string()))
             .collect();
+    }
+    if let Some(v) = new_settings.get("owner_name").and_then(|v| v.as_str()) {
+        current_config.owner_name = v.to_string();
     }
 
     current_config.write_config(&config_path).map_err(|e| {

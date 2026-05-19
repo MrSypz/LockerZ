@@ -1,10 +1,11 @@
 @import "tailwindcss";
-@plugin "tailwindcss-animate";
 @import "@fontsource/noto-sans-thai/400.css";
-@import "@fontsource/noto-sans-thai/600.css";
 @import "@fontsource/noto-sans-thai/700.css";
 @import "@fontsource/noto-sans-jp/400.css";
 @import "@fontsource/noto-sans-jp/700.css";
+@import "@fontsource/noto-sans-thai/600.css";
+
+@plugin "tailwindcss-animate";
 
 /*
  * Tailwind v4: @theme inline maps CSS variables to utility classes.
@@ -60,6 +61,16 @@
     --input:                 0 0% 14.9%;
     --ring:                  0 0% 83.1%;
     --radius:                0.5rem;
+
+    /* Chart palette — full color values (used as fill="var(--chart-N)" in recharts) */
+    --chart-1: hsl(221, 83%, 63%);
+    --chart-2: hsl(262, 83%, 68%);
+    --chart-3: hsl(198, 93%, 60%);
+    --chart-4: hsl(142, 71%, 55%);
+    --chart-5: hsl(38, 92%, 60%);
+    --chart-6: hsl(16, 90%, 63%);
+    --chart-7: hsl(330, 81%, 65%);
+    --chart-8: hsl(173, 80%, 52%);
   }
 
   *, *::before, *::after {

@@ -285,6 +285,34 @@ impl FileCache {
         self.write_cache(root_path, "all", &all_files)
     }
 
+    pub fn remove_category(&self, root_path: &Path, category: &str) -> io::Result<()> {
+        let cache_key = self.generate_cache_key(root_path, category);
+
+        // Evict in-memory entry
+        {
+            let mut cache = self.cache.lock().unwrap();
+            cache.remove(&cache_key);
+        }
+
+        // Delete the on-disk .bin file
+        let bin_path = self.get_cache_path(root_path, category);
+        if bin_path.exists() {
+            fs::remove_file(&bin_path)?;
+        }
+
+        // Rebuild the "all" cache without this category's files
+        let all_key = self.generate_cache_key(root_path, "all");
+        {
+            let mut cache = self.cache.lock().unwrap();
+            if let Some(entry) = cache.get_mut(&all_key) {
+                entry.files.retain(|f| f.category != category);
+                self.write_cache(root_path, "all", &entry.files)?;
+            }
+        }
+
+        Ok(())
+    }
+
     pub async fn synchronize_cache(&self, root_path: &Path) -> io::Result<()> {
         let mut all_files = Vec::new();
 

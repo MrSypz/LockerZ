@@ -12,16 +12,16 @@ interface SettingsTabsProps {
 export default function SettingsTabs({ selectedTab, onSelect }: SettingsTabsProps) {
   const { t } = useTranslation()
   return (
-    <nav className="flex gap-1" aria-label="Settings sections">
+    <nav className="flex flex-col gap-0.5" aria-label="Settings sections">
       {SETTINGS_TABS.map(item => (
         <button
           key={item.id}
           type="button"
           onClick={() => onSelect(item.id)}
           className={cn(
-            "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+            "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left",
             item.id === selectedTab
-              ? "bg-primary text-primary-foreground"
+              ? "bg-primary/15 text-foreground ring-1 ring-primary/30"
               : "text-muted-foreground hover:text-foreground hover:bg-muted",
           )}
         >

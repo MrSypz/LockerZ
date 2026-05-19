@@ -7,12 +7,14 @@ mod modules {
     pub mod imagedupe;
     pub mod imgoptimize;
     pub mod logger;
+    pub mod pack;
     pub mod pathutils;
     pub mod stats;
 }
 
 use crate::modules::db::{create_category_tags, migrate_database};
 use crate::modules::imgoptimize::start_cache_cleanup;
+use crate::modules::pack::{cancel_export_pack, export_category_pack, import_category_pack};
 use modules::{
     category::create_category,
     category::delete_category,
@@ -122,7 +124,10 @@ pub fn run() {
             Database::edit_tag,
             Database::create_category_tags,
             Database::set_category_icon,
-            Database::get_category_icon
+            Database::get_category_icon,
+            export_category_pack,
+            cancel_export_pack,
+            import_category_pack,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

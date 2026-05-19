@@ -141,6 +141,19 @@
       "title": "センシティブコンテンツ",
       "description": "セーフモードがオンのとき、これらのタグが付いた画像はぼかし表示になります。"
     },
+    "ownerName": {
+      "title": "オーナー名",
+      "description": "エクスポートしたパックに埋め込まれる表示名です。"
+    },
+    "pack": {
+      "export": "パックをエクスポート",
+      "exportSuccess": "エクスポート成功",
+      "exportError": "エクスポート失敗",
+      "import": "パックをインポート",
+      "importSuccess": "'{{name}}' としてインポート（{{count}} 枚）",
+      "importRenamed": "名前の衝突を回避しました",
+      "importError": "インポート失敗"
+    },
     "toast": {
       "error": "設定の変更に失敗しました",
       "success": "設定の変更に成功しました"

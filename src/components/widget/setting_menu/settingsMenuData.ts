@@ -1,6 +1,6 @@
 import { languages } from '@/lib/lang'
 import type { Settings } from '@/types/file'
-import type { SettingField, TabConfig, TabId } from './settingsMenuTypes'
+import type { SettingField, TabConfig, TabId, TextField } from './settingsMenuTypes'
 
 export const SETTINGS_TABS: TabConfig[] = [
   { id: 'general', labelKey: 'settings.tab.general', icon: 'folder' },
@@ -45,6 +45,17 @@ export const SETTINGS_FIELDS: SettingField[] = [
     getValue: (s) => s.rememberCategory ?? false,
     toPatch: (v) => ({ rememberCategory: v }),
   },
+  {
+    id: 'owner_name',
+    tab: 'general',
+    control: 'text',
+    titleKey: 'settings.ownerName.title',
+    descriptionKey: 'settings.ownerName.description',
+    placeholder: 'e.g. chain',
+    defaultValue: '',
+    getValue: (s) => s.owner_name ?? '',
+    toPatch: (v) => ({ owner_name: v }),
+  } satisfies TextField,
   // Display
   {
     id: 'imageQuality',

@@ -1,5 +1,7 @@
 use crate::modules::config::get_config;
 use crate::modules::db::connect_db;
+use crate::modules::filecache::FileCache;
+use crate::modules::imgoptimize::evict_path_prefix;
 use crate::{log_error, log_info};
 use serde::Serialize;
 use std::path::{Path, PathBuf};
@@ -154,14 +156,68 @@ pub async fn create_category(name: &str) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn delete_category(name: &str) -> Result<String, String> {
-    let new_path = get_config().folderPath.join(name);
+    let folder_path = get_config().folderPath.join(name);
 
-    if !new_path.exists() {
+    if !folder_path.exists() {
         return Err(format!("Category '{}' does not exist", name));
     }
 
-    tokio::fs::remove_dir(&new_path)
+    let config = get_config();
+    let folder_path_str = folder_path.to_string_lossy().to_string();
+
+    // Evict image optimize cache for all files in this category (before deletion)
+    evict_path_prefix(&folder_path_str);
+
+    // Remove folder and all contents
+    tokio::fs::remove_dir_all(&folder_path)
         .await
-        .map(|_| format!("Successfully deleted category '{}'", name))
-        .map_err(|e| format!("Failed to delete category '{}': Directory is not empty or other error: {}", name, e))
+        .map_err(|e| format!("Failed to delete category folder '{}': {}", name, e))?;
+
+    // Evict file listing cache for this category
+    if let Some(cache) = FileCache::get_instance() {
+        let _ = cache.remove_category(&config.folderPath, name);
+    }
+
+    // Clean DB in one transaction
+    let name_owned = name.to_string();
+    tokio::task::spawn_blocking(move || purge_category_from_db(&name_owned))
+        .await
+        .map_err(|e| format!("DB cleanup task failed: {}", e))??;
+
+    let msg = format!("Successfully deleted category '{}'", name);
+    log_info!("{}", msg);
+    Ok(msg)
+}
+
+fn purge_category_from_db(name: &str) -> Result<(), String> {
+    let mut conn = connect_db()?;
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+
+    // image_tags rows are removed by CASCADE when images are deleted
+    tx.execute("DELETE FROM images WHERE category = ?1", [name])
+        .map_err(|e| format!("Failed to delete images: {}", e))?;
+
+    // Remove the category tag entry
+    tx.execute(
+        "DELETE FROM tags WHERE name = ?1 AND is_category = 1",
+        [name],
+    )
+    .map_err(|e| format!("Failed to delete category tag: {}", e))?;
+
+    // Remove orphaned non-category tags (no remaining image_tags references)
+    tx.execute(
+        "DELETE FROM tags WHERE is_category = 0
+         AND id NOT IN (SELECT DISTINCT tag_id FROM image_tags)",
+        [],
+    )
+    .map_err(|e| format!("Failed to purge orphaned tags: {}", e))?;
+
+    // Remove category icon record
+    tx.execute(
+        "DELETE FROM category_icons WHERE category = ?1",
+        [name],
+    )
+    .map_err(|e| format!("Failed to delete category icon: {}", e))?;
+
+    tx.commit().map_err(|e| e.to_string())
 }
