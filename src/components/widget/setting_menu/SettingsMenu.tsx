@@ -34,16 +34,16 @@ export default function SettingsMenu({ settings, onChange, onBrowse }: SettingsM
       .catch(() => {})
   }, [])
 
-  // Auto-prune orphaned sensitive tags that no longer exist in the tag table
+  // Auto-prune orphaned sensitive entries that no longer exist as tags OR categories
   useEffect(() => {
-    if (allTags.length === 0) return
+    if (allTags.length === 0 && allCategories.length === 0) return
     const current = settings.sensitive_tags ?? []
-    const valid = current.filter(t => allTags.includes(t))
+    const valid = current.filter(t => allTags.includes(t) || allCategories.includes(t))
     if (valid.length !== current.length) {
       onChange({ sensitive_tags: valid })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allTags])
+  }, [allTags, allCategories])
 
   const fields = useMemo(() => SETTINGS_FIELDS.filter(f => f.tab === tab), [tab])
   const activeField = fields.find(f => f.id === activeId) ?? fields[0]

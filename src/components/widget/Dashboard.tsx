@@ -35,6 +35,7 @@ import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { type CategoryIcon, DatabaseService } from "@/hooks/use-database"
 import { useSharedSettings } from "@/utils/SettingsContext"
+import { useSafeMode } from "@/utils/SafeModeContext"
 import { useToast } from "@/hooks/use-toast"
 import ExportProgressDialog from "@/components/dialog/ExportProgressDialog"
 import ImportProgressDialog, { type ImportResult } from "@/components/dialog/ImportProgressDialog"
@@ -163,7 +164,8 @@ export default function Dashboard() {
     const [stats, setStats] = useState<Stats>({ total_images: 0, categories: 0, storage_used: 0 })
     const router = useNavigate()
     const { settings } = useSharedSettings()
-    const sensitiveTags: string[] = settings?.sensitive_tags ?? []
+    const { isSafeMode } = useSafeMode()
+    const sensitiveTags: string[] = isSafeMode ? (settings?.sensitive_tags ?? []) : []
     const { toast } = useToast()
 
     const [exportDialog, setExportDialog] = useState<{ categoryName: string; outputPath: string } | null>(null)
