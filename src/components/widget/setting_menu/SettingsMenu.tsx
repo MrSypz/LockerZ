@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RotateCcw } from 'lucide-react'
+import { invoke } from '@tauri-apps/api/core'
 import { DatabaseService, type TagInfo } from '@/hooks/use-database'
-import type { Settings } from '@/types/file'
+import type { Settings, Category } from '@/types/file'
 import type { TabId } from './settingsMenuTypes'
 import { firstFieldIdForTab, resetSettingsPatch, SETTINGS_FIELDS, SETTINGS_TABS } from './settingsMenuData'
 import { cycleOption } from './settingsMenuUtils'
@@ -22,10 +23,14 @@ export default function SettingsMenu({ settings, onChange, onBrowse }: SettingsM
   const [activeId, setActiveId] = useState(firstFieldIdForTab('general'))
   const [inputMode, setInputMode] = useState<'keyboard' | 'pointer'>('keyboard')
   const [allTags, setAllTags] = useState<string[]>([])
+  const [allCategories, setAllCategories] = useState<string[]>([])
 
   useEffect(() => {
     new DatabaseService().getAllTags()
       .then((tags: TagInfo[]) => setAllTags(tags.map(t => t.name)))
+      .catch(() => {})
+    invoke<Category[]>('get_categories')
+      .then(cats => setAllCategories(cats.map(c => c.name)))
       .catch(() => {})
   }, [])
 
@@ -157,6 +162,7 @@ export default function SettingsMenu({ settings, onChange, onBrowse }: SettingsM
               tab={tab}
               settings={settings}
               allTags={allTags}
+              allCategories={allCategories}
               onChange={onChange}
               onBrowse={onBrowse}
             />

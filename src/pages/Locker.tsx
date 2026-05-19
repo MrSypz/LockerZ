@@ -398,7 +398,12 @@ export default function LockerPage() {
                                     <TagManagerDialog
                                         file={selectedFileForTags}
                                         isOpen={tagManagerOpen}
-                                        onClose={async () => { setTagManagerOpen(false); setSelectedFileForTags(null); await fetchAllFiles() }}
+                                        onClose={() => { setTagManagerOpen(false); setSelectedFileForTags(null) }}
+                                        onTagsApplied={(updatedFile, tags) => {
+                                            setFiles(prev => prev.map(f =>
+                                                f.filepath === updatedFile.filepath ? { ...f, tags } : f
+                                            ))
+                                        }}
                                     />
                                 )}
                                 {selectedFilesForBulkAction.length > 0 && (

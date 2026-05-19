@@ -120,7 +120,9 @@ export default function FileCard({
     const { isSafeMode } = useSafeMode()
 
     const sensitiveTagNames: string[] = settings?.sensitive_tags ?? ["explicit"]
-    const isSensitive = (file.tags ?? []).some(tag => sensitiveTagNames.includes(tag.name))
+    const isSensitive =
+        sensitiveTagNames.includes(file.category) ||
+        (file.tags ?? []).some(tag => sensitiveTagNames.includes(tag.name))
     const isBlurred = isSensitive && isSafeMode && !revealed
 
     // Re-blur when global safe mode is switched back on

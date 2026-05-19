@@ -2,19 +2,47 @@ import { useTranslation } from 'react-i18next'
 import { FolderOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Settings } from '@/types/file'
-import type { SettingField, TabId } from './settingsMenuTypes'
+import type { SettingField, TabId, TagsField } from './settingsMenuTypes'
 import { cn } from '@/lib/utils'
+
+function SensitiveChip({ name, field, settings, onChange }: {
+  name: string
+  field: TagsField
+  settings: Settings
+  onChange: (patch: Partial<Settings>) => void
+}) {
+  const active = field.getValue(settings).includes(name)
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        const current = field.getValue(settings)
+        const next = active ? current.filter(t => t !== name) : [...current, name]
+        onChange(field.toPatch(next))
+      }}
+      className={cn(
+        "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+        active
+          ? "bg-amber-500/20 text-amber-400 border-amber-500/40 hover:bg-amber-500/30"
+          : "bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground",
+      )}
+    >
+      {name}
+    </button>
+  )
+}
 
 interface SettingsDetailsPanelProps {
   field: SettingField
   tab: TabId
   settings: Settings
   allTags: string[]
+  allCategories: string[]
   onChange: (patch: Partial<Settings>) => void
   onBrowse: () => void
 }
 
-export default function SettingsDetailsPanel({ field, tab, settings, allTags, onChange, onBrowse }: SettingsDetailsPanelProps) {
+export default function SettingsDetailsPanel({ field, tab, settings, allTags, allCategories, onChange, onBrowse }: SettingsDetailsPanelProps) {
   const { t } = useTranslation()
   const title = t(field.titleKey, { defaultValue: field.id })
   const description = t(field.descriptionKey, { defaultValue: '' })
@@ -50,41 +78,31 @@ export default function SettingsDetailsPanel({ field, tab, settings, allTags, on
       )}
 
       {field.control === 'tags' && (
-        <div className="space-y-4">
-          {allTags.length === 0 ? (
+        <div className="space-y-5">
+          {allTags.length === 0 && allCategories.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">
-              No tags in your library yet. Tag your images first, then return here to mark any as sensitive.
+              No tags or categories yet. Add tags to your images first, then return here to mark any as sensitive.
             </p>
           ) : (
             <>
-              <div className="flex flex-wrap gap-2">
-                {allTags.map(tag => {
-                  const active = field.getValue(settings).includes(tag)
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => {
-                        const current = field.getValue(settings)
-                        const next = active
-                          ? current.filter(t => t !== tag)
-                          : [...current, tag]
-                        onChange(field.toPatch(next))
-                      }}
-                      className={cn(
-                        "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
-                        active
-                          ? "bg-amber-500/20 text-amber-400 border-amber-500/40 hover:bg-amber-500/30"
-                          : "bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground",
-                      )}
-                    >
-                      {tag}
-                    </button>
-                  )
-                })}
-              </div>
+              {allTags.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Tags</div>
+                  <div className="flex flex-wrap gap-2">
+                    {allTags.map(tag => <SensitiveChip key={tag} name={tag} field={field} settings={settings} onChange={onChange} />)}
+                  </div>
+                </div>
+              )}
+              {allCategories.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Categories</div>
+                  <div className="flex flex-wrap gap-2">
+                    {allCategories.map(cat => <SensitiveChip key={cat} name={cat} field={field} settings={settings} onChange={onChange} />)}
+                  </div>
+                </div>
+              )}
               <p className="text-xs text-muted-foreground">
-                Highlighted tags will blur matching images when safe mode is on. Toggle safe mode in the sidebar.
+                Highlighted items blur matching images in safe mode. Categories blur all images in that folder.
               </p>
             </>
           )}
