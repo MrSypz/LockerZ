@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::fs::create_dir_all;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Image {
@@ -28,11 +28,6 @@ pub struct CategoryIcon {
     filename: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct ImageTag {
-    image_id: i64,
-    tag_id: i64,
-}
 pub fn connect_db() -> Result<Connection, String> {
     let main_path = get_main_path().map_err(|e| format!("Failed to get main path: {}", e))?;
     let db_dir = main_path.join("database");
@@ -45,22 +40,20 @@ pub fn init_db() -> Result<Connection, String> {
     let conn = connect_db()?;
 
     conn.execute(
-        "
-        CREATE TABLE IF NOT EXISTS images (
-        id INTEGER PRIMARY KEY,
-        relative_path TEXT NOT NULL,
-        category TEXT NOT NULL,
-        filename TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(relative_path, filename)
+        "CREATE TABLE IF NOT EXISTS images (
+            id INTEGER PRIMARY KEY,
+            relative_path TEXT NOT NULL,
+            category TEXT NOT NULL,
+            filename TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(relative_path, filename)
         )",
         [],
     )
     .map_err(|e| e.to_string())?;
 
     conn.execute(
-        "
-        CREATE TABLE IF NOT EXISTS tags (
+        "CREATE TABLE IF NOT EXISTS tags (
             id INTEGER PRIMARY KEY,
             name TEXT NOT NULL UNIQUE,
             is_category BOOLEAN NOT NULL DEFAULT 0,
@@ -71,21 +64,19 @@ pub fn init_db() -> Result<Connection, String> {
     .map_err(|e| e.to_string())?;
 
     conn.execute(
-        "
-        CREATE TABLE IF NOT EXISTS image_tags (
-        image_id INTEGER,
-        tag_id INTEGER,
-        PRIMARY KEY (image_id, tag_id),
-        FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE,
-        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
-       )",
+        "CREATE TABLE IF NOT EXISTS image_tags (
+            image_id INTEGER,
+            tag_id INTEGER,
+            PRIMARY KEY (image_id, tag_id),
+            FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE,
+            FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+        )",
         [],
     )
     .map_err(|e| e.to_string())?;
 
     conn.execute(
-        "
-        CREATE TABLE IF NOT EXISTS category_icons (
+        "CREATE TABLE IF NOT EXISTS category_icons (
             category TEXT PRIMARY KEY,
             relative_path TEXT,
             filename TEXT,
@@ -116,9 +107,7 @@ pub fn add_image(path: PathBuf, category: String) -> Result<i64, String> {
     let mut stmt = conn
         .prepare(
             "SELECT id FROM images
-             WHERE relative_path = ?1
-             AND category = ?2
-             AND filename = ?3",
+             WHERE relative_path = ?1 AND category = ?2 AND filename = ?3",
         )
         .map_err(|e| e.to_string())?;
 
@@ -132,7 +121,6 @@ pub fn add_image(path: PathBuf, category: String) -> Result<i64, String> {
                 [relative_path, &category, filename],
             )
             .map_err(|e| e.to_string())?;
-
             Ok(conn.last_insert_rowid())
         }
     }
@@ -141,28 +129,22 @@ pub fn add_image(path: PathBuf, category: String) -> Result<i64, String> {
 #[tauri::command]
 pub fn add_tag(name: String) -> Result<i64, String> {
     let conn = connect_db()?;
-    println!("add_tag pass {:?}", conn);
     conn.execute("INSERT OR IGNORE INTO tags (name) VALUES (?1)", [&name])
         .map_err(|e| e.to_string())?;
-
-    let id = conn.last_insert_rowid();
-    Ok(id)
+    Ok(conn.last_insert_rowid())
 }
 
 #[tauri::command]
 pub fn tag_image(image_id: i64, tag_name: String) -> Result<(), String> {
     let conn = connect_db()?;
-    println!("tag_image pass {:?}", conn);
     conn.execute("INSERT OR IGNORE INTO tags (name) VALUES (?1)", [&tag_name])
         .map_err(|e| e.to_string())?;
-
     conn.execute(
         "INSERT OR IGNORE INTO image_tags (image_id, tag_id)
          SELECT ?1, id FROM tags WHERE name = ?2",
         [&image_id.to_string(), &tag_name],
     )
     .map_err(|e| e.to_string())?;
-
     Ok(())
 }
 
@@ -179,22 +161,17 @@ pub fn get_image_tags(image_id: i64) -> Result<Vec<TagInfo>, String> {
 
     let tags = stmt
         .query_map([image_id], |row| {
-            Ok(TagInfo {
-                name: row.get(0)?,
-                is_category: row.get(1)?,
-            })
+            Ok(TagInfo { name: row.get(0)?, is_category: row.get(1)? })
         })
         .map_err(|e| e.to_string())?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| e.to_string())?;
-
     Ok(tags)
 }
 
 #[tauri::command]
 pub fn search_images_by_tags(tags: Vec<String>) -> Result<Vec<Image>, String> {
     let conn = connect_db()?;
-    println!("search_images_by_tags pass {:?}", conn);
     let placeholders = vec!["?"; tags.len()].join(",");
     let query = format!(
         "SELECT DISTINCT i.* FROM images i
@@ -229,7 +206,6 @@ pub fn search_images_by_tags(tags: Vec<String>) -> Result<Vec<Image>, String> {
         .map_err(|e| e.to_string())?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| e.to_string())?;
-
     Ok(images)
 }
 
@@ -242,34 +218,28 @@ pub fn get_all_tags() -> Result<Vec<TagInfo>, String> {
 
     let tags = stmt
         .query_map([], |row| {
-            Ok(TagInfo {
-                name: row.get(0)?,
-                is_category: row.get(1)?,
-            })
+            Ok(TagInfo { name: row.get(0)?, is_category: row.get(1)? })
         })
         .map_err(|e| e.to_string())?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| e.to_string())?;
-
     Ok(tags)
 }
 
 #[tauri::command]
 pub fn remove_image_tag(image_id: i64, tag_name: String) -> Result<(), String> {
     let conn = connect_db()?;
-    println!("remove_image_tag pass {:?}", conn);
     conn.execute(
         "DELETE FROM image_tags WHERE image_id = ? AND tag_id = (SELECT id FROM tags WHERE name = ?)",
         [&image_id.to_string(), &tag_name],
     )
-        .map_err(|e| e.to_string())?;
-
+    .map_err(|e| e.to_string())?;
     Ok(())
 }
+
 #[tauri::command]
 pub fn get_image_id(path: PathBuf, category: String) -> Result<i64, String> {
     let conn = connect_db()?;
-    println!("get_image_id pass {:?}", conn);
 
     let filename = path
         .file_name()
@@ -284,24 +254,17 @@ pub fn get_image_id(path: PathBuf, category: String) -> Result<i64, String> {
     let mut stmt = conn
         .prepare(
             "SELECT id FROM images
-             WHERE relative_path = ?1
-             AND category = ?2
-             AND filename = ?3",
+             WHERE relative_path = ?1 AND category = ?2 AND filename = ?3",
         )
         .map_err(|e| e.to_string())?;
 
-    let image_id = stmt
-        .query_row([relative_path, &category, filename], |row| row.get(0))
-        .map_err(|e| e.to_string())?;
-
-    Ok(image_id)
+    stmt.query_row([relative_path, &category, filename], |row| row.get(0))
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn remove_tag(name: String) -> Result<(), String> {
     let mut conn = connect_db()?;
-    println!("remove_tag called for tag: {}", name);
-
     let tx = conn.transaction().map_err(|e| e.to_string())?;
 
     tx.execute(
@@ -313,17 +276,13 @@ pub fn remove_tag(name: String) -> Result<(), String> {
     tx.execute("DELETE FROM tags WHERE name = ?1", [&name])
         .map_err(|e| e.to_string())?;
 
-    tx.commit().map_err(|e| e.to_string())?;
-
-    Ok(())
+    tx.commit().map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn edit_tag(old_name: String, new_name: String) -> Result<(), String> {
     let conn = connect_db()?;
-    println!("edit_tag called: {} -> {}", old_name, new_name);
 
-    // Check if the new name already exists
     let mut stmt = conn
         .prepare("SELECT COUNT(*) FROM tags WHERE name = ?1")
         .map_err(|e| e.to_string())?;
@@ -336,7 +295,6 @@ pub fn edit_tag(old_name: String, new_name: String) -> Result<(), String> {
         return Err(format!("Tag '{}' already exists", new_name));
     }
 
-    // Update the tag name
     conn.execute(
         "UPDATE tags SET name = ?1 WHERE name = ?2",
         [&new_name, &old_name],
@@ -345,20 +303,17 @@ pub fn edit_tag(old_name: String, new_name: String) -> Result<(), String> {
 
     Ok(())
 }
+
 #[tauri::command]
 pub fn create_category_tags() -> Result<(), String> {
     let conn = connect_db()?;
-    let config = get_config();
-    let root_folder_path = config.folderPath;
+    let root_folder_path = get_config().folderPath;
 
-    // Get all directories in the root folder
     let categories: Vec<String> = fs::read_dir(&root_folder_path)
         .map_err(|e| format!("Failed to read directory: {}", e))?
         .filter_map(|entry| {
             let entry = entry.ok()?;
             let path = entry.path();
-
-            // Only include if it's a directory and not "uncategorized"
             if path.is_dir() && path.file_name()?.to_string_lossy() != "uncategorized" {
                 Some(path.file_name()?.to_string_lossy().into_owned())
             } else {
@@ -367,34 +322,18 @@ pub fn create_category_tags() -> Result<(), String> {
         })
         .collect();
 
-    log_info!("Found {} categories from folders", categories.len());
-
-    // Create tags for each category
     for category in &categories {
-        match conn.execute(
+        if let Err(e) = conn.execute(
             "INSERT OR IGNORE INTO tags (name, is_category) VALUES (?1, 1)",
             [category],
         ) {
-            Ok(_) => log_info!("Created category tag: {}", category),
-            Err(e) => log_error!("Failed to create tag for category {}: {}", category, e),
+            log_error!("Failed to create tag for category {}: {}", category, e);
         }
     }
-
-    // Verify tags were created
-    let created_tags = conn
-        .prepare("SELECT name FROM tags WHERE is_category = 1")
-        .map_err(|e| e.to_string())?
-        .query_map([], |row| row.get::<_, String>(0))
-        .map_err(|e| e.to_string())?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| e.to_string())?;
-
-    log_info!("Created category tags: {:?}", created_tags);
 
     Ok(())
 }
 
-// Add these new functions for managing category icons
 #[tauri::command]
 pub fn set_category_icon(category: String, path: Option<PathBuf>) -> Result<(), String> {
     let conn = connect_db()?;
@@ -419,7 +358,6 @@ pub fn set_category_icon(category: String, path: Option<PathBuf>) -> Result<(), 
             .map_err(|e| e.to_string())?;
         }
         None => {
-            // Remove icon if path is None
             conn.execute(
                 "DELETE FROM category_icons WHERE category = ?1",
                 [&category],
@@ -439,14 +377,12 @@ pub fn get_category_icon(category: String) -> Result<Option<CategoryIcon>, Strin
         .prepare("SELECT relative_path, filename FROM category_icons WHERE category = ?1")
         .map_err(|e| e.to_string())?;
 
-    let result = stmt.query_row([&category], |row| {
+    match stmt.query_row([&category], |row| {
         Ok(CategoryIcon {
             relative_path: row.get(0)?,
             filename: row.get(1)?,
         })
-    });
-
-    match result {
+    }) {
         Ok(icon) => Ok(Some(icon)),
         Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
         Err(e) => Err(e.to_string()),
@@ -461,12 +397,8 @@ pub fn get_batch_image_ids(
 
     let mut stmt = conn
         .prepare(
-            "
-        SELECT id FROM images
-        WHERE relative_path = ?1
-        AND category = ?2
-        AND filename = ?3
-    ",
+            "SELECT id FROM images
+             WHERE relative_path = ?1 AND category = ?2 AND filename = ?3",
         )
         .map_err(|e| e.to_string())?;
 
@@ -500,8 +432,8 @@ pub fn get_batch_image_tags(
     let mut stmt = conn
         .prepare(
             "SELECT t.name, t.is_category FROM tags t
-         JOIN image_tags it ON t.id = it.tag_id
-         WHERE it.image_id = ?1",
+             JOIN image_tags it ON t.id = it.tag_id
+             WHERE it.image_id = ?1",
         )
         .map_err(|e| e.to_string())?;
 
@@ -526,19 +458,15 @@ pub fn get_batch_image_tags(
 pub fn migrate_database() -> Result<(), String> {
     let conn = connect_db()?;
 
-    // Check if the column already exists first
     let columns = conn
         .prepare("PRAGMA table_info(tags)")
         .map_err(|e| e.to_string())?
-        .query_map([], |row| {
-            Ok(row.get::<_, String>(1)?) // 1 is the index of the column name
-        })
+        .query_map([], |row| Ok(row.get::<_, String>(1)?))
         .map_err(|e| e.to_string())?
         .collect::<Result<Vec<String>, _>>()
         .map_err(|e| e.to_string())?;
 
     if !columns.contains(&"is_category".to_string()) {
-        // Column doesn't exist, so add it
         conn.execute(
             "ALTER TABLE tags ADD COLUMN is_category BOOLEAN NOT NULL DEFAULT 0",
             [],
@@ -546,8 +474,6 @@ pub fn migrate_database() -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
         log_info!("Added is_category column to tags table");
-    } else {
-        log_info!("is_category column already exists");
     }
 
     Ok(())

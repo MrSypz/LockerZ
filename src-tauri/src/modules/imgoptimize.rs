@@ -9,17 +9,13 @@ use std::{
     hash::{Hash, Hasher},
     io::Cursor,
     path::Path,
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        Arc,
-    },
+    sync::Arc,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use tokio::task;
 
 lazy_static::lazy_static! {
     static ref IMAGE_CACHE: Arc<DashMap<u64, CachedImage>> = Arc::new(DashMap::new());
-    static ref PROCESS_COUNTER: AtomicUsize = AtomicUsize::new(0);
 }
 
 #[derive(Clone)]
@@ -130,8 +126,6 @@ fn process_image(
     max_h: i32,
     quality: i32,
 ) -> Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync>> {
-    PROCESS_COUNTER.fetch_add(1, Ordering::Relaxed);
-
     if !Path::new(path).exists() {
         return Err(format!("File does not exist: {}", path).into());
     }

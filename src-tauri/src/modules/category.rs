@@ -13,7 +13,6 @@ pub struct Category {
     pub size: u64,
 }
 
-/// Recursively calculate directory size and file count with optimized parallelism.
 async fn get_dir_stats_async(
     dir_path: &Path,
 ) -> Result<(u64, usize), Box<dyn std::error::Error + Send + Sync>> {
@@ -40,39 +39,32 @@ async fn get_dir_stats_async(
 }
 
 pub async fn fetch_categories_async(root_folder_path: PathBuf) -> Result<Vec<Category>, String> {
-    let entries = match fs::read_dir(&root_folder_path).await {
-        Ok(entries) => entries,
-        Err(err) => return Err(format!("Failed to read directory: {}", err)),
-    };
+    let mut read_dir = fs::read_dir(&root_folder_path)
+        .await
+        .map_err(|e| format!("Failed to read directory: {}", e))?;
 
     let mut entry_vec = Vec::new();
-    let mut read_dir = entries;
 
     while let Some(entry) = read_dir.next_entry().await.map_err(|e| e.to_string())? {
         if entry
             .file_type()
             .await
-            .map(|file_type| file_type.is_dir() && entry.file_name() != "temp")
+            .map(|ft| ft.is_dir() && entry.file_name() != "temp")
             .unwrap_or(false)
         {
             entry_vec.push(entry);
         }
     }
 
-    // Use Tokio tasks for parallelism
     let categories = futures::future::join_all(entry_vec.into_iter().map(|entry| {
         let dir_name = entry.file_name().to_string_lossy().to_string();
         let dir_path = root_folder_path.join(&dir_name);
 
         task::spawn(async move {
             match get_dir_stats_async(&dir_path).await {
-                Ok((size, count)) => Some(Category {
-                    name: dir_name,
-                    file_count: count,
-                    size,
-                }),
-                Err(err) => {
-                    eprintln!("Error calculating stats for {:?}: {}", dir_path, err);
+                Ok((size, count)) => Some(Category { name: dir_name, file_count: count, size }),
+                Err(e) => {
+                    log_error!("Error calculating stats for {:?}: {}", dir_path, e);
                     None
                 }
             }
@@ -88,42 +80,37 @@ pub async fn fetch_categories_async(root_folder_path: PathBuf) -> Result<Vec<Cat
 
 #[tauri::command]
 pub async fn get_categories() -> Result<Vec<Category>, String> {
-    let root_folder_path = get_config().folderPath.clone();
-    fetch_categories_async(root_folder_path).await
+    fetch_categories_async(get_config().folderPath.clone()).await
 }
 
 #[tauri::command]
 pub async fn rename_category(old_name: &str, new_name: &str) -> Result<String, String> {
     let root_folder_path = get_config().folderPath;
-    let old_path = Path::new(&root_folder_path).join(old_name);
-    let new_path = Path::new(&root_folder_path).join(new_name);
+    let old_path = root_folder_path.join(old_name);
+    let new_path = root_folder_path.join(new_name);
 
     if !old_path.exists() {
         return Err(format!("Category '{}' does not exist", old_name));
     }
-
     if new_path.exists() {
         return Err(format!("Category '{}' already exists", new_name));
     }
 
-    // Update database first
     update_category_in_db(old_name, new_name)?;
 
-    // Then try to rename the directory
     match tokio::fs::rename(&old_path, &new_path).await {
         Ok(_) => {
-            let message = format!("Successfully renamed '{}' to '{}'", old_name, new_name);
-            log_info!("{}", message);
-            Ok(message)
+            let msg = format!("Successfully renamed '{}' to '{}'", old_name, new_name);
+            log_info!("{}", msg);
+            Ok(msg)
         }
         Err(e) => {
-            // If directory rename fails, we should roll back the database changes
             if let Err(rollback_err) = update_category_in_db(new_name, old_name) {
                 log_error!("Failed to rollback database changes: {}", rollback_err);
             }
-            let error_message = format!("Failed to rename '{}' to '{}': {}", old_name, new_name, e);
-            log_error!("{}", error_message);
-            Err(error_message)
+            let msg = format!("Failed to rename '{}' to '{}': {}", old_name, new_name, e);
+            log_error!("{}", msg);
+            Err(msg)
         }
     }
 }
@@ -134,75 +121,47 @@ fn update_category_in_db(old_name: &str, new_name: &str) -> Result<(), String> {
         .transaction()
         .map_err(|e| format!("Failed to start transaction: {}", e))?;
 
-    // Update the images table
-    tx.execute(
-        "UPDATE images SET category = ?1 WHERE category = ?2",
-        [new_name, old_name],
-    )
-    .map_err(|e| format!("Failed to update images table: {}", e))?;
+    tx.execute("UPDATE images SET category = ?1 WHERE category = ?2", [new_name, old_name])
+        .map_err(|e| format!("Failed to update images table: {}", e))?;
 
-    // Update the tags table
     tx.execute(
         "UPDATE tags SET name = ?1 WHERE name = ?2 AND is_category = 1",
         [new_name, old_name],
     )
     .map_err(|e| format!("Failed to update tags table: {}", e))?;
 
-    // Update the category_icons table
     tx.execute(
         "UPDATE category_icons SET category = ?1 WHERE category = ?2",
         [new_name, old_name],
     )
     .map_err(|e| format!("Failed to update category_icons table: {}", e))?;
 
-    tx.commit()
-        .map_err(|e| format!("Failed to commit transaction: {}", e))?;
-
-    Ok(())
+    tx.commit().map_err(|e| format!("Failed to commit transaction: {}", e))
 }
 
 #[tauri::command]
 pub async fn create_category(name: &str) -> Result<(), String> {
-    let root_folder_path = get_config().folderPath.clone();
-
-    let new_path = Path::new(&root_folder_path).join(name);
+    let new_path = get_config().folderPath.join(name);
 
     if new_path.exists() {
         return Err(format!("Category '{}' already exists", name));
     }
 
-    match tokio::fs::create_dir(&new_path).await {
-        Ok(_) => {
-            println!("Successfully created category {}", name);
-            Ok(())
-        }
-        Err(e) => {
-            eprintln!("Error creating category {}: {}", name, e);
-            Err(format!("Failed to create category {}: {}", name, e))
-        }
-    }
+    tokio::fs::create_dir(&new_path)
+        .await
+        .map_err(|e| format!("Failed to create category {}: {}", name, e))
 }
+
 #[tauri::command]
 pub async fn delete_category(name: &str) -> Result<String, String> {
-    let root_folder_path = get_config().folderPath.clone();
-    let new_path = Path::new(&root_folder_path).join(name);
+    let new_path = get_config().folderPath.join(name);
 
     if !new_path.exists() {
         return Err(format!("Category '{}' does not exist", name));
     }
 
-    match tokio::fs::remove_dir(&new_path).await {
-        Ok(_) => {
-            let message = format!("Successfully deleted category '{}'", name);
-            println!("{}", message);
-            Ok(message)
-        }
-        Err(e) => {
-            let error_message = format!(
-                "Failed to delete category '{}': Directory is not empty or other error: {}",
-                name, e
-            );
-            Err(error_message)
-        }
-    }
+    tokio::fs::remove_dir(&new_path)
+        .await
+        .map(|_| format!("Successfully deleted category '{}'", name))
+        .map_err(|e| format!("Failed to delete category '{}': Directory is not empty or other error: {}", name, e))
 }
