@@ -38,7 +38,7 @@ export function TagPanel({ imageId, onComplete }: TagPanelProps) {
             ])
             setSelectedTags(imageTags as unknown as TagInfo[])
             setInitialTags(imageTags as unknown as TagInfo[])
-            setAvailableTags(allTags as unknown as TagInfo[])
+            setAvailableTags(allTags)
         } catch (error) {
             toast({ title: "Error loading tags", description: String(error), variant: "destructive" })
         } finally {

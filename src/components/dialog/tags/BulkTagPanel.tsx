@@ -36,7 +36,7 @@ export function BulkTagPanel({ imageIds, onComplete }: BulkTagPanelProps) {
         ...imageIds.map((id) => db.getImageTags(id)),
       ])
 
-      setAvailableTags(allTags as unknown as TagInfo[])
+      setAvailableTags(allTags)
 
       // Tags present on every selected image
       if (tagsPerImage.length > 0) {

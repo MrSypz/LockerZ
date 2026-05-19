@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RotateCcw } from 'lucide-react'
-import { DatabaseService } from '@/hooks/use-database'
+import { DatabaseService, type TagInfo } from '@/hooks/use-database'
 import type { Settings } from '@/types/file'
 import type { TabId } from './settingsMenuTypes'
 import { firstFieldIdForTab, resetSettingsPatch, SETTINGS_FIELDS, SETTINGS_TABS } from './settingsMenuData'
@@ -24,7 +24,9 @@ export default function SettingsMenu({ settings, onChange, onBrowse }: SettingsM
   const [allTags, setAllTags] = useState<string[]>([])
 
   useEffect(() => {
-    new DatabaseService().getAllTags().then(setAllTags).catch(() => {})
+    new DatabaseService().getAllTags()
+      .then((tags: TagInfo[]) => setAllTags(tags.map(t => t.name)))
+      .catch(() => {})
   }, [])
 
   // Auto-prune orphaned sensitive tags that no longer exist in the tag table
