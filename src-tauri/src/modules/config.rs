@@ -19,6 +19,9 @@ pub struct Config {
     pub imageWidth: u32,
     pub imageHeight: u32,
     pub batch_process: u8,
+    pub sensitive_tags: Vec<String>,
+    #[serde(default)]
+    pub owner_name: String,
 }
 
 pub static CONFIG: Lazy<RwLock<Config>> = Lazy::new(|| {
@@ -36,7 +39,6 @@ impl Config {
             if !config_dir.exists() {
                 fs::create_dir_all(config_dir)?;
                 log_pre!("Created config directory: {}", config_dir.display());
-                println!("Created config directory: {:?}", config_dir);
             }
         }
         Ok(())
@@ -51,7 +53,6 @@ impl Config {
             let config_json = serde_json::to_string_pretty(&default_config)?;
             fs::write(&config_path, config_json)?;
             log_pre!("Config file created: {}", config_path.display());
-            println!("Created config file: {:?}", config_path);
         }
 
         Self::read_config(&config_path)
@@ -82,6 +83,7 @@ impl Config {
             }
         }
     }
+
     fn ensure_uncategorized_dir(&self) -> io::Result<()> {
         let uncategorized_dir = self.folderPath.join("uncategorized");
         if !uncategorized_dir.exists() {
@@ -114,6 +116,8 @@ impl Default for Config {
             imageWidth: 960,
             imageHeight: 540,
             batch_process: 32,
+            sensitive_tags: vec!["explicit".to_string()],
+            owner_name: String::new(),
         }
     }
 }
@@ -125,9 +129,7 @@ pub fn setup_folders() -> io::Result<()> {
     if !root_folder_path.exists() {
         log_pre!("Creating root folder...");
         match fs::create_dir_all(root_folder_path) {
-            Ok(_) => {
-                log_pre!("Created root folder: {:?}", root_folder_path);
-            }
+            Ok(_) => log_pre!("Created root folder: {:?}", root_folder_path),
             Err(e) => {
                 log_error!("Failed to create root folder: {}", e);
                 return Err(e);
@@ -159,13 +161,10 @@ pub fn get_config() -> Config {
 
 #[tauri::command]
 pub async fn get_settings() -> Result<Config, String> {
-    let config_path = match Config::get_config_path() {
-        Ok(path) => path,
-        Err(e) => {
-            log_error!("Failed to get config path: {}", e);
-            return Err(e.to_string());
-        }
-    };
+    let config_path = Config::get_config_path().map_err(|e| {
+        log_error!("Failed to get config path: {}", e);
+        e.to_string()
+    })?;
 
     Config::read_config(&config_path).map_err(|e| {
         log_error!("Failed to read settings: {}", e);
@@ -175,72 +174,62 @@ pub async fn get_settings() -> Result<Config, String> {
 
 #[tauri::command]
 pub async fn update_settings(new_settings: Value) -> Result<Config, String> {
-    let config_path = match Config::get_config_path() {
-        Ok(path) => path,
-        Err(e) => {
-            log_error!("Failed to get config path: {}", e);
-            return Err(e.to_string());
-        }
-    };
-    log_info!("Modifying config file at: {:?}", config_path);
+    let config_path = Config::get_config_path().map_err(|e| {
+        log_error!("Failed to get config path: {}", e);
+        e.to_string()
+    })?;
 
-    let mut current_config = match Config::read_config(&config_path) {
-        Ok(config) => config,
-        Err(e) => {
-            log_error!("Failed to read config: {}", e);
-            return Err(format!("Failed to read config: {}", e));
-        }
-    };
+    log_info!("Updating config at: {:?}", config_path);
 
-    // Update configuration fields
+    let mut current_config = Config::read_config(&config_path).map_err(|e| {
+        log_error!("Failed to read config: {}", e);
+        format!("Failed to read config: {}", e)
+    })?;
+
     if let Some(folder_path) = new_settings.get("folderPath").and_then(|v| v.as_str()) {
         current_config.folderPath = PathBuf::from(folder_path);
-        log_info!("Updated folder path: {:?}", current_config.folderPath);
         if let Err(e) = current_config.ensure_uncategorized_dir() {
             log_error!("Failed to create uncategorized directory: {}", e);
             return Err(format!("Failed to create uncategorized directory: {}", e));
         }
     }
-    if let Some(remember_category) = new_settings
-        .get("rememberCategory")
-        .and_then(|v| v.as_bool())
-    {
-        current_config.rememberCategory = remember_category;
-        log_info!(
-            "Updated remember category: {}",
-            current_config.rememberCategory
-        );
+    if let Some(v) = new_settings.get("rememberCategory").and_then(|v| v.as_bool()) {
+        current_config.rememberCategory = v;
     }
-    if let Some(lang) = new_settings.get("lang").and_then(|v| v.as_str()) {
-        current_config.lang = lang.to_string();
-        log_info!("Updated lang: {}", current_config.lang);
+    if let Some(v) = new_settings.get("lang").and_then(|v| v.as_str()) {
+        current_config.lang = v.to_string();
     }
-    if let Some(image_quality) = new_settings.get("imageQuality").and_then(|v| v.as_u64()) {
-        current_config.imageQuality = image_quality as u8;
-        log_info!("Updated image quality: {}", current_config.imageQuality);
+    if let Some(v) = new_settings.get("imageQuality").and_then(|v| v.as_u64()) {
+        current_config.imageQuality = v as u8;
     }
-    if let Some(image_width) = new_settings.get("imageWidth").and_then(|v| v.as_u64()) {
-        current_config.imageWidth = image_width as u32;
-        log_info!("Updated image width: {}", current_config.imageWidth);
+    if let Some(v) = new_settings.get("imageWidth").and_then(|v| v.as_u64()) {
+        current_config.imageWidth = v as u32;
     }
-    if let Some(image_height) = new_settings.get("imageHeight").and_then(|v| v.as_u64()) {
-        current_config.imageHeight = image_height as u32;
-        log_info!("Updated image height: {}", current_config.imageHeight);
+    if let Some(v) = new_settings.get("imageHeight").and_then(|v| v.as_u64()) {
+        current_config.imageHeight = v as u32;
     }
-    if let Some(batch_process) = new_settings.get("batch_process").and_then(|v| v.as_u64()) {
-        current_config.batch_process = batch_process as u8;
-        log_info!("Updated batch process: {}", current_config.batch_process);
+    if let Some(v) = new_settings.get("batch_process").and_then(|v| v.as_u64()) {
+        current_config.batch_process = v as u8;
+    }
+    if let Some(arr) = new_settings.get("sensitive_tags").and_then(|v| v.as_array()) {
+        current_config.sensitive_tags = arr
+            .iter()
+            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .collect();
+    }
+    if let Some(v) = new_settings.get("owner_name").and_then(|v| v.as_str()) {
+        current_config.owner_name = v.to_string();
     }
 
-    if let Err(e) = current_config.write_config(&config_path) {
+    current_config.write_config(&config_path).map_err(|e| {
         log_error!("Failed to write config: {}", e);
-        return Err(format!("Failed to write config: {}", e));
-    }
+        format!("Failed to write config: {}", e)
+    })?;
 
-    if let Err(e) = refresh_config() {
+    refresh_config().map_err(|e| {
         log_error!("Failed to refresh global config: {}", e);
-        return Err(format!("Failed to refresh global config: {}", e));
-    }
+        format!("Failed to refresh global config: {}", e)
+    })?;
 
     Ok(current_config)
 }

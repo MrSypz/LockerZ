@@ -1,4 +1,3 @@
-"use client"
 
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
@@ -18,9 +17,10 @@ import { Badge } from "@/components/ui/badge"
 interface TagPanelProps {
     imageId: number
     onComplete?: (success: boolean) => void
+    onTagsApplied?: (tags: TagInfo[]) => void
 }
 
-export function TagPanel({ imageId, onComplete }: TagPanelProps) {
+export function TagPanel({ imageId, onComplete, onTagsApplied }: TagPanelProps) {
     const { toast } = useToast()
     const [activeTab, setActiveTab] = useState("current")
     const [selectedTags, setSelectedTags] = useState<TagInfo[]>([])
@@ -39,7 +39,7 @@ export function TagPanel({ imageId, onComplete }: TagPanelProps) {
             ])
             setSelectedTags(imageTags as unknown as TagInfo[])
             setInitialTags(imageTags as unknown as TagInfo[])
-            setAvailableTags(allTags as unknown as TagInfo[])
+            setAvailableTags(allTags)
         } catch (error) {
             toast({ title: "Error loading tags", description: String(error), variant: "destructive" })
         } finally {
@@ -102,6 +102,7 @@ export function TagPanel({ imageId, onComplete }: TagPanelProps) {
             })
             setSuccess(true)
             setInitialTags([...selectedTags])
+            onTagsApplied?.([...selectedTags])
         } catch (error) {
             toast({
                 title: "Error updating tags",

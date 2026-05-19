@@ -1,16 +1,14 @@
-'use client'
-
 import { useEffect, useState } from 'react'
 import i18n from 'i18next'
 import { initReactI18next, I18nextProvider } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import resourcesToBackend from 'i18next-resources-to-backend'
-import {languages} from "@/lib/lang";
+import { languages } from '@/lib/lang'
 
 interface I18nProviderProps {
-    children: React.ReactNode;
-    initialLang: string;
-    onLanguageChangeAction: (lang: string) => void;
+    children: React.ReactNode
+    initialLang: string
+    onLanguageChange: (lang: string) => void
 }
 
 const initI18n = async (initialLang: string) => {
@@ -18,41 +16,38 @@ const initI18n = async (initialLang: string) => {
         await i18n
             .use(initReactI18next)
             .use(LanguageDetector)
-            .use(resourcesToBackend((language: string, namespace: string) => import(`../../public/locales/${language}/${namespace}.json`)))
+            .use(resourcesToBackend((language: string, namespace: string) =>
+                fetch(`/locales/${language}/${namespace}.json`).then(r => r.json())
+            ))
             .init({
                 fallbackLng: initialLang,
-                supportedLngs: Object.keys(languages),  // Dynamically use keys from the languages object
+                supportedLngs: Object.keys(languages),
                 lng: initialLang,
-                interpolation: {
-                    escapeValue: false,
-                },
-            });
+                interpolation: { escapeValue: false },
+            })
     } else {
-        await i18n.changeLanguage(initialLang);
+        await i18n.changeLanguage(initialLang)
     }
 }
 
-export default function I18nProvider({ children, initialLang, onLanguageChangeAction }: I18nProviderProps) {
-    const [isInitialized, setIsInitialized] = useState(false);
+export default function I18nProvider({ children, initialLang, onLanguageChange }: I18nProviderProps) {
+    const [isInitialized, setIsInitialized] = useState(false)
 
     useEffect(() => {
-        initI18n(initialLang).then(() => setIsInitialized(true));
+        initI18n(initialLang).then(() => {
+            document.documentElement.setAttribute('data-lang', initialLang)
+            setIsInitialized(true)
+        })
 
-        const handleLanguageChanged = (lang: string) => {
-            onLanguageChangeAction(lang);
-        };
+        const handleLangChanged = (lang: string) => {
+            document.documentElement.setAttribute('data-lang', lang)
+            onLanguageChange(lang)
+        }
+        i18n.on('languageChanged', handleLangChanged)
+        return () => { i18n.off('languageChanged', handleLangChanged) }
+    }, [initialLang, onLanguageChange])
 
-        i18n.on('languageChanged', handleLanguageChanged);
+    if (!isInitialized) return null
 
-        return () => {
-            i18n.off('languageChanged', handleLanguageChanged);
-        };
-    }, [initialLang, onLanguageChangeAction]);
-
-    if (!isInitialized) {
-        return null; // or a loading spinner
-    }
-
-    return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
+    return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
 }
-

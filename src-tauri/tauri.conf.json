@@ -5,10 +5,10 @@
   "version": "0.7.3",
   "identifier": "lockerz",
   "build": {
-    "frontendDist": "../out",
-    "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build"
   },
   "app": {
     "windows": [
@@ -49,6 +49,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": []
+    "resources": [],
+    "fileAssociations": [
+      {
+        "name": "LockerZ Pack",
+        "description": "LockerZ Pack File",
+        "ext": ["lkrz"]
+      }
+    ]
   }
 }

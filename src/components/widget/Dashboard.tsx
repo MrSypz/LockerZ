@@ -1,27 +1,52 @@
-"use client"
-
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import {
     FolderOpen,
     ImageIcon,
     HardDrive,
-    Search,
-    Grid,
-    LayoutGrid,
-    Image,
-    PlusCircle,
     ChevronRight,
-    X,
+    PlusCircle,
+    TrendingUp,
+    EyeOff,
+    Upload,
+    Download,
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+    ChartLegend,
+    ChartLegendContent,
+    type ChartConfig,
+} from "@/components/ui/chart.tsx"
 import { useTranslation } from "react-i18next"
-import { invoke } from "@tauri-apps/api/core"
-import { useRouter } from "next/navigation"
+import { invoke, convertFileSrc } from "@tauri-apps/api/core"
+import { save, open as openDialog } from "@tauri-apps/plugin-dialog"
+import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
-import { OptimizedImage } from "@/components/widget/ImageProcessor"
 import { type CategoryIcon, DatabaseService } from "@/hooks/use-database"
+import { useSharedSettings } from "@/utils/SettingsContext"
+import { useToast } from "@/hooks/use-toast"
+import ExportProgressDialog from "@/components/dialog/ExportProgressDialog"
+import ImportProgressDialog, { type ImportResult } from "@/components/dialog/ImportProgressDialog"
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    PieChart,
+    Pie,
+    CartesianGrid,
+} from "recharts"
 
 interface Category {
     name: string
@@ -39,348 +64,558 @@ export function formatBytes(bytes: number, decimals = 2) {
     if (bytes === 0) return "0 Bytes"
     const k = 1024
     const dm = decimals < 0 ? 0 : decimals
-    const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"]
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i]
 }
 
-export default function Dashboard() {
-    const { t } = useTranslation()
-    const [categories, setCategories] = useState<Category[]>([])
-    const [stats, setStats] = useState<Stats>({
-        total_images: 0,
-        categories: 0,
-        storage_used: 0,
+// CSS variable slots used by ChartContainer — maps to --chart-1 … --chart-8
+const CHART_VAR_COLORS = [
+    "var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)",
+    "var(--chart-5)", "var(--chart-6)", "var(--chart-7)", "var(--chart-8)",
+]
+
+/** Build a ChartConfig from a list of category names, keyed by name. */
+function buildChartConfig(names: string[]): ChartConfig {
+    const config: ChartConfig = {}
+    names.forEach((name, i) => {
+        config[name] = {
+            label: name,
+            color: CHART_VAR_COLORS[i % CHART_VAR_COLORS.length],
+        }
     })
-    const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-    const [searchTerm, setSearchTerm] = useState("")
-    const [isSearchFocused, setIsSearchFocused] = useState(false)
-    const router = useRouter()
+    return config
+}
+
+// ── Category thumbnail with Skeleton fallback ────────────────────────────────
+
+function CategoryThumbnail({ category }: { category: Category }) {
+    const [icon, setIcon] = useState<CategoryIcon | null>(null)
+    const [loading, setLoading] = useState(true)
+    const db = new DatabaseService()
 
     useEffect(() => {
-        async function fetchData() {
-            try {
-                const [categoriesData, statsData] = await Promise.all([invoke("get_categories"), invoke("get_stats")])
-                setCategories(categoriesData as Category[])
-                setStats(statsData as Stats)
-            } catch (error) {
-                console.error("Failed to fetch data:", error)
-            }
-        }
+        db.getCategoryIcon(category.name)
+            .then(setIcon)
+            .catch(() => {})
+            .finally(() => setLoading(false))
+    }, [category.name])
 
-        fetchData()
-    }, [])
+    // if (loading) {
+    //     return <Skeleton className="w-full h-full rounded-none" />
+    // }
 
-    const handleCategoryClick = (categoryName: string) => {
-        localStorage.setItem("lastSelectedCategory", categoryName)
-        router.push("/locker")
-    }
-
-    const filteredCategories = categories.filter((category) =>
-        category.name.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
-
-    const CategoryCard = ({ category }: { category: Category }) => {
-        const [categoryIcon, setCategoryIcon] = useState<CategoryIcon | null>(null)
-        const db = new DatabaseService()
-
-        useEffect(() => {
-            const loadCategoryIcon = async () => {
-                try {
-                    const icon = await db.getCategoryIcon(category.name)
-                    setCategoryIcon(icon)
-                } catch (error) {
-                    console.error("Failed to load category icon:", error)
-                }
-            }
-
-            loadCategoryIcon()
-        }, [category.name])
-
-        const IconComponent = () => {
-            if (categoryIcon && categoryIcon.relative_path && categoryIcon.filename) {
-                const iconPath = `${categoryIcon.relative_path}/${categoryIcon.filename}`
-                return (
-                    <div className="relative w-full h-36 overflow-hidden bg-primary/10 flex items-center justify-center">
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <OptimizedImage
-                            src={iconPath}
-                            alt={category.name}
-                            width={600}
-                            height={400}
-                            quality={100}
-                        />
-                    </div>
-                )
-            }
-            return (
-                <div className="w-full h-36 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/20 flex items-center justify-center">
-                    <FolderOpen className="h-16 w-16 text-primary/70" />
-                </div>
-            )
-        }
-
+    if (icon?.relative_path && icon?.filename) {
         return (
-            <motion.div
-                whileHover={{
-                    y: -5,
-                    transition: { duration: 0.2 },
-                }}
-                className="h-full"
-            >
-                <Card className="overflow-hidden h-full border shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
-                    <IconComponent />
-                    <CardContent className="p-5 flex-grow relative">
-                        <div className="absolute -top-6 right-4">
-                            <div className="bg-primary text-primary-foreground font-medium text-xs px-3 py-1.5 rounded-full shadow-md">
-                                {category.file_count} {category.file_count === 1 ? "image" : "images"}
-                            </div>
-                        </div>
-                        <h3 className="font-semibold text-lg mt-2 line-clamp-1">{category.name}</h3>
-                        <div className="flex items-center gap-2 mt-1.5 text-sm text-muted-foreground">
-                            <HardDrive className="h-3.5 w-3.5" />
-                            <span>{formatBytes(category.size)}</span>
-                        </div>
-                    </CardContent>
-                    <CardFooter className="p-5 pt-0 mt-auto">
-                        <Button
-                            variant="outline"
-                            className="w-full group relative overflow-hidden"
-                            onClick={() => handleCategoryClick(category.name)}
-                        >
-              <span className="relative z-10 group-hover:text-primary-foreground transition-colors duration-300">
-                Browse
-              </span>
-                            <ChevronRight className="ml-2 h-4 w-4 relative z-10 transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary-foreground" />
-                            <span className="absolute inset-0 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
-                        </Button>
-                    </CardFooter>
-                </Card>
-            </motion.div>
-        )
-    }
-
-    const CategoryListItem = ({ category }: { category: Category }) => {
-        const [categoryIcon, setCategoryIcon] = useState<CategoryIcon | null>(null)
-        const db = new DatabaseService()
-
-        useEffect(() => {
-            const loadCategoryIcon = async () => {
-                try {
-                    const icon = await db.getCategoryIcon(category.name)
-                    setCategoryIcon(icon)
-                } catch (error) {
-                    console.error("Failed to load category icon:", error)
-                }
-            }
-
-            loadCategoryIcon()
-        }, [category.name])
-
-        return (
-            <Card
-                className="overflow-hidden cursor-pointer hover:bg-muted/50 transition-all duration-300 group border hover:border-primary/30 hover:shadow-md"
-                onClick={() => handleCategoryClick(category.name)}
-            >
-                <CardContent className="p-4 flex items-center gap-5">
-                    <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-muted flex items-center justify-center shrink-0 shadow-sm">
-                        {categoryIcon && categoryIcon.relative_path && categoryIcon.filename ? (
-                            <>
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                <OptimizedImage
-                                    src={`${categoryIcon.relative_path}/${categoryIcon.filename}`}
-                                    alt={category.name}
-                                    width={200}
-                                    height={200}
-                                />
-                            </>
-                        ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-primary/5 via-primary/10 to-primary/20 flex items-center justify-center">
-                                <FolderOpen className="h-10 w-10 text-primary/70" />
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex-grow min-w-0">
-                        <h3 className="font-medium text-lg truncate group-hover:text-primary transition-colors duration-200">
-                            {category.name}
-                        </h3>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1.5">
-                                <Image className="h-3.5 w-3.5 text-primary" />
-                                <span>
-                  {category.file_count} {category.file_count === 1 ? "image" : "images"}
-                </span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <HardDrive className="h-3.5 w-3.5 text-primary" />
-                                <span>{formatBytes(category.size)}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-primary/10 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <ChevronRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-0.5" />
-                    </div>
-                </CardContent>
-            </Card>
+            <img
+                src={convertFileSrc(`${icon.relative_path}/${icon.filename}`)}
+                alt={category.name}
+                className="w-full h-full object-cover"
+                loading="lazy"
+            />
         )
     }
 
     return (
-        <div className="container mx-auto p-6 space-y-8">
-            {/* Header Section - Original Design */}
-            <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="mb-8"
-            >
-                <h1 className="text-4xl font-bold gradient-text-header mb-2">{t("dashboard.header")}</h1>
-                <p className="text-muted-foreground">{t("dashboard.subheader")}</p>
-            </motion.div>
-
-            {/* Stats Grid - Original Design */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[
-                    { icon: ImageIcon, label: t("dashboard.content.totalimg"), value: stats.total_images.toString() },
-                    { icon: FolderOpen, label: t("dashboard.content.category"), value: stats.categories.toString() },
-                    { icon: HardDrive, label: t("dashboard.content.storageused"), value: formatBytes(stats.storage_used) },
-                ].map((stat, index) => (
-                    <motion.div
-                        key={stat.label}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                        <Card className="hover:shadow-lg transition-all duration-200">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
-                                <stat.icon className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{stat.value}</div>
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-                ))}
-            </div>
-
-            {/* Categories Section - Enhanced Visual Design without flickering */}
-            <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-br from-background via-background to-muted/30">
-                <CardHeader className="pb-2 pt-6 px-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                            <CardTitle className="text-2xl font-bold">Categories</CardTitle>
-                            <CardDescription className="text-muted-foreground mt-1">
-                                Browse and manage your image categories
-                            </CardDescription>
-                        </div>
-                        <div className="flex flex-col md:flex-row gap-3">
-                            <div
-                                className={`relative transition-all duration-300 ${isSearchFocused ? "w-full md:w-80" : "w-full md:w-64"}`}
-                            >
-                                <div
-                                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-all duration-300 ${isSearchFocused ? "text-primary" : "text-muted-foreground"}`}
-                                >
-                                    <Search className="h-4 w-4" />
-                                </div>
-                                {searchTerm && (
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 hover:bg-destructive/10 hover:text-destructive transition-colors"
-                                        onClick={() => setSearchTerm("")}
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </Button>
-                                )}
-                                <Input
-                                    placeholder="Search categories..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-9 pr-7 border-muted-foreground/20 focus:border-primary transition-all duration-300 bg-background/80 backdrop-blur-sm"
-                                    onFocus={() => setIsSearchFocused(true)}
-                                    onBlur={() => setIsSearchFocused(false)}
-                                />
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <Button
-                                    onClick={() => router.push("/category")}
-                                    size="sm"
-                                    className="gap-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-300"
-                                >
-                                    <PlusCircle className="h-3.5 w-3.5" />
-                                    <span>New Category</span>
-                                </Button>
-                                <div className="hidden md:flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-lg p-1 shadow-sm">
-                                    <Button
-                                        variant={viewMode === "grid" ? "secondary" : "ghost"}
-                                        size="sm"
-                                        onClick={() => setViewMode("grid")}
-                                        className="h-8 w-8 p-0 rounded-md"
-                                        title="Grid view"
-                                    >
-                                        <LayoutGrid className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        variant={viewMode === "list" ? "secondary" : "ghost"}
-                                        size="sm"
-                                        onClick={() => setViewMode("list")}
-                                        className="h-8 w-8 p-0 rounded-md"
-                                        title="List view"
-                                    >
-                                        <Grid className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-2 md:p-6">
-                    <div className="h-[480px] overflow-hidden hover:overflow-y-auto pr-4 transition-all duration-300">
-                        {filteredCategories.length > 0 ? (
-                            <div
-                                className={
-                                    viewMode === "grid"
-                                        ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5"
-                                        : "space-y-4"
-                                }
-                            >
-                                {filteredCategories.map((category) => (
-                                    <div key={category.name}>
-                                        {viewMode === "grid" ? (
-                                            <CategoryCard category={category} />
-                                        ) : (
-                                            <CategoryListItem category={category} />
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-[400px] text-center p-4">
-                                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-muted/80 to-muted flex items-center justify-center mb-5 shadow-inner">
-                                    <FolderOpen className="h-10 w-10 text-muted-foreground/70" />
-                                </div>
-                                <h3 className="text-xl font-medium mb-2">No categories found</h3>
-                                <p className="text-muted-foreground mb-6 max-w-md">
-                                    {searchTerm
-                                        ? `No results matching "${searchTerm}"`
-                                        : "You haven't created any categories yet. Create your first category to start organizing your images."}
-                                </p>
-                                {!searchTerm && (
-                                    <Button
-                                        onClick={() => router.push("/category")}
-                                        className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-300"
-                                    >
-                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                        Create Category
-                                    </Button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
+        <div className="w-full h-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center">
+            <FolderOpen className="h-8 w-8 text-primary/60" />
         </div>
     )
 }
 
+// ── Stat card data ───────────────────────────────────────────────────────────
+
+interface StatCardProps {
+    icon: React.ElementType
+    label: string
+    value: string
+    sub?: string
+    color: string
+    delay: number
+}
+
+function StatCard({ icon: Icon, label, value, sub, color, delay }: StatCardProps) {
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay }}
+        >
+            <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
+                    <Icon className={`h-4 w-4 ${color}`} />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold truncate">{value}</div>
+                    {sub && <p className="text-xs text-muted-foreground mt-1 truncate">{sub}</p>}
+                </CardContent>
+            </Card>
+        </motion.div>
+    )
+}
+
+// ── Main Dashboard ───────────────────────────────────────────────────────────
+
+export default function Dashboard() {
+    const { t } = useTranslation()
+    const [categories, setCategories] = useState<Category[]>([])
+    const [stats, setStats] = useState<Stats>({ total_images: 0, categories: 0, storage_used: 0 })
+    const router = useNavigate()
+    const { settings } = useSharedSettings()
+    const sensitiveTags: string[] = settings?.sensitive_tags ?? []
+    const { toast } = useToast()
+
+    const [exportDialog, setExportDialog] = useState<{ categoryName: string; outputPath: string } | null>(null)
+    const [importDialog, setImportDialog] = useState<{ packPath: string } | null>(null)
+
+    const handleExport = useCallback(async (categoryName: string) => {
+        const outPath = await save({
+            defaultPath: `${categoryName}.lkrz`,
+            filters: [{ name: "LockerZ Pack", extensions: ["lkrz"] }],
+        })
+        if (!outPath) return
+        setExportDialog({ categoryName, outputPath: outPath })
+    }, [])
+
+    const handleImport = async () => {
+        const filePath = await openDialog({
+            multiple: false,
+            filters: [{ name: "LockerZ Pack", extensions: ["lkrz"] }],
+        })
+        if (!filePath) return
+        setImportDialog({ packPath: filePath as string })
+    }
+
+    const handleImportDone = useCallback(async (result: ImportResult) => {
+        toast({
+            title: t("settings.pack.importSuccess", { name: result.category_name, count: result.image_count }),
+            description: result.was_renamed ? t("settings.pack.importRenamed") : `by ${result.owner || "unknown"}`,
+        })
+        const [cats, s] = await Promise.all([invoke<Category[]>("get_categories"), invoke<Stats>("get_stats")])
+        setCategories(cats)
+        setStats(s)
+    }, [t, toast])
+
+    useEffect(() => {
+        Promise.all([invoke<Category[]>("get_categories"), invoke<Stats>("get_stats")])
+            .then(([cats, s]) => {
+                setCategories(cats)
+                setStats(s)
+            })
+            .catch(console.error)
+    }, [])
+
+    const handleCategoryClick = (name: string) => {
+        localStorage.setItem("lastSelectedCategory", name)
+        router("/locker")
+    }
+
+    const maskName = (name: string) => sensitiveTags.includes(name) ? "Sensitive" : name
+
+    const topByCount = [...categories]
+        .sort((a, b) => b.file_count - a.file_count)
+        .slice(0, 8)
+        .map((c, i) => ({ ...c, name: maskName(c.name), fill: CHART_VAR_COLORS[i % CHART_VAR_COLORS.length] }))
+
+    const topBySize = [...categories]
+        .sort((a, b) => b.size - a.size)
+        .slice(0, 6)
+        .map((c, i) => ({ ...c, name: maskName(c.name), fill: CHART_VAR_COLORS[i % CHART_VAR_COLORS.length] }))
+
+    const countChartConfig = buildChartConfig(topByCount.map((c) => c.name))
+    const sizeChartConfig  = buildChartConfig(topBySize.map((c) => c.name))
+
+    const avgImagesPerCategory = categories.length
+        ? Math.round(stats.total_images / categories.length)
+        : 0
+
+    const largestCategory = categories.reduce(
+        (acc, c) => (c.file_count > acc.file_count ? c : acc),
+        { name: "—", file_count: 0, size: 0 }
+    )
+
+    const statCards: StatCardProps[] = [
+        {
+            icon: ImageIcon,
+            label: t("dashboard.content.totalimg"),
+            value: stats.total_images.toLocaleString(),
+            sub: `avg ${avgImagesPerCategory} per category`,
+            color: "text-indigo-400",
+            delay: 0.06,
+        },
+        {
+            icon: FolderOpen,
+            label: t("dashboard.content.category"),
+            value: stats.categories.toLocaleString(),
+            sub: largestCategory.name !== "—" ? `largest: ${maskName(largestCategory.name)}` : "no categories yet",
+            color: "text-violet-400",
+            delay: 0.12,
+        },
+        {
+            icon: HardDrive,
+            label: t("dashboard.content.storageused"),
+            value: formatBytes(stats.storage_used),
+            sub: categories.length
+                ? `avg ${formatBytes(stats.storage_used / categories.length)} per category`
+                : "",
+            color: "text-sky-400",
+            delay: 0.18,
+        },
+        {
+            icon: TrendingUp,
+            label: "Largest category",
+            value: largestCategory.name !== "—" ? maskName(largestCategory.name) : "—",
+            sub: largestCategory.file_count
+                ? `${largestCategory.file_count} images · ${formatBytes(largestCategory.size)}`
+                : "",
+            color: "text-emerald-400",
+            delay: 0.24,
+        },
+    ]
+
+    return (
+        <>
+        <TooltipProvider>
+            <div className="container mx-auto p-6 space-y-6">
+
+                {/* Header */}
+                <motion.div
+                    initial={{ opacity: 0, y: -16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                >
+                    <h1 className="text-4xl font-bold gradient-text-header mb-1">
+                        {t("dashboard.header")}
+                    </h1>
+                    <p className="text-muted-foreground">{t("dashboard.subheader")}</p>
+                </motion.div>
+
+                {/* Stat cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {statCards.map((s) => (
+                        <StatCard key={s.label} {...s} />
+                    ))}
+                </div>
+
+                {/* Charts row */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+                    {/* Images per category bar chart */}
+                    <motion.div
+                        className="lg:col-span-2"
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.2 }}
+                    >
+                        <Card className="h-full">
+                            <CardHeader>
+                                <div className="flex items-center gap-2">
+                                    <CardTitle className="text-base">Images per Category</CardTitle>
+                                    <Badge variant="secondary">Top {topByCount.length}</Badge>
+                                </div>
+                                <CardDescription>Sorted by image count</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <ChartContainer config={countChartConfig} className="h-[220px] w-full">
+                                    <BarChart
+                                        data={topByCount}
+                                        margin={{ top: 0, right: 8, left: -16, bottom: 0 }}
+                                    >
+                                        <CartesianGrid vertical={false} />
+                                        <XAxis
+                                            dataKey="name"
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tickMargin={8}
+                                            tick={{ fontSize: 11 }}
+                                            tickFormatter={(v) => v.length > 10 ? v.slice(0, 10) + "…" : v}
+                                        />
+                                        <YAxis
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tick={{ fontSize: 11 }}
+                                            allowDecimals={false}
+                                        />
+                                        <ChartTooltip
+                                            cursor={false}
+                                            content={<ChartTooltipContent hideLabel />}
+                                        />
+                                        <Bar
+                                            dataKey="file_count"
+                                            name="Images"
+                                            fill="var(--chart-1)"
+                                            radius={[4, 4, 0, 0]}
+                                        />
+                                    </BarChart>
+                                </ChartContainer>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+
+                    {/* Storage pie chart */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.28 }}
+                    >
+                        <Card className="h-full">
+                            <CardHeader>
+                                <div className="flex items-center gap-2">
+                                    <CardTitle className="text-base">Storage Distribution</CardTitle>
+                                    <Badge variant="secondary">Top {topBySize.length}</Badge>
+                                </div>
+                                <CardDescription>By disk usage</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex items-center justify-center">
+                                {topBySize.length > 0 ? (
+                                    <ChartContainer
+                                        config={sizeChartConfig}
+                                        className="mx-auto aspect-square max-h-[220px]"
+                                    >
+                                        <PieChart>
+                                            <ChartTooltip
+                                                cursor={false}
+                                                content={<ChartTooltipContent hideLabel />}
+                                            />
+                                            <Pie
+                                                data={topBySize}
+                                                dataKey="size"
+                                                nameKey="name"
+                                                cx="50%"
+                                                cy="50%"
+                                                outerRadius={80}
+                                                innerRadius={40}
+                                                stroke="0"
+                                            />
+                                            <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+                                        </PieChart>
+                                    </ChartContainer>
+                                ) : (
+                                    <p className="text-muted-foreground text-sm">No data</p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                </div>
+
+                {/* Size per category bar chart */}
+                <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.34 }}
+                >
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-2">
+                                <CardTitle className="text-base">Storage per Category</CardTitle>
+                                <Badge variant="secondary">Top {topBySize.length}</Badge>
+                            </div>
+                            <CardDescription>Hover for exact size</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <ChartContainer config={sizeChartConfig} className="h-[180px] w-full">
+                                <BarChart
+                                    data={topBySize}
+                                    layout="vertical"
+                                    margin={{ top: 0, right: 48, left: 8, bottom: 0 }}
+                                >
+                                    <CartesianGrid horizontal={false} />
+                                    <XAxis
+                                        type="number"
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tick={{ fontSize: 11 }}
+                                        tickFormatter={(v) => formatBytes(v, 0)}
+                                    />
+                                    <YAxis
+                                        type="category"
+                                        dataKey="name"
+                                        width={90}
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tick={{ fontSize: 11 }}
+                                        tickFormatter={(v) => v.length > 12 ? v.slice(0, 12) + "…" : v}
+                                    />
+                                    <ChartTooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent hideLabel />}
+                                    />
+                                    <Bar
+                                        dataKey="size"
+                                        name="Size"
+                                        fill="var(--chart-1)"
+                                        radius={[0, 4, 4, 0]}
+                                    />
+                                </BarChart>
+                            </ChartContainer>
+                        </CardContent>
+                    </Card>
+                </motion.div>
+
+                {/* Category grid */}
+                <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.4 }}
+                >
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle className="text-base">All Categories</CardTitle>
+                                <CardDescription>
+                                    <Badge variant="outline" className="mt-1">
+                                        {categories.length} total
+                                    </Badge>
+                                </CardDescription>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button size="sm" variant="outline" onClick={handleImport}>
+                                    <Upload className="h-3.5 w-3.5 mr-1.5" />
+                                    {t("settings.pack.import")}
+                                </Button>
+                                <Button size="sm" onClick={() => router("/category")}>
+                                    <PlusCircle className="h-3.5 w-3.5 mr-1.5" />
+                                    New
+                                </Button>
+                            </div>
+                        </CardHeader>
+
+                        <Separator />
+
+                        <CardContent className="pt-4">
+                            {categories.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                                    <FolderOpen className="h-12 w-12 mb-3 opacity-40" />
+                                    <p>No categories yet</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+                                    {categories.map((category) => {
+                                        const pct = stats.storage_used
+                                            ? Math.round((category.size / stats.storage_used) * 100)
+                                            : 0
+                                        const isSensitive = sensitiveTags.includes(category.name)
+                                        return (
+                                            <Tooltip key={category.name}>
+                                                <TooltipTrigger asChild>
+                                                    <motion.button
+                                                        whileHover={{ y: -3 }}
+                                                        transition={{ duration: 0.15 }}
+                                                        onClick={() => handleCategoryClick(category.name)}
+                                                        className="group rounded-xl overflow-hidden border bg-card hover:border-primary/50 hover:shadow-lg transition-all text-left"
+                                                    >
+                                                        <div className="relative h-24 overflow-hidden">
+                                                            <CategoryThumbnail category={category} />
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                                            {isSensitive && (
+                                                                <div
+                                                                    className="absolute inset-0 flex flex-col items-center justify-center gap-1"
+                                                                    style={{ backdropFilter: "blur(14px)", background: "rgba(0,0,0,0.5)" }}
+                                                                >
+                                                                    <EyeOff className="h-5 w-5 text-white/70" />
+                                                                    <span className="text-[9px] font-semibold text-white/60 uppercase tracking-widest">Sensitive</span>
+                                                                </div>
+                                                            )}
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => { e.stopPropagation(); handleExport(category.name) }}
+                                                                className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 hover:bg-black/70 rounded-md p-1"
+                                                                title={t("settings.pack.export")}
+                                                            >
+                                                                <Download className="h-3.5 w-3.5 text-white" />
+                                                            </button>
+                                                            <div className="absolute bottom-2 right-2">
+                                                                <Badge
+                                                                    variant="secondary"
+                                                                    className="text-[10px] bg-black/40 text-white border-0 backdrop-blur-sm px-1.5 py-0.5 h-auto"
+                                                                >
+                                                                    {pct}%
+                                                                </Badge>
+                                                            </div>
+                                                        </div>
+                                                        <div className="p-2.5">
+                                                            <p className={`text-xs font-semibold truncate transition-colors ${isSensitive ? "text-amber-400/70 italic" : "group-hover:text-primary"}`}>
+                                                                {isSensitive ? (
+                                                                    <span className="flex items-center gap-1">
+                                                                        <EyeOff className="h-3 w-3 shrink-0" />
+                                                                        Sensitive
+                                                                    </span>
+                                                                ) : category.name}
+                                                            </p>
+                                                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                                                                {isSensitive ? "—" : `${category.file_count} · ${formatBytes(category.size)}`}
+                                                            </p>
+                                                        </div>
+                                                        <div className="px-2.5 pb-2.5">
+                                                            <div className="h-1 bg-muted rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-primary rounded-full transition-all"
+                                                                    style={{ width: `${pct}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </motion.button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="bottom">
+                                                    {isSensitive ? (
+                                                        <p className="text-amber-400 font-medium flex items-center gap-1.5">
+                                                            <EyeOff className="h-3.5 w-3.5" /> Sensitive content hidden
+                                                        </p>
+                                                    ) : (
+                                                        <>
+                                                            <p className="font-medium">{category.name}</p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {category.file_count} images · {formatBytes(category.size)} · {pct}% of storage
+                                                            </p>
+                                                        </>
+                                                    )}
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        )
+                                    })}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </motion.div>
+
+                {/* Bottom: quick navigate */}
+                <motion.div
+                    className="flex gap-3"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.4, delay: 0.46 }}
+                >
+                    <Button variant="outline" className="flex-1" onClick={() => router("/locker")}>
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        Browse Images
+                        <ChevronRight className="h-4 w-4 ml-auto" />
+                    </Button>
+                    <Button variant="outline" className="flex-1" onClick={() => router("/category")}>
+                        <FolderOpen className="h-4 w-4 mr-2" />
+                        Manage Categories
+                        <ChevronRight className="h-4 w-4 ml-auto" />
+                    </Button>
+                </motion.div>
+
+            </div>
+        </TooltipProvider>
+
+        {exportDialog && (
+            <ExportProgressDialog
+                categoryName={exportDialog.categoryName}
+                outputPath={exportDialog.outputPath}
+                onClose={() => setExportDialog(null)}
+            />
+        )}
+        {importDialog && (
+            <ImportProgressDialog
+                packPath={importDialog.packPath}
+                onDone={handleImportDone}
+                onClose={() => setImportDialog(null)}
+            />
+        )}
+        </>
+    )
+}

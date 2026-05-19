@@ -44,5 +44,9 @@ next-env.d.ts
 
 
 # Added by cargo
-
 /target
+
+# Vite build output
+/dist
+
+pnpm-lock.yaml

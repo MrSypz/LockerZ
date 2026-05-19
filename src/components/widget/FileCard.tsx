@@ -1,14 +1,14 @@
-"use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useTranslation } from "react-i18next"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { FileContextMenu } from "@/components/widget/Context-menu"
-import { Tag, Plus, X, Check } from "lucide-react"
+import { Tag, Plus, X, Check, EyeOff, Eye } from "lucide-react"
 import { useSharedSettings } from "@/utils/SettingsContext"
+import { useSafeMode } from "@/utils/SafeModeContext"
 import { useBatchProcessing } from "@/components/widget/BatchProcessingProvider"
 import BatchOptimizedImage from "@/components/widget/BatchOptimizedImage"
 import type { File } from "@/types/file"
@@ -113,9 +113,26 @@ export default function FileCard({
                                  }: FileCardProps) {
     const [isPressed, setIsPressed] = useState(false)
     const [showAllTags, setShowAllTags] = useState(false)
+    const [revealed, setRevealed] = useState(false)
     const { t } = useTranslation()
     const { optimizedImages, imageStatus } = useBatchProcessing()
     const { settings } = useSharedSettings()
+    const { isSafeMode } = useSafeMode()
+
+    const sensitiveTagNames: string[] = settings?.sensitive_tags ?? ["explicit"]
+    const isSensitive =
+        sensitiveTagNames.includes(file.category) ||
+        (file.tags ?? []).some(tag => sensitiveTagNames.includes(tag.name))
+    const isBlurred = isSensitive && isSafeMode && !revealed
+
+    // Re-blur when global safe mode is switched back on
+    useEffect(() => { if (isSafeMode) setRevealed(false) }, [isSafeMode])
+
+    const handleReveal = useCallback((e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setRevealed(true)
+    }, [])
 
     const selectedStyle = selectionStyles
 
@@ -218,9 +235,24 @@ export default function FileCard({
                                 optimizedData={optimizedImages.get(file.filepath)}
                                 status={imageStatus.get(file.filepath) || "queued"}
                             />
+
+                            {isBlurred && (
+                                <div
+                                    className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 cursor-pointer"
+                                    style={{ backdropFilter: "blur(18px)", background: "rgba(0,0,0,0.45)" }}
+                                    onClick={handleReveal}
+                                >
+                                    <EyeOff className="h-8 w-8 text-white/80" />
+                                    <span className="text-[10px] font-semibold text-white/70 uppercase tracking-widest">Sensitive</span>
+                                    <span className="text-[9px] text-white/50 flex items-center gap-1">
+                                        <Eye className="h-3 w-3" /> Click to reveal
+                                    </span>
+                                </div>
+                            )}
+
                             <div
                                 className={`
-                  absolute inset-0 
+                  absolute inset-0
                   transition-all duration-300
                   ${isPressed ? "bg-black/20" : ""}
                   ${isSelected && selectedStyle !== selectionStyles ? "ring-2 ring-primary ring-inset" : ""}

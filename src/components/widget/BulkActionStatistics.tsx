@@ -1,4 +1,3 @@
-"use client"
 
 import type { File } from "@/types/file"
 import { formatBytes } from "@/components/widget/Dashboard"

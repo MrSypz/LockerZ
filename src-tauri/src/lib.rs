@@ -2,17 +2,21 @@ mod modules {
     pub mod category;
     pub mod config;
     pub mod db;
+    pub mod fileassoc;
     pub mod filecache;
     pub mod filehandler;
     pub mod imagedupe;
     pub mod imgoptimize;
     pub mod logger;
+    pub mod pack;
     pub mod pathutils;
     pub mod stats;
 }
 
 use crate::modules::db::{create_category_tags, migrate_database};
+use crate::modules::fileassoc::register_lkrz_association;
 use crate::modules::imgoptimize::start_cache_cleanup;
+use crate::modules::pack::{cancel_export_pack, export_category_pack, import_category_pack};
 use modules::{
     category::create_category,
     category::delete_category,
@@ -37,7 +41,6 @@ use modules::{
 use tauri::Manager;
 use window_vibrancy::apply_acrylic;
 
-
 #[tauri::command]
 fn show_in_folder(path: String) {
     #[cfg(target_os = "windows")]
@@ -53,22 +56,20 @@ fn show_in_folder(path: String) {
 fn show_in_photos(path: String) {
     #[cfg(target_os = "windows")]
     {
-        let path = if path.contains(" ") {
+        let path = if path.contains(' ') {
             format!("\"{}\"", path)
         } else {
             path
         };
-
         std::process::Command::new("cmd")
-            .args(&["/C", "start", &path])
+            .args(["/C", "start", &path])
             .spawn()
             .unwrap();
     }
 }
 
-// Run the Tauri app
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() -> Result<(), Box<dyn std::error::Error>> {
+pub fn run() {
     let _ = setup_folders();
     let _ = init_db();
     log_pre!("Application started");
@@ -83,8 +84,9 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
-        .setup(|_app| {
-            let window = _app.get_webview_window("main").unwrap();
+        .setup(|app| {
+            register_lkrz_association(app.handle());
+            let window = app.get_webview_window("main").unwrap();
             window.on_window_event(move |event| {
                 if let tauri::WindowEvent::Destroyed { .. } = event {
                     let _ = LOGGER.archive_log();
@@ -92,8 +94,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             });
             #[cfg(target_os = "windows")]
             apply_acrylic(&window, Some((0, 0, 0, 10)))
-                .expect("Unsupported platform! 'apply_blur' is only supported on Windows");
-
+                .expect("apply_acrylic is only supported on Windows");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -114,7 +115,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             get_stats,
             find_duplicates,
             batch_optimize_images,
-            Database::remove_image_tag, //Database
+            Database::remove_image_tag,
             Database::get_all_tags,
             Database::search_images_by_tags,
             Database::get_image_tags,
@@ -126,10 +127,11 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             Database::edit_tag,
             Database::create_category_tags,
             Database::set_category_icon,
-            Database::get_category_icon
+            Database::get_category_icon,
+            export_category_pack,
+            cancel_export_pack,
+            import_category_pack,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-
-    Ok(()) // Return Result
 }

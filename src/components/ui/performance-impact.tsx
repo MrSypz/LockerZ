@@ -1,8 +1,7 @@
-import React from 'react'
 import { cn } from "@/lib/utils"
 import { useTranslation } from 'react-i18next'
 
-type PerformanceImpact = 'veryhigh'| 'high' | 'medium' | 'low' | 'none'
+type PerformanceImpact = 'veryhigh' | 'high' | 'medium' | 'low' | 'none'
 
 interface PerformanceImpactProps {
     impact: PerformanceImpact
@@ -23,9 +22,8 @@ export function PerformanceImpact({ impact }: PerformanceImpactProps) {
         <div className="flex items-center space-x-2">
             <div className={cn("w-3 h-3 rounded-full", impactColors[impact])} />
             <span className="text-sm text-muted-foreground">
-        {t(`settings.performanceImpact.${impact}`)}
-      </span>
+                {t(`settings.performanceImpact.${impact}`)}
+            </span>
         </div>
     )
 }
-

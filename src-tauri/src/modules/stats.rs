@@ -1,6 +1,6 @@
 use crate::modules::config::get_config;
 use serde::Serialize;
-use std::fs::{self};
+use std::fs;
 use std::path::Path;
 
 #[derive(Serialize)]
@@ -14,22 +14,17 @@ fn get_dir_stats(path: &Path) -> Result<(u64, u64), String> {
     let mut total_size = 0;
     let mut count = 0;
 
-    // Read the directory entries recursively
-    let entries = fs::read_dir(path).map_err(|e| format!("Error reading directory: {}", e))?;
-
-    for entry in entries {
+    for entry in fs::read_dir(path).map_err(|e| format!("Error reading directory: {}", e))? {
         let entry = entry.map_err(|e| format!("Error reading entry: {}", e))?;
         let entry_path = entry.path();
 
         if entry_path.is_dir() {
-            // Recursively get the stats for subdirectories
             let (subdir_size, subdir_count) = get_dir_stats(&entry_path)?;
             total_size += subdir_size;
             count += subdir_count;
         } else if entry_path.is_file() {
-            // For files, accumulate the size and count
-            let metadata =
-                fs::metadata(&entry_path).map_err(|e| format!("Error reading metadata: {}", e))?;
+            let metadata = fs::metadata(&entry_path)
+                .map_err(|e| format!("Error reading metadata: {}", e))?;
             total_size += metadata.len();
             count += 1;
         }
@@ -46,13 +41,10 @@ pub async fn get_stats() -> Result<StatsResponse, String> {
         return Err("Root folder path does not exist.".to_string());
     }
 
-    // Get directory stats (size and file count)
-    let (size, count) = get_dir_stats(&*root_folder_path)?;
+    let (size, count) = get_dir_stats(&root_folder_path)?;
 
-    // Get categories count (directories excluding "temp" directory)
-    let entries =
-        fs::read_dir(root_folder_path).map_err(|e| format!("Error reading root folder: {}", e))?;
-    let categories_count = entries
+    let categories_count = fs::read_dir(&root_folder_path)
+        .map_err(|e| format!("Error reading root folder: {}", e))?
         .filter(|entry| match entry {
             Ok(entry) => {
                 entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false)

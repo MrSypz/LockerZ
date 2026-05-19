@@ -216,6 +216,28 @@
       "low": "Low impact",
       "none": "Not Affect"
     },
+    "tab": {
+      "general": "General",
+      "display": "Display",
+      "content": "Content"
+    },
+    "sensitiveContent": {
+      "title": "Sensitive Content",
+      "description": "Images tagged with these tags will be blurred when safe mode is on."
+    },
+    "ownerName": {
+      "title": "Owner Name",
+      "description": "Your display name embedded in exported packs so recipients know who shared the content."
+    },
+    "pack": {
+      "export": "Export Pack",
+      "exportSuccess": "Pack exported successfully",
+      "exportError": "Failed to export pack",
+      "import": "Import Pack",
+      "importSuccess": "Pack imported as '{{name}}' ({{count}} images)",
+      "importRenamed": "Category renamed to avoid collision",
+      "importError": "Failed to import pack"
+    },
     "toast": {
       "error": "Failed to update settings",
       "success": "Success to update settings"

@@ -117,9 +117,9 @@ export class DatabaseService {
      * Get all tags in the database
      * @returns Promise with array of all tag names
      */
-    async getAllTags(): Promise<string[]> {
+    async getAllTags(): Promise<TagInfo[]> {
         try {
-            return await invoke<string[]>('get_all_tags');
+            return await invoke<TagInfo[]>('get_all_tags');
         } catch (error) {
             throw error;
         }

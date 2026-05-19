@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog"
 import { ImagePanel } from "@/components/dialog/tags/ImagePanel"
 import { TagPanel } from "@/components/dialog/tags/TagPanel"
-import { DatabaseService } from "@/hooks/use-database"
+import { DatabaseService, type TagInfo } from "@/hooks/use-database"
 import { useToast } from "@/hooks/use-toast"
 import { Tag } from "lucide-react"
 import { File } from "@/types/file"
@@ -16,9 +16,10 @@ interface TagManagerDialogProps {
     file: File
     isOpen: boolean
     onClose: () => void
+    onTagsApplied?: (file: File, tags: TagInfo[]) => void
 }
 
-export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProps) {
+export function TagManagerDialog({ file, isOpen, onClose, onTagsApplied }: TagManagerDialogProps) {
     const { toast } = useToast()
     const [imageId, setImageId] = useState<number | null>(null)
     const db = new DatabaseService()
@@ -57,7 +58,12 @@ export function TagManagerDialog({ file, isOpen, onClose }: TagManagerDialogProp
                     </div>
 
                     <div className="md:col-span-2 h-full overflow-hidden">
-                        {imageId && <TagPanel imageId={imageId} />}
+                        {imageId && (
+                            <TagPanel
+                                imageId={imageId}
+                                onTagsApplied={(tags) => onTagsApplied?.(file, tags)}
+                            />
+                        )}
                     </div>
                 </div>
             </DialogContent>

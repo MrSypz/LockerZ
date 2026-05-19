@@ -96,7 +96,7 @@ export function ImageViewer({
     }, [onClose, handleNavigate]);
 
     return (
-        <div className="fixed inset-0 -top-[16px] z-50 bg-black/80 backdrop-blur-sm p-0 m-0 overflow-hidden">
+        <div className="fixed inset-0 -top-4 z-50 bg-black/80 backdrop-blur-sm p-0 m-0 overflow-hidden">
             <div className="absolute inset-0 overflow-hidden p-0 m-0">
                 <TransformWrapper
                     initialScale={1}
@@ -170,7 +170,7 @@ export function ImageViewer({
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute top-4 right-4 rounded-full glass-effect hover:bg-background/100"
+                    className="absolute top-4 right-4 rounded-full glass-effect hover:bg-background"
                     onClick={onClose}
                 >
                     <X className="h-5 w-5"/>
@@ -179,7 +179,7 @@ export function ImageViewer({
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 rounded-full glass-effect hover:bg-background/100"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 rounded-full glass-effect hover:bg-background"
                     onClick={() => handleNavigate('prev')}
                     disabled={currentIndex === 0 && currentPage === 1}
                 >
@@ -189,7 +189,7 @@ export function ImageViewer({
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 rounded-full glass-effect hover:bg-background/100"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 rounded-full glass-effect hover:bg-background"
                     onClick={() => handleNavigate('next')}
                     disabled={currentIndex === files.length - 1 && currentPage === totalPages}
                 >

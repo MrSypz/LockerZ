@@ -33,4 +33,6 @@ export interface Settings {
     imageWidth: number;
     imageHeight: number;
     batch_process?: number;
+    sensitive_tags: string[];
+    owner_name: string;
 }

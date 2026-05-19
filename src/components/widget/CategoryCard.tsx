@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { formatBytes } from "@/components/widget/Dashboard";
 import { EditCategoryDialog } from "@/components/dialog/category/EditCategoryDialog";
 import { DatabaseService } from "@/hooks/use-database";
-import {OptimizedImage} from "@/components/widget/ImageProcessor";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import { Separator } from "@/components/ui/separator"
 
 interface Category {
@@ -57,7 +57,7 @@ export function CategoryCard({ category, onRename, onDelete, onRefresh }: Catego
                     <div className="flex items-start space-x-4">
                         <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
                             {categoryIcon ? (
-                                <OptimizedImage src={categoryIcon} alt={category.name} width={300} height={300}></OptimizedImage>
+                                <img src={convertFileSrc(categoryIcon)} alt={category.name} className="w-full h-full object-cover" loading="lazy" />
                             ) : (
                                 <ImageIcon className="w-8 h-8 text-muted-foreground" />
                             )}
