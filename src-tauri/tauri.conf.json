@@ -49,6 +49,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": []
+    "resources": [],
+    "fileAssociations": [
+      {
+        "name": "LockerZ Pack",
+        "description": "LockerZ Pack File",
+        "ext": ["lkrz"]
+      }
+    ]
   }
 }

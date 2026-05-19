@@ -59,5 +59,7 @@ lazy_static = "1"
 bincode = "1"
 sha2 = "0.10"
 futures = "0.3"
-num_cpus = "1"
 zip = { version = "2", features = ["zstd"] }
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.55"

@@ -2,6 +2,7 @@ mod modules {
     pub mod category;
     pub mod config;
     pub mod db;
+    pub mod fileassoc;
     pub mod filecache;
     pub mod filehandler;
     pub mod imagedupe;
@@ -13,6 +14,7 @@ mod modules {
 }
 
 use crate::modules::db::{create_category_tags, migrate_database};
+use crate::modules::fileassoc::register_lkrz_association;
 use crate::modules::imgoptimize::start_cache_cleanup;
 use crate::modules::pack::{cancel_export_pack, export_category_pack, import_category_pack};
 use modules::{
@@ -83,6 +85,7 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            register_lkrz_association(app.handle());
             let window = app.get_webview_window("main").unwrap();
             window.on_window_event(move |event| {
                 if let tauri::WindowEvent::Destroyed { .. } = event {
