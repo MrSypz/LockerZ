@@ -9,14 +9,29 @@ import { open } from '@tauri-apps/plugin-dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTranslation } from 'react-i18next'
 import { useSettings } from '@/hooks/useSettings'
-import { Loader2 } from 'lucide-react'
+import { Loader2, X, Plus, EyeOff } from 'lucide-react'
 import { PerformanceImpact } from '@/components/ui/performance-impact'
 import { languages } from "@/lib/lang"
+import { Badge } from "@/components/ui/badge"
 
 export default function SettingsPage() {
     const { t, i18n } = useTranslation()
     const { settings, updateSettings, isLoading } = useSettings()
     const [newFolderPath, setNewFolderPath] = useState('')
+    const [newSensitiveTag, setNewSensitiveTag] = useState('')
+
+    const sensitiveTags: string[] = settings?.sensitive_tags ?? ["explicit"]
+
+    const handleAddSensitiveTag = async () => {
+        const tag = newSensitiveTag.trim().toLowerCase()
+        if (!tag || sensitiveTags.includes(tag)) return
+        await updateSettings({ sensitive_tags: [...sensitiveTags, tag] })
+        setNewSensitiveTag('')
+    }
+
+    const handleRemoveSensitiveTag = async (tag: string) => {
+        await updateSettings({ sensitive_tags: sensitiveTags.filter(t => t !== tag) })
+    }
 
     const handleSelectFolder = async () => {
         try {
@@ -176,6 +191,48 @@ export default function SettingsPage() {
                                 </div>
                                 <CardDescription>{t('settings.lockerSettings.batchprocess.description')}</CardDescription>
                                 <Input id="batch-process" type="number" value={settings?.batch_process} onChange={handleBatchProcessChange} min={1} max={255} />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="w-full max-w-2xl mx-auto mt-6">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <EyeOff className="h-4 w-4 text-amber-400" />
+                                Sensitive Content
+                            </CardTitle>
+                            <CardDescription>
+                                Images tagged with any of these tags will be blurred in the locker. Click the eye icon in the sidebar to toggle safe mode on/off.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex flex-wrap gap-2 min-h-8">
+                                {sensitiveTags.length === 0 && (
+                                    <span className="text-sm text-muted-foreground italic">No sensitive tags defined</span>
+                                )}
+                                {sensitiveTags.map(tag => (
+                                    <Badge key={tag} variant="secondary" className="gap-1 pr-1 bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                        {tag}
+                                        <button
+                                            onClick={() => handleRemoveSensitiveTag(tag)}
+                                            className="ml-1 rounded-full hover:bg-amber-500/20 p-0.5"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                ))}
+                            </div>
+                            <div className="flex gap-2">
+                                <Input
+                                    placeholder="Add tag (e.g. explicit, nsfw, 18r)"
+                                    value={newSensitiveTag}
+                                    onChange={e => setNewSensitiveTag(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter') handleAddSensitiveTag() }}
+                                    className="flex-1"
+                                />
+                                <Button onClick={handleAddSensitiveTag} disabled={!newSensitiveTag.trim()}>
+                                    <Plus className="h-4 w-4 mr-1" /> Add
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>

@@ -17,7 +17,7 @@ const initI18n = async (initialLang: string) => {
             .use(initReactI18next)
             .use(LanguageDetector)
             .use(resourcesToBackend((language: string, namespace: string) =>
-                import(`../../public/locales/${language}/${namespace}.json`)
+                fetch(`/locales/${language}/${namespace}.json`).then(r => r.json())
             ))
             .init({
                 fallbackLng: initialLang,
