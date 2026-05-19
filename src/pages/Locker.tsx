@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { toast } from "@/hooks/use-toast"
-import { Loader2, Upload, Trash2, Info } from "lucide-react"
+import { Loader2, Upload, Trash2, Info, User, Crown } from "lucide-react"
 import { open } from "@tauri-apps/plugin-dialog"
 import { invoke } from "@tauri-apps/api/core"
 import { MoveDialog } from "@/components/widget/Move-dialog"
@@ -28,6 +28,7 @@ import { DragAndDropProvider } from "@/components/widget/DragAndDropProvider"
 import { DragDropZone } from "@/components/widget/DragDropZone"
 import { motion } from "framer-motion"
 import { BulkActionStatistics } from "@/components/widget/BulkActionStatistics"
+import { Badge } from "@/components/ui/badge"
 
 interface FileMoveResponse {
     success: boolean
@@ -64,6 +65,7 @@ export default function LockerPage() {
         return savedImagesPerPage ? Number.parseInt(savedImagesPerPage, 10) : 10
     })
     const [rememberCategory] = useState(settings?.rememberCategory ?? true)
+    const [importInfo, setImportInfo] = useState<{ owner: string; original_name: string } | null>(null)
 
     const [tagManagerOpen, setTagManagerOpen] = useState(false)
     const [selectedFileForTags, setSelectedFileForTags] = useState<File | null>(null)
@@ -72,6 +74,13 @@ export default function LockerPage() {
     const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
     const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false)
     const [selectedFilesForBulkAction, setSelectedFilesForBulkAction] = useState<File[]>([])
+
+    useEffect(() => {
+        if (selectedCategory === 'all') { setImportInfo(null); return }
+        invoke<{ owner: string; original_name: string } | null>('get_import_info', { categoryName: selectedCategory })
+            .then(setImportInfo)
+            .catch(() => setImportInfo(null))
+    }, [selectedCategory])
 
     async function show_in_folder(path: string) {
         await invoke("show_in_folder", { path })
@@ -331,7 +340,22 @@ export default function LockerPage() {
             <DragAndDropProvider onFilesDrop={handleFileDrop}>
                 <div className="p-4 md:p-8">
                     <div className="container mx-auto max-w-[2000px]">
-                                <h1 className="text-3xl font-bold">Locker</h1>
+                                <div className="flex items-center gap-3 mb-1">
+                                    <h1 className="text-3xl font-bold">Locker</h1>
+                                    {selectedCategory !== 'all' && (
+                                        importInfo ? (
+                                            <Badge variant="outline" className="text-xs gap-1.5 text-sky-400 border-sky-400/40 bg-sky-400/10">
+                                                <User className="h-3 w-3" />
+                                                from {importInfo.owner || 'unknown'}
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="outline" className="text-xs gap-1.5 text-emerald-500 border-emerald-500/40 bg-emerald-500/10">
+                                                <Crown className="h-3 w-3" />
+                                                {settings?.owner_name || 'Your content'}
+                                            </Badge>
+                                        )
+                                    )}
+                                </div>
                                 <CategorySelector
                                     selectedCategory={selectedCategory}
                                     categories={categories}

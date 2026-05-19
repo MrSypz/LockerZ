@@ -32,8 +32,11 @@ export default function ExportProgressDialog({ categoryName, outputPath, onClose
   const [error, setError] = useState<string | null>(null)
   const exportId = useRef(crypto.randomUUID())
   const cancelledRef = useRef(false)
+  const started = useRef(false)
 
   useEffect(() => {
+    if (started.current) return
+    started.current = true
     const id = exportId.current
     const unlisteners: (() => void)[] = []
 

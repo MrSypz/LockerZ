@@ -40,8 +40,11 @@ export default function ImportProgressDialog({ packPath, onClose, onDone }: Prop
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ImportResult | null>(null)
   const importId = useRef(crypto.randomUUID())
+  const started = useRef(false)
 
   useEffect(() => {
+    if (started.current) return
+    started.current = true
     const id = importId.current
     const unlisteners: (() => void)[] = []
 

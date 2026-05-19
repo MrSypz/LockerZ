@@ -472,9 +472,22 @@ pub fn migrate_database() -> Result<(), String> {
             [],
         )
         .map_err(|e| e.to_string())?;
-
         log_info!("Added is_category column to tags table");
     }
+
+    // Track imported pack metadata separately from folder names
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS category_imports (
+            id INTEGER PRIMARY KEY,
+            category_name TEXT NOT NULL,
+            original_name TEXT NOT NULL,
+            owner TEXT NOT NULL,
+            pack_id TEXT NOT NULL,
+            imported_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
 
     Ok(())
 }

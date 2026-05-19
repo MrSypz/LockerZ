@@ -50,6 +50,13 @@ struct ImportDoneEvent {
 
 // ---------- public types ----------
 
+#[derive(Debug, Serialize, Clone)]
+pub struct ImportInfo {
+    pub owner: String,
+    pub original_name: String,
+    pub imported_at: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PackManifest {
     pub pack_id: String,
@@ -291,22 +298,21 @@ pub async fn import_category_pack(
         .unwrap_or_default();
 
     let original_name = manifest.category_name.clone();
-    let owner_tag = if manifest.owner.is_empty() {
-        "imported".to_string()
-    } else {
-        manifest.owner.clone()
-    };
 
-    let mut final_name = original_name.clone();
-    let was_renamed = if category_dir_exists(&final_name) {
-        final_name = format!("{} [from {}]", original_name, owner_tag);
-        if category_dir_exists(&final_name) {
-            final_name = format!("{} [from {} {}]", original_name, owner_tag, &manifest.pack_id[..6]);
-        }
-        true
+    // Folder uses the original name; owner lives in the DB
+    let final_name = if !category_dir_exists(&original_name) {
+        original_name.clone()
     } else {
-        false
+        let mut n = 2u32;
+        loop {
+            let candidate = format!("{} ({})", original_name, n);
+            if !category_dir_exists(&candidate) {
+                break candidate;
+            }
+            n += 1;
+        }
     };
+    let was_renamed = final_name != original_name;
 
     let dest_dir = config.folderPath.join(&final_name);
     fs::create_dir_all(&dest_dir).map_err(|e| e.to_string())?;
@@ -367,6 +373,13 @@ pub async fn import_category_pack(
         imported += 1;
     }
 
+    // Record import metadata in the database
+    conn.execute(
+        "INSERT INTO category_imports (category_name, original_name, owner, pack_id) VALUES (?1, ?2, ?3, ?4)",
+        params![final_name, original_name, manifest.owner, manifest.pack_id],
+    )
+    .ok();
+
     let _ = app.emit("pack://import/done", ImportDoneEvent { import_id });
 
     log_info!(
@@ -381,4 +394,23 @@ pub async fn import_category_pack(
         original_name,
         was_renamed,
     })
+}
+
+#[tauri::command]
+pub async fn get_import_info(category_name: String) -> Result<Option<ImportInfo>, String> {
+    let conn = connect_db().map_err(|e| e.to_string())?;
+    let result = conn.query_row(
+        "SELECT owner, original_name, imported_at FROM category_imports WHERE category_name = ?1 ORDER BY imported_at DESC LIMIT 1",
+        params![category_name],
+        |row| Ok(ImportInfo {
+            owner: row.get(0)?,
+            original_name: row.get(1)?,
+            imported_at: row.get(2)?,
+        }),
+    );
+    match result {
+        Ok(info) => Ok(Some(info)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
 }

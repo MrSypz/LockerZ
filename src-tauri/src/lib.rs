@@ -16,7 +16,7 @@ mod modules {
 use crate::modules::db::{create_category_tags, migrate_database};
 use crate::modules::fileassoc::register_lkrz_association;
 use crate::modules::imgoptimize::start_cache_cleanup;
-use crate::modules::pack::{cancel_export_pack, export_category_pack, import_category_pack};
+use crate::modules::pack::{cancel_export_pack, export_category_pack, get_import_info, import_category_pack};
 use modules::{
     category::create_category,
     category::delete_category,
@@ -131,6 +131,7 @@ pub fn run() {
             export_category_pack,
             cancel_export_pack,
             import_category_pack,
+            get_import_info,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
