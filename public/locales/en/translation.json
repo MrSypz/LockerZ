@@ -216,6 +216,15 @@
       "low": "Low impact",
       "none": "Not Affect"
     },
+    "tab": {
+      "general": "General",
+      "display": "Display",
+      "content": "Content"
+    },
+    "sensitiveContent": {
+      "title": "Sensitive Content",
+      "description": "Images tagged with these tags will be blurred when safe mode is on."
+    },
     "toast": {
       "error": "Failed to update settings",
       "success": "Success to update settings"

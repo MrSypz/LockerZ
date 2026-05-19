@@ -21,6 +21,15 @@
       "rememberCategory": "จดจำหมวดหมู่ที่เลือกใน Locker",
       "language": "ภาษา"
     },
+    "tab": {
+      "general": "ทั่วไป",
+      "display": "การแสดงผล",
+      "content": "เนื้อหา"
+    },
+    "sensitiveContent": {
+      "title": "เนื้อหาที่ละเอียดอ่อน",
+      "description": "ภาพที่มีแท็กเหล่านี้จะถูกเบลอเมื่อเปิดโหมดปลอดภัย"
+    },
     "toast": {
       "errorFetchingSettings": "เกิดข้อผิดพลาดในการดึงการตั้งค่าปัจจุบัน",
       "errorSelectingFolder": "เกิดข้อผิดพลาดขณะเลือกโฟลเดอร์",

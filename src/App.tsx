@@ -9,6 +9,7 @@ import HomePage from "@/pages/Home"
 import LockerPage from "@/pages/Locker"
 import CategoryPage from "@/pages/Category"
 import SettingsPage from "@/pages/Settings"
+import DupeCheckerPage from "@/pages/DupeChecker"
 
 export default function App() {
   const [currentLang, setCurrentLang] = useState("en")
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="/locker"            element={<LockerPage />} />
             <Route path="/category"          element={<CategoryPage />} />
             <Route path="/settings"          element={<SettingsPage />} />
+            <Route path="/feature/imagedupe" element={<DupeCheckerPage />} />
           </Routes>
         </Layout>
         </SafeModeProvider>
