@@ -1,9 +1,8 @@
 // components/ImagePanel.tsx
 import React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { OptimizedImage } from "@/components/widget/ImageProcessor"
+import { convertFileSrc } from "@tauri-apps/api/core"
 import { formatBytes } from "@/components/widget/Dashboard"
-import { useSharedSettings } from "@/utils/SettingsContext"
 import { File } from "@/types/file"
 import { ImageIcon, Tag, FolderIcon, ScaleIcon, CalendarIcon } from "lucide-react"
 
@@ -26,8 +25,6 @@ const MetadataItem = ({ icon: Icon, label, value }: MetadataItemProps) => (
 )
 
 export function ImagePanel({ file }: ImagePanelProps) {
-    const { settings } = useSharedSettings()
-
     const metadata = [
         { icon: ImageIcon, label: "Name", value: file.name },
         { icon: FolderIcon, label: "Category", value: file.category },
@@ -47,12 +44,11 @@ export function ImagePanel({ file }: ImagePanelProps) {
             <CardContent className="space-y-4">
                 {/* Image Preview */}
                 <div className="relative aspect-square rounded-lg overflow-hidden">
-                    <OptimizedImage
-                        src={file.filepath}
+                    <img
+                        src={convertFileSrc(file.filepath)}
                         alt={file.name}
-                        width={settings.imageWidth}
-                        height={settings.imageHeight}
-                        quality={settings.imageQuality}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
                     />
                 </div>
 

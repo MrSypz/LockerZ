@@ -16,10 +16,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useTranslation } from "react-i18next"
-import { invoke } from "@tauri-apps/api/core"
+import { invoke, convertFileSrc } from "@tauri-apps/api/core"
 import { useNavigate } from 'react-router-dom'
 import { motion } from "framer-motion"
-import { OptimizedImage } from "@/components/widget/ImageProcessor"
 import { type CategoryIcon, DatabaseService } from "@/hooks/use-database"
 
 interface Category {
@@ -102,12 +101,11 @@ export default function Dashboard() {
                 return (
                     <div className="relative w-full h-36 overflow-hidden bg-primary/10 flex items-center justify-center">
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <OptimizedImage
-                            src={iconPath}
+                        <img
+                            src={convertFileSrc(iconPath)}
                             alt={category.name}
-                            width={600}
-                            height={400}
-                            quality={100}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
                         />
                     </div>
                 )
@@ -186,11 +184,11 @@ export default function Dashboard() {
                         {categoryIcon && categoryIcon.relative_path && categoryIcon.filename ? (
                             <>
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                <OptimizedImage
-                                    src={`${categoryIcon.relative_path}/${categoryIcon.filename}`}
+                                <img
+                                    src={convertFileSrc(`${categoryIcon.relative_path}/${categoryIcon.filename}`)}
                                     alt={category.name}
-                                    width={200}
-                                    height={200}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
                                 />
                             </>
                         ) : (

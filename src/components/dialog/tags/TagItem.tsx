@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { motion } from "framer-motion"
 import { Tag, Folder, X, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"

@@ -1,7 +1,5 @@
-// @ts-nocheck
-
 import { useState, useEffect } from "react"
-import { invoke } from "@tauri-apps/api/core"
+import { invoke, convertFileSrc } from "@tauri-apps/api/core"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
@@ -19,7 +17,6 @@ import {
     SlidersHorizontal,
     ChevronDown,
 } from "lucide-react"
-import { OptimizedImage } from "@/components/widget/ImageProcessor"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -81,9 +78,6 @@ const ImagePreview = ({ src, info, onShowInFolder, onDelete, similarity, isOrigi
         }
     }
 
-    // Use a smaller resolution for gallery view to improve performance
-    const imageSize = lowQuality ? { width: 400, height: 400 } : { width: 1920, height: 1080 }
-
     return (
         <motion.div
             className="relative border rounded-lg overflow-hidden bg-card shadow-sm transition-all group"
@@ -105,12 +99,11 @@ const ImagePreview = ({ src, info, onShowInFolder, onDelete, similarity, isOrigi
                 )}
 
                 <div className="w-full h-full">
-                    <OptimizedImage
-                        src={src}
+                    <img
+                        src={convertFileSrc(src)}
                         alt={`Image ${isOriginal ? "original" : "duplicate"}`}
-                        width={imageSize.width}
-                        height={imageSize.height}
                         className="object-cover h-full w-full"
+                        loading="lazy"
                         onLoad={() => setIsLoading(false)}
                     />
                 </div>

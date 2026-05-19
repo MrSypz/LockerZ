@@ -1,8 +1,7 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { OptimizedImage } from "@/components/widget/ImageProcessor"
-import { useSharedSettings } from "@/utils/SettingsContext"
+import { convertFileSrc } from "@tauri-apps/api/core"
 import type { File } from "@/types/file"
 import { ImageIcon, Tag, FolderIcon, ScaleIcon, Info } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -14,7 +13,6 @@ interface MultiImagePanelProps {
 }
 
 export function MultiImagePanel({ files }: MultiImagePanelProps) {
-    const { settings } = useSharedSettings()
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
     const selectedFile = files[selectedImageIndex]
 
@@ -32,12 +30,11 @@ export function MultiImagePanel({ files }: MultiImagePanelProps) {
             <CardContent className="flex-1 flex flex-col space-y-4 overflow-hidden">
                 {/* Selected Image Preview */}
                 <div className="relative aspect-square rounded-lg overflow-hidden">
-                    <OptimizedImage
-                        src={selectedFile.filepath}
+                    <img
+                        src={convertFileSrc(selectedFile.filepath)}
                         alt={selectedFile.name}
-                        width={settings.imageWidth}
-                        height={settings.imageHeight}
-                        quality={settings.imageQuality}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
                     />
                     <div className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm rounded-md px-2 py-1 text-xs">
                         {selectedImageIndex + 1} / {files.length}
@@ -58,7 +55,7 @@ export function MultiImagePanel({ files }: MultiImagePanelProps) {
                                     }`}
                                     onClick={() => setSelectedImageIndex(index)}
                                 >
-                                    <OptimizedImage src={file.filepath} alt={file.name} width={80} height={80} quality={50} />
+                                    <img src={convertFileSrc(file.filepath)} alt={file.name} className="w-full h-full object-cover" loading="lazy" />
                                 </button>
                             ))}
                         </div>
